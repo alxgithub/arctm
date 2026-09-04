@@ -543,6 +543,10 @@
     cursor:pointer;border-radius:10px;margin:4px 0;padding:9px 10px;
     border:1px solid transparent;border-bottom-color:color-mix(in srgb, var(--line) 60%, transparent);
   }
+  .visor .campo-pay.aviso-campo{
+    background:color-mix(in srgb, var(--coral) 14%, var(--card));
+    border-color:color-mix(in srgb, var(--coral) 55%, var(--line));
+  }
   .visor .campo-pay.ativo{
     background:color-mix(in srgb, var(--petrol) 10%, var(--card));
     border-color:color-mix(in srgb, var(--petrol) 45%, var(--line));
@@ -2991,9 +2995,12 @@
     }
     desenharRapidas();
     var b=$("#payConfirmar");
-    b.textContent = "Registar venda";
-    b.disabled = false;
-    b.disabled = modoPag==="misto" && (valorCartao<=0 || valorCartao>=t);
+    var faltaValor = modoPag!=="cartao" && devido>0 && (!recebido || recebido<devido);
+    b.textContent = modoPag==="cartao" ? "Registar venda"
+      : (!recebido ? "Indique o valor recebido"
+      : recebido<devido ? ("Faltam "+money(devido-recebido))
+      : "Registar venda");
+    b.disabled = faltaValor || (modoPag==="misto" && (valorCartao<=0 || valorCartao>=t));
   }
   function desenharRapidas(){
     var c=$("#payRapidas"); c.innerHTML="";
@@ -3041,12 +3048,28 @@
       toast("Indique quanto vai no cartão");
       return;
     }
+    // com dinheiro pelo meio, é preciso saber o que o cliente entregou
+    var devidoAgora = devidoEmDinheiro();
+    if(modoPag!=="cartao" && devidoAgora > 0){
+      if(!recebido){
+        campoPag="recebido";
+        $("#fRecebido").classList.add("aviso-campo");
+        setTimeout(function(){ $("#fRecebido").classList.remove("aviso-campo"); }, 1600);
+        atualizarPagar();
+        toast("Indique quanto o cliente entregou — ou toque em “Certo”");
+        return;
+      }
+      if(recebido < devidoAgora){
+        toast("Faltam "+money(devidoAgora-recebido));
+        return;
+      }
+    }
     aRegistar = true;
     setTimeout(function(){ aRegistar = false; }, 800);
     var devido=devidoEmDinheiro();
     var emCartao = modoPag==="cartao" ? t : (modoPag==="misto" ? valorCartao : 0);
     var emDinheiro = Math.round((t-emCartao)*100)/100;
-    var rec = modoPag==="cartao" ? 0 : (recebido || devido);
+    var rec = modoPag==="cartao" ? 0 : recebido;
     var venda={
       id:uid(), ts:Date.now(), dia:estado.dia,
       total:Math.round(t*100)/100, metodo:modoPag,
