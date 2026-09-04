@@ -977,6 +977,10 @@
   }
   function ligarSala(){
     if(partilha()!=="sala"){ desligarSala(); return; }
+    if(!(window.crypto && window.crypto.subtle)){
+      desligarSala();
+      SALA.estado="precisa de https"; desenhar(false); return;
+    }
     if(!nomeSala() || !passeSala()){
       desligarSala(); SALA.estado="falta nome ou palavra-passe"; desenhar(false); return;
     }
@@ -1163,6 +1167,8 @@
     if($("#folhaDefs").hasAttribute("open") || $("#folhaConfirmar").hasAttribute("open") || $("#folhaDefinir").hasAttribute("open")) return;
     var alvo = e.target;
     if(alvo && (alvo.tagName==="INPUT" || alvo.tagName==="SELECT" || alvo.tagName==="TEXTAREA")) return;
+    // com Ctrl ou Cmd, as teclas pertencem ao browser (recarregar, procurar, imprimir…)
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
 
     if(TECLAS_FRENTE.indexOf(e.key) >= 0){ e.preventDefault(); seguinte(); return; }
     if(TECLAS_TRAS.indexOf(e.key) >= 0){

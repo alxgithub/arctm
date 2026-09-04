@@ -411,6 +411,20 @@
   .cabeca-lista h3{margin:0}
   .cabeca-lista + .lista{margin-top:0}
   .cabeca-lista .conta{font-size:0.8125rem;color:var(--ink-2);font-weight:600}
+  .acoes-pagar{display:flex;gap:9px;margin-top:6px;flex-wrap:wrap}
+  .acoes-pagar > .btn{flex:1 1 190px;justify-content:center;text-align:center}
+  .com-pedido{display:flex;gap:8px;flex:2 1 300px;min-width:0}
+  .com-pedido .btn{flex:1;min-width:0}
+  .com-pedido input{
+    width:92px;flex:none;text-align:center;font-weight:700;font-size:1.0625rem;
+    border:2px solid color-mix(in srgb, var(--petrol) 45%, var(--line));border-radius:12px;
+    background:color-mix(in srgb, var(--petrol) 10%, var(--card));color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .com-pedido input.mau{
+    border-color:var(--coral);background:color-mix(in srgb, var(--coral) 14%, var(--card));
+  }
+  .nota-pedido{margin-top:9px;font-size:0.8125rem;color:var(--ink-2);text-align:center}
   .linha-pedido{
     display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:11px 13px;
     border:1px solid color-mix(in srgb, var(--petrol) 35%, var(--line));border-radius:12px;
@@ -820,10 +834,6 @@
   <div class="painel">
     <button class="icon-btn fechar" type="button" data-fechar aria-label="Fechar"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
     <h2>Cobrar</h2>
-    <label class="linha-pedido" id="linhaPedido" hidden>
-      <input id="payPedido" type="checkbox">
-      <span>Criar pedido <b id="payPedidoNum">nº 1</b> e enviar para os visores</span>
-    </label>
     <div class="pagar-corpo">
       <div class="pagar-lado">
         <div class="abas separadores" id="payModos"></div>
@@ -844,7 +854,15 @@
         </details>
       </div>
     </div>
-    <button class="btn largo" id="payConfirmar" type="button" style="margin-top:6px">Registar venda</button>
+    <div class="acoes-pagar">
+      <button class="btn ghost" id="payConfirmar" type="button">Registar venda</button>
+      <div class="com-pedido" id="blocoPedido" hidden>
+        <button class="btn" id="payComPedido" type="button">Registar e criar pedido</button>
+        <input id="payPedidoNum" type="number" min="0" step="1" inputmode="numeric"
+               aria-label="Número do pedido" title="Número do pedido — só igual ou maior que o seguinte">
+      </div>
+    </div>
+    <div class="nota-pedido" id="notaPedido" hidden></div>
   </div>
 </div>
 
@@ -1099,11 +1117,9 @@
             <option value="sim">Ligado</option>
           </select>
         </label>
-        <label class="campo"><span>Por omissão, ao abrir o Cobrar</span>
-          <select id="aPedidoPorOmissao">
-            <option value="sim">Criar pedido</option>
-            <option value="nao">Não criar</option>
-          </select>
+        <label class="campo"><span>Como funciona</span>
+          <input type="text" value="Dois botões no Cobrar: com e sem pedido" readonly
+                 style="background:transparent;border-style:dashed;color:var(--ink-2)">
         </label>
       </div>
       <div class="par" id="camposSalaPos">
@@ -2923,15 +2939,13 @@
   }
   function abrirPagar(){
     recebido=0; valorCartao=0; campoPag="recebido";
-    var lp=$("#linhaPedido");
-    if(lp){
-      var podeCriar = pedidosLigados() && PEDIDOS.estado==="ligada";
-      lp.hidden = !pedidosLigados();
-      $("#payPedido").checked = podeCriar && LS.ler("pedidoPorOmissao","sim")==="sim";
-      $("#payPedido").disabled = !podeCriar;
-      atualizarNumeroPedido();
-      if(pedidosLigados() && !podeCriar) $("#payPedidoNum").textContent = "— sem ligação à sala";
-    }
+    var podeCriar = pedidosLigados() && PEDIDOS.estado==="ligada";
+    $("#blocoPedido").hidden = !podeCriar;
+    var nota=$("#notaPedido");
+    nota.hidden = !(pedidosLigados() && !podeCriar);
+    nota.textContent = nota.hidden ? "" : ("Sem pedido: " + PEDIDOS.estado);
+    numeroEscolhido = null;
+    atualizarNumeroPedido();
     desenharArtigosPagar();
     var det=$("#payArtigos");
     if(det) det.open = window.innerWidth >= 620 || estado.carrinho.length <= 4;
@@ -3037,9 +3051,9 @@
     });
   }
   var ultimoToqueTeclado = 0, aRegistar = false;
-  function registar(){
+  function registar(comPedido){
     if(aRegistar) return;
-    if(Date.now() - ultimoToqueTeclado < 700){
+    if(Date.now() - ultimoToqueTeclado < 350){
       toast("Toque outra vez para confirmar");
       return;
     }
@@ -3082,8 +3096,7 @@
         return o;
       })
     };
-    var caixaPedido = $("#payPedido");
-    if(caixaPedido && caixaPedido.checked && !caixaPedido.disabled){
+    if(comPedido){
       var np = criarPedido();
       if(np){ venda.pedido = np; }
     }
@@ -3755,6 +3768,11 @@
   }
   function ligarPedidos(){
     if(!pedidosLigados()){ desligarPedidos(); pintarEstadoSala(); return; }
+    if(!(window.crypto && window.crypto.subtle)){
+      desligarPedidos();
+      PEDIDOS.estado="precisa de https — abra a aplicação por um endereço https, não por file:// nem http://";
+      pintarEstadoSala(); return;
+    }
     if(!salaNome() || !salaPasse()){ desligarPedidos(); PEDIDOS.estado="falta nome ou palavra-passe"; pintarEstadoSala(); return; }
     PEDIDOS.estado="a ligar"; pintarEstadoSala();
     Promise.all([carregarMqtt(), caminhoSala()]).then(function(r){
@@ -3785,7 +3803,8 @@
   }
   function criarPedido(){
     if(!pedidosLigados() || !PEDIDOS.cli || !PEDIDOS.cli.connected) return null;
-    var n = proximoPedido();
+    var automatico = proximoPedido();
+    var n = (numeroEscolhido!==null && numeroEscolhido>=automatico) ? numeroEscolhido : automatico;
     PEDIDOS.lista = PEDIDOS.lista.concat([{n:n, estado:"espera", ts:Date.now()}]);
     PEDIDOS.contador = n;
     cifrarSala({lista:PEDIDOS.lista, atual:PEDIDOS.atual, contador:PEDIDOS.contador, ts:Date.now(), de:PEDIDOS.id})
@@ -3794,9 +3813,14 @@
       }).catch(function(){});
     return n;
   }
+  var numeroEscolhido = null;   // número escrito à mão, nunca abaixo do automático
   function atualizarNumeroPedido(){
     var el=$("#payPedidoNum");
-    if(el) el.textContent = "nº " + proximoPedido();
+    if(!el || el.tagName!=="INPUT") return;
+    if(el === document.activeElement) return;
+    el.value = numeroEscolhido!==null ? numeroEscolhido : proximoPedido();
+    el.min = proximoPedido();
+    el.classList.remove("mau");
   }
   function pintarEstadoSala(){
     var el=$("#estadoSalaPos");
@@ -3988,6 +4012,7 @@
     s.querySelectorAll("[data-fechar]").forEach(function(b){ b.addEventListener("click", function(){ s.removeAttribute("open"); }); });
   });
   document.addEventListener("keydown", function(e){
+    if(e.ctrlKey || e.metaKey || e.altKey) return;   // atalhos do browser
     if(e.key!=="Escape") return;
     if($("#sheetConfirmar").hasAttribute("open")){ responder(false); return; }
     var algumPainel = document.querySelector(".sheet[open]");
@@ -4436,7 +4461,38 @@
       estado.carrinho=[]; desenharCarrinho(); desenharGrelha(); toast("Venda anulada");
     });
   });
-  $("#payConfirmar").addEventListener("click", registar);
+  $("#payConfirmar").addEventListener("click", function(){ registar(false); });
+  $("#payComPedido").addEventListener("click", function(){ registar(true); });
+  (function(){
+    var el=$("#payPedidoNum");
+    if(!el) return;
+    function validar(aviso){
+      var v = parseInt(String(el.value).replace(/[^0-9]/g,""),10);
+      var minimo = proximoPedido();
+      if(isNaN(v)){ numeroEscolhido=null; el.classList.remove("mau"); return true; }
+      if(v < minimo){
+        el.classList.add("mau");
+        if(aviso) toast("O número não pode recuar — o seguinte é "+minimo);
+        return false;
+      }
+      if(PEDIDOS.lista.some(function(p){ return p.n===v; })){
+        el.classList.add("mau");
+        if(aviso) toast("O pedido "+v+" já existe");
+        return false;
+      }
+      el.classList.remove("mau");
+      numeroEscolhido = v;
+      return true;
+    }
+    el.addEventListener("input", function(){ validar(false); });
+    el.addEventListener("change", function(){ if(!validar(true)){ numeroEscolhido=null; atualizarNumeroPedido(); } });
+    el.addEventListener("focus", function(){ el.select(); });
+    el.addEventListener("blur", function(){ if(!validar(false)){ numeroEscolhido=null; atualizarNumeroPedido(); } });
+    el.addEventListener("keydown", function(e){
+      if(e.key==="Enter"){ e.preventDefault(); if(validar(true)) registar(true); }
+      if(e.key==="Escape"){ e.preventDefault(); numeroEscolhido=null; atualizarNumeroPedido(); el.blur(); }
+    });
+  })();
   document.querySelectorAll("#payModos button").forEach(function(b){
     b.addEventListener("click", function(){ definirModo(b.dataset.modo); });
   });
@@ -4472,7 +4528,7 @@
   $("#btnAjustes").addEventListener("click", function(){
     $("#aModo").value=estado.modo; notaModo(); desenharAcentos(); desenharProntos(); desenharManuais(); sincronizarCursores(); desenharPrevia(); desenharListaProdutos();
     $("#aPedidos").value = LS.ler("pedidosLigar","nao");
-    $("#aPedidoPorOmissao").value = LS.ler("pedidoPorOmissao","sim");
+
     $("#aSalaNome").value = salaNome();
     $("#aSalaPasse").value = salaPasse();
     $("#aSalaServidor").value = LS.ler("salaServidor","");
@@ -4484,7 +4540,7 @@
     LS.esc("pedidosLigar", this.value);
     if(this.value==="sim") ligarPedidos(); else { desligarPedidos(); pintarEstadoSala(); }
   });
-  $("#aPedidoPorOmissao").addEventListener("change", function(){ LS.esc("pedidoPorOmissao", this.value); });
+
   [["#aSalaNome","salaNome"],["#aSalaPasse","salaPasse"],["#aSalaServidor","salaServidor"]].forEach(function(par){
     $(par[0]).addEventListener("change", function(){
       LS.esc(par[1], this.value.trim()); chaveSala=null;

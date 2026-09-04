@@ -246,6 +246,7 @@
     background:color-mix(in srgb, var(--texto) 4%, var(--painel));
   }
   .altura-barra{display:none}
+  :root[data-criar="nao"] .grupo-novo{display:none}
   :root[data-modo="mostrar"] #btnNovo,
   :root[data-modo="mostrar"] #btnRepetir,
   :root[data-modo="mostrar"] #btnManual,
@@ -567,6 +568,12 @@
           Ligue a partilha em todos os aparelhos para andarem a par.
         </div>
         <div class="par">
+          <label class="campo"><span>Criar pedidos neste ecrã</span>
+            <select id="dCriarAqui">
+              <option value="sim">Sim — botão “+ Pedido” e caixa do número</option>
+              <option value="nao">Não — os números vêm da registadora</option>
+            </select>
+          </label>
           <label class="campo"><span>Tocar num cartão</span>
             <select id="dToqueCartao">
               <option value="chamar">Chama esse pedido</option>
@@ -781,6 +788,10 @@
   }
   function ligarSala(){
     if(partilha()!=="sala"){ desligarSala(); return; }
+    if(!(window.crypto && window.crypto.subtle)){
+      desligarSala();
+      SALA.estado="precisa de https"; desenhar(); return;
+    }
     if(!nomeSala() || !passeSala()){
       desligarSala(); SALA.estado="falta nome ou palavra-passe"; desenhar(); return;
     }
@@ -873,8 +884,10 @@
   }
   function soMostrar(){ return LS.ler("modo","controlo")==="mostrar"; }
   function modoComando(){ return LS.ler("modo","controlo")==="comando"; }
+  function criarAqui(){ return LS.ler("criarAqui","sim")==="sim"; }
   function aplicarAspeto(){
     var r=document.documentElement;
+    r.setAttribute("data-criar", criarAqui() ? "sim" : "nao");
     r.setAttribute("data-tema", LS.ler("tema","arctm-azul"));
     r.setAttribute("data-modo", LS.ler("modo","controlo"));
     r.style.setProperty("--acento", LS.ler("cor", "#2A8FC4"));
@@ -1360,6 +1373,7 @@
     var vol=parseInt(LS.ler("volume",70),10);
     $("#dVolume").value=vol; $("#dVolumeNum").value=vol; $("#lblVolume").textContent=vol+"%";
     $("#dToqueCartao").value = LS.ler("toqueCartao","chamar");
+    $("#dCriarAqui").value = LS.ler("criarAqui","sim");
     $("#dModo").value = LS.ler("modo","controlo");
     $("#dPartilha").value = partilha();
     $("#dSalaNome").value = nomeSala();
@@ -1457,6 +1471,7 @@
     apitar();
   });
   $("#dToqueCartao").addEventListener("change", function(){ LS.esc("toqueCartao",this.value); });
+  $("#dCriarAqui").addEventListener("change", function(){ LS.esc("criarAqui",this.value); aplicarAspeto(); desenhar(); });
   $("#dModo").addEventListener("change", function(){
     LS.esc("modo", this.value);
     aplicarAspeto(); mostrarBarra(); desenhar();
@@ -1506,7 +1521,7 @@
   });
 
   /* ---------- copiar e colar definições ---------- */
-  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","outrosProntos","tempoCartoes","partilha","salaNome","salaServidor","salaUtilizador","som","volume","toqueCartao","modo"];
+  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","outrosProntos","tempoCartoes","criarAqui","partilha","salaNome","salaServidor","salaUtilizador","som","volume","toqueCartao","modo"];
   $("#dCopiarDefs").addEventListener("click", function(){
     var texto=JSON.stringify(pacoteDefs()), ta=$("#dTextoDefs");
     ta.hidden=false; ta.value=texto;
@@ -1645,8 +1660,10 @@
     var alvo=e.target;
     if(alvo && (alvo.tagName==="INPUT"||alvo.tagName==="SELECT"||alvo.tagName==="TEXTAREA")) return;
     if(soMostrar()) return;
-    if(FRENTE.indexOf(e.key)>=0){ e.preventDefault(); novoPedido(); return; }
+    if(FRENTE.indexOf(e.key)>=0){ e.preventDefault(); if(criarAqui()) novoPedido(); return; }
     if(TRAS.indexOf(e.key)>=0){ e.preventDefault(); chamarMaisAntigo(); return; }
+    // com Ctrl ou Cmd, as teclas pertencem ao browser (recarregar, procurar, imprimir…)
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
     if(e.key && e.key.toLowerCase()==="r"){ e.preventDefault(); repetir(); return; }
     if(e.key && e.key.toLowerCase()==="e"){ e.preventDefault(); if(atual!==null && atual!==undefined) entregar(atual); }
   });
