@@ -2,43 +2,1513 @@
 <html lang="pt-PT">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Visor de senhas — a abrir</title>
-
-<!-- ============================================================
-     Para mudar o destino desta aplicação, altere o endereço nas
-     TRÊS linhas assinaladas com  <<< DESTINO  e guarde o ficheiro.
-     ============================================================ -->
-<meta http-equiv="refresh" content="0; url=https://claude.ai/code/artifact/bbcd799f-a99e-46d9-b8a8-e08be38183a4">   <!-- <<< DESTINO -->
-<link rel="canonical" href="https://claude.ai/code/artifact/bbcd799f-a99e-46d9-b8a8-e08be38183a4">                  <!-- <<< DESTINO -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visor de senhas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Share+Tech+Mono&family=Azeret+Mono:wght@700;800;900&family=Martian+Mono:wght@700;800&family=JetBrains+Mono:wght@700;800&family=IBM+Plex+Mono:wght@600;700&family=Roboto+Mono:wght@700&family=Space+Mono:wght@700&family=Red+Hat+Mono:wght@600;700&family=Chivo+Mono:wght@700;800;900&family=Rubik+Mono+One&family=Sometype+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --verde:#1E8F42; --papel:#F3F8F4; --tinta:#10301D; --linha:#CFE0D6; }
+  :root{
+    --fundo:#0B0F14; --painel:#141B24; --linha:#26313D;
+    --texto:#EAF1F8; --texto-2:#8A9AAB;
+    --acento:#22C55E; --apagado:rgba(234,241,248,.09);
+    --radius:16px;
+  }
+  :root[data-tema="claro"]{
+    --fundo:#F6F7F9; --painel:#FFFFFF; --linha:#DCE2E8;
+    --texto:#101720; --texto-2:#5C6B7A;
+    --apagado:rgba(16,23,32,.08);
+  }
+  :root[data-tema="preto"]{
+    --fundo:#000000; --painel:#0B0B0B; --linha:#242424;
+    --texto:#FFFFFF; --texto-2:#9A9A9A; --apagado:rgba(255,255,255,.07);
+  }
+  :root[data-tema="azul"]{
+    --fundo:#0A1A2F; --painel:#11263F; --linha:#1F3A5C;
+    --texto:#E7F0FA; --texto-2:#8AA6C4; --apagado:rgba(231,240,250,.09);
+  }
+  :root[data-tema="verde"]{
+    --fundo:#08170F; --painel:#0F2419; --linha:#1D3A2A;
+    --texto:#E6F5EC; --texto-2:#8FB6A0; --apagado:rgba(230,245,236,.09);
+  }
+  :root[data-tema="vinho"]{
+    --fundo:#1A0B10; --painel:#26121A; --linha:#3E2029;
+    --texto:#F7E9ED; --texto-2:#BE9AA5; --apagado:rgba(247,233,237,.09);
+  }
+  :root[data-tema="creme"]{
+    --fundo:#F5EFE2; --painel:#FFFBF2; --linha:#E0D5C0;
+    --texto:#2B2216; --texto-2:#6E6150; --apagado:rgba(43,34,22,.08);
+  }
+  :root[data-tema="arctm"]{
+    --fundo:#F3FAF4; --painel:#FFFFFF; --linha:#C9E3D1;
+    --texto:#10301D; --texto-2:#4C6B57; --apagado:rgba(16,48,29,.08);
+  }
+  :root[data-tema="arctm-noite"]{
+    --fundo:#07150D; --painel:#0E2115; --linha:#1D3A28;
+    --texto:#E9F5EC; --texto-2:#93B4A0; --apagado:rgba(233,245,236,.09);
+  }
+  :root[data-tema="arctm-tri"]{
+    --fundo:#F3F8F4; --painel:#FFFFFF; --linha:#CFE0D6;
+    --texto:#10301D; --texto-2:#4C6B57; --apagado:rgba(16,48,29,.08);
+    --acc2:#2A8FC4;
+  }
+  :root[data-tema="arctm-tri-noite"]{
+    --fundo:#07160E; --painel:#0E2318; --linha:#20372A;
+    --texto:#EAF6EE; --texto-2:#8FB6A5; --apagado:rgba(234,246,238,.09);
+    --acc2:#3BA7DC;
+  }
+  :root[data-tema="arctm-azul"]{
+    --fundo:#F1F8FC; --painel:#FFFFFF; --linha:#C9E1EF;
+    --texto:#0E2434; --texto-2:#4B667A; --apagado:rgba(14,36,52,.08);
+  }
+  :root[data-tema="arctm-azul-noite"]{
+    --fundo:#06131C; --painel:#0D1F2B; --linha:#1B3546;
+    --texto:#E6F2FA; --texto-2:#8FAEC2; --apagado:rgba(230,242,250,.09);
+  }
+  :root[data-tema="arctm-amarelo"]{
+    --fundo:#FDF9E7; --painel:#FFFDF4; --linha:#EADFAE;
+    --texto:#2E2708; --texto-2:#6D6134; --apagado:rgba(46,39,8,.08);
+  }
+  :root[data-tema="arctm-amarelo-noite"]{
+    --fundo:#161206; --painel:#221C0B; --linha:#3A3115;
+    --texto:#F7F0D4; --texto-2:#A99C6B; --apagado:rgba(247,240,212,.09);
+  }
+  :root[data-tema="papel"]{
+    --fundo:#FFFFFF; --painel:#FFFFFF; --linha:#C9C9C9;
+    --texto:#000000; --texto-2:#4A4A4A; --apagado:rgba(0,0,0,.07);
+  }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
-    margin:0;min-height:100dvh;display:grid;place-items:center;background:var(--papel);color:var(--tinta);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px;text-align:center;
+    margin:0;background:var(--fundo);color:var(--texto);overflow:hidden;
+    font-family:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;
   }
-  .cartao{
-    background:#fff;border:1px solid var(--linha);border-top:4px solid var(--verde);
-    border-radius:16px;padding:32px 28px;max-width:460px;box-shadow:0 10px 30px rgba(16,48,29,.08);
+  button{font:inherit;color:inherit;cursor:pointer}
+  input,select{font:inherit;color:inherit}
+  :focus-visible{outline:3px solid var(--acento);outline-offset:2px}
+
+  .ecra{height:100dvh;display:flex;flex-direction:column}
+
+  /* ---------- visor ---------- */
+  .visor{
+    touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+    flex:1;min-height:0;overflow:hidden;display:grid;
+    grid-template-rows:auto minmax(0,1fr) auto auto;
+    justify-items:center;align-content:stretch;
+    gap:.6vmin;padding:.8vmin 1vmin;cursor:pointer;position:relative;
   }
-  .icone{font-size:44px;line-height:1;margin-bottom:10px}
-  h1{margin:0 0 6px;font-size:22px}
-  p{margin:0 0 20px;color:#4C6B57;font-size:15px;line-height:1.5}
-  a.botao{
-    display:inline-block;background:var(--verde);color:#fff;text-decoration:none;font-weight:600;
-    padding:14px 22px;border-radius:12px;font-size:16px;
+  .visor > *{min-width:0;max-width:100%}
+  .zona{
+    width:100%;min-height:0;overflow:hidden;display:grid;place-items:center;
   }
-  .nota{margin-top:18px;font-size:13px;color:#6A8375;line-height:1.5;border-top:1px solid var(--linha);padding-top:14px}
+  .rotulo{
+    flex:none;white-space:nowrap;margin-top:calc(2.4vmin * var(--esc-texto, 1));
+    color:color-mix(in srgb, var(--acc2, var(--texto-2)) 70%, var(--texto-2));
+    font-size:calc(clamp(14px, 3.4vmin, 42px) * var(--esc-texto, 1));letter-spacing:.32em;text-transform:uppercase;
+    color:var(--texto-2);font-weight:600;padding-left:.32em;
+  }
+  .digitos{
+    display:flex;align-items:center;justify-content:center;gap:.02em;line-height:.72;
+    max-width:100%;
+    font-family:var(--fonte-num, "Roboto Mono"),ui-monospace,monospace;
+    font-weight:var(--peso-num, 700);
+    font-variant-numeric:tabular-nums;
+    font-size:34vmin;
+  }
+  .dig{position:relative;display:inline-grid;place-items:center;min-width:var(--larg-dig, .58em)}
+  .dig .fantasma{color:var(--apagado)}
+  .dig:not(.off) .fantasma{visibility:var(--fantasma-visivel, hidden)}
+  .dig.off .fantasma{visibility:var(--fantasma-off, visible)}
+  .dig .valor{position:absolute;inset:0;display:grid;place-items:center;color:var(--acento)}
+  .dig.off .valor{display:none}
+  .dig.piscar .valor{animation:bater .55s ease 4}
+  @keyframes bater{0%,100%{opacity:1}50%{opacity:.15}}
+  @media (prefers-reduced-motion: reduce){.dig.piscar .valor{animation:none}}
+
+  .rodape{
+    flex:none;display:flex;align-items:center;justify-content:center;gap:3vmin;flex-wrap:wrap;
+    font-size:calc(clamp(13px, 2.2vmin, 26px) * var(--esc-texto, 1));color:var(--texto-2);font-weight:500;
+  }
+  .rodape b{color:var(--texto);font-weight:600}
+  .mensagem{
+    font-size:calc(clamp(15px, 3vmin, 40px) * var(--esc-texto, 1));color:var(--texto-2);font-weight:600;text-align:center;
+    max-width:90vw;
+  }
+
+  /* ---------- barra de controlo ---------- */
+  .barra{
+    display:flex;align-items:center;gap:8px;padding:10px 12px calc(env(safe-area-inset-bottom) + 10px);
+    border-top:2px solid color-mix(in srgb, var(--acc2, var(--acento)) 45%, var(--linha));
+    background:var(--painel);flex-wrap:wrap;
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .barra.escondida{opacity:0;transform:translateY(100%);pointer-events:none;position:absolute;bottom:0;left:0;right:0}
+  .btn{
+    border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 5%, var(--painel));
+    border-radius:12px;padding:12px 16px;font-weight:600;font-size:15px;
+  }
+  .btn.forte{background:var(--acento);border-color:var(--acento);color:#04120A;flex:1;min-width:150px;font-size:17px}
+  .btn.icone{width:46px;padding:12px 0;display:grid;place-items:center}
+  .grupo{display:flex;gap:1px;flex:none}
+  .grupo .btn:first-child{border-radius:12px 0 0 12px}
+  .grupo .btn:last-child{border-radius:0 12px 12px 0}
+  .btn.repetir{
+    display:flex;align-items:center;gap:8px;flex:1;min-width:150px;justify-content:center;
+    border:2px solid var(--acento);
+    background:color-mix(in srgb, var(--acento) 30%, var(--painel));
+    color:var(--texto);
+  }
+  .btn.repetir:hover{background:color-mix(in srgb, var(--acento) 42%, var(--painel))}
+  .btn.repetir[disabled]{opacity:.4}
+  .btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .btn[disabled]{opacity:.4}
+  .estado{font-size:13px;color:var(--texto-2);font-weight:600;margin-left:auto;padding:0 4px;white-space:nowrap}
+
+  /* ---------- definições ---------- */
+  .folha{position:fixed;inset:0;z-index:40;display:none;background:rgba(0,0,0,.6)}
+  .folha[open]{display:block}
+  #folhaConfirmar{z-index:60}
+  .folha .painel{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:min(100%,560px);
+    max-height:88dvh;overflow-y:auto;background:var(--painel);border:1px solid var(--linha);
+    border-radius:18px 18px 0 0;
+    padding:22px 20px calc(env(safe-area-inset-bottom) + 22px);
+  }
+  .folha .painel.largo{
+    width:min(100%, 860px);height:min(82dvh, 660px);max-height:calc(100dvh - 44px);
+    display:flex;flex-direction:column;overflow:hidden;padding:22px 0 0;
+  }
+  .folha .painel.largo > h2,
+  .folha .painel.largo > p.sub,
+  .folha .painel.largo > .abas{padding-left:22px;padding-right:64px;margin-left:0;margin-right:0}
+  .folha .painel.largo > .abas{padding-right:22px}
+  .folha .painel.largo .corpo{
+    flex:1;min-height:0;overflow-y:auto;
+    padding:4px 22px calc(env(safe-area-inset-bottom) + 22px);
+  }
+  @media (min-width:680px){
+    .folha .painel.largo{padding-top:24px}
+    .folha .painel.largo .corpo{padding-bottom:24px}
+  }
+  .abas{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 16px;flex:none}
+  .abas button{
+    border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 5%, var(--painel));
+    border-radius:999px;padding:9px 15px;font-size:14px;font-weight:600;color:var(--texto-2);
+  }
+  .abas button[aria-pressed="true"]{background:var(--acento);border-color:var(--acento);color:#04120A}
+  .aba[hidden]{display:none}
+  .aba h3{
+    margin:2px 0 12px;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--acento);padding-bottom:8px;border-bottom:1px solid var(--linha);
+  }
+  .aba h3 + .par,.aba h3 + .campo{margin-top:0}
+  .aba > .fila{margin-bottom:22px}
+  .aba > h3:not(:first-child){margin-top:26px}
+  .par{display:flex;gap:14px;flex-wrap:wrap}
+  .par .campo{flex:1;min-width:220px}
+  @media (min-width:680px){ .folha .painel{border-radius:18px;bottom:20px;max-height:calc(100dvh - 60px)} }
+  .folha h2{margin:0 0 6px;font-size:20px}
+  .folha p.sub{margin:0 0 16px;color:var(--texto-2);font-size:14px;line-height:1.5}
+  .campo{display:block;margin-bottom:16px}
+  .aba > :last-child{margin-bottom:0}
+  .campo span{display:block;font-size:13px;color:var(--texto-2);margin-bottom:6px;font-weight:500}
+  .campo input,.campo select{
+    width:100%;padding:12px;border-radius:11px;border:1px solid var(--linha);
+    background:color-mix(in srgb, var(--texto) 4%, var(--painel));
+  }
+  .fila{display:flex;gap:9px}
+  .fila .btn{flex:1;justify-content:center;text-align:center}
+  .amostra{
+    border:1px solid var(--linha);border-radius:12px;
+    background:color-mix(in srgb, var(--texto) 4%, var(--painel));
+    height:120px;display:grid;place-items:center;overflow:hidden;
+  }
+  .amostra span{
+    font-family:var(--fonte-num, "Roboto Mono"),ui-monospace,monospace;
+    font-weight:var(--peso-num, 700);font-variant-numeric:tabular-nums;
+    font-size:88px;line-height:1;color:var(--acento);
+  }
+  /* enquanto se espreita, o painel fica quase transparente */
+  .folha.espreitar{background:rgba(0,0,0,.12)}
+  .folha.espreitar .painel{opacity:.12;transition:opacity .12s ease}
+  .cores{display:flex;gap:8px;flex-wrap:wrap}
+  .cores button{width:38px;height:38px;border-radius:10px;border:2px solid transparent}
+  .cores button[aria-pressed="true"]{border-color:var(--texto)}
+  .fechar{position:absolute;top:18px;right:18px;z-index:2}
+  .aviso{
+    border:1px solid var(--linha);border-left:3px solid var(--acento);border-radius:10px;
+    padding:12px 14px;font-size:13.5px;color:var(--texto-2);line-height:1.55;margin-bottom:16px;
+    background:color-mix(in srgb, var(--texto) 4%, var(--painel));
+  }
+  .toast{
+    position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:var(--texto);color:var(--fundo);
+    padding:11px 18px;border-radius:999px;font-weight:600;z-index:60;opacity:0;pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .toast.on{opacity:1}
 </style>
 </head>
 <body>
-  <div class="cartao">
-    <div class="icone">🔢</div>
-    <h1>Visor de senhas</h1>
-    <p>A abrir a aplicação. Se não avançar sozinho, use o botão.</p>
-    <a class="botao" href="https://claude.ai/code/artifact/bbcd799f-a99e-46d9-b8a8-e08be38183a4">Abrir Visor de senhas</a>   <!-- <<< DESTINO -->
-    <div class="nota">É preciso ter sessão iniciada na conta do Claude neste dispositivo.</div>
+<div class="ecra">
+  <div class="visor" id="visor">
+    <div class="rotulo" id="rotulo">Senha</div>
+    <div class="zona" id="zona"><div class="digitos" id="digitos"></div></div>
+    <div class="mensagem" id="mensagem" hidden></div>
+    <div class="rodape" id="rodape"></div>
   </div>
+
+  <div class="barra" id="barra">
+    <div class="grupo">
+      <button class="btn icone" id="btnAnterior" type="button" aria-label="Recuar uma senha" title="Recuar uma senha">
+        <svg viewBox="0 0 24 24"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <button class="btn icone" id="btnDefinir" type="button" aria-label="Definir número" title="Definir o número">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h11M4 17h7"/><path d="M18 14v7M14.5 17.5h7"/></svg>
+      </button>
+    </div>
+    <button class="btn repetir" id="btnRepetir" type="button">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 20v-6h6"/></svg>
+      <span>Chamar o mesmo</span>
+    </button>
+    <button class="btn forte" id="btnSeguinte" type="button">Chamar seguinte</button>
+    <button class="btn icone" id="btnEcra" type="button" aria-label="Ecrã inteiro" title="Ecrã inteiro">
+      <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+    <button class="btn icone" id="btnDefs" type="button" aria-label="Definições">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+    <span class="estado" id="estado"></span>
+  </div>
+</div>
+
+<div class="folha" id="folhaDefs" role="dialog" aria-modal="true">
+  <div class="painel largo">
+    <button class="btn icone fechar" type="button" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2>Definições do visor</h2>
+    <p class="sub">Fica tudo guardado neste dispositivo.</p>
+
+    <div class="abas" id="dAbas">
+      <button type="button" data-aba="contagem">Contagem</button>
+      <button type="button" data-aba="mostrar">Mostrar</button>
+      <button type="button" data-aba="letra">Letra</button>
+      <button type="button" data-aba="texto">Textos</button>
+      <button type="button" data-aba="aspeto">Aspeto</button>
+      <button type="button" data-aba="uso">Uso</button>
+    </div>
+
+    <div class="corpo">
+      <section class="aba" data-aba="contagem">
+        <div class="par">
+          <label class="campo"><span>Limite de senhas</span>
+            <select id="dLimite">
+              <option value="sem">Sem limite — conta sem parar</option>
+              <option value="com">Definir um total</option>
+            </select>
+          </label>
+          <label class="campo" id="campoMax" hidden><span>Total de senhas</span>
+            <input id="dMax" type="number" inputmode="numeric" min="1" max="999999" step="1">
+          </label>
+          <label class="campo" id="campoCasas"><span>Casas a reservar</span>
+            <select id="dCasas">
+              <option value="1">1 — até 9</option>
+              <option value="2">2 — até 99</option>
+              <option value="3">3 — até 999</option>
+              <option value="4">4 — até 9999</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+          </label>
+        </div>
+        <div class="fila">
+          <button class="btn" id="dDefinir" type="button">Definir senha…</button>
+          <button class="btn" id="dReiniciar" type="button">Reiniciar a zero</button>
+        </div>
+        <div class="aviso" id="dExemplo"></div>
+      </section>
+
+      <section class="aba" data-aba="mostrar" hidden>
+        <div class="par">
+          <label class="campo"><span>Casas do número</span>
+            <select id="dModo">
+              <option value="fixas">Fixas — reserva sempre o mesmo espaço</option>
+              <option value="centrado">Centrado — cresce com o número</option>
+            </select>
+          </label>
+          <label class="campo"><span>Casas ainda não usadas</span>
+            <select id="dFantasma">
+              <option value="vazio">Espaço vazio</option>
+              <option value="fantasma">Mostrar 8 esbatido</option>
+            </select>
+          </label>
+        </div>
+        <label class="campo"><span>Aumentar além do que cabe — <b id="lblEscalaNum">100%</b></span>
+          <input id="dEscalaNum" type="range" min="100" max="220" step="5" style="padding:0">
+        </label>
+        <p class="sub" style="margin:-8px 0 16px">Acima de 100% o número passa a ser maior do que o espaço disponível e pode ficar cortado nas bordas — às vezes é mesmo o que se quer num ecrã largo.</p>
+        <label class="campo"><span>Tamanho do número</span>
+          <select id="dTamanho">
+            <option value="auto">Ajustar ao ecrã — o maior que couber</option>
+            <option value="26vmin">Médio</option>
+            <option value="34vmin">Grande</option>
+            <option value="44vmin">Enorme</option>
+            <option value="56vmin">Muito grande</option>
+            <option value="70vmin">Gigante</option>
+            <option value="88vmin">Máximo</option>
+            <option value="110vmin">Sem limites</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="aba" data-aba="letra" hidden>
+        <label class="campo"><span>Letra do número</span>
+          <select id="dFonte"></select>
+        </label>
+        <div class="campo">
+          <div class="amostra" id="amostraFonte"><span id="amostraNum">8</span></div>
+          <div class="fila" style="margin-top:8px">
+            <button class="btn" id="amostraAnterior" type="button" aria-label="Letra anterior">‹</button>
+            <button class="btn" id="amostraEspreitar" type="button">Ver no visor</button>
+            <button class="btn" id="amostraSeguinte" type="button" aria-label="Letra seguinte">›</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="aba" data-aba="texto" hidden>
+        <label class="campo"><span>Rótulo por cima do número</span>
+          <input id="dRotulo" type="text" autocomplete="off" placeholder="Senha">
+        </label>
+        <label class="campo"><span>Mensagem por baixo (opcional)</span>
+          <input id="dMensagem" type="text" autocomplete="off" placeholder="Levantar no balcão 2">
+        </label>
+        <div class="par">
+          <label class="campo"><span>Rodapé por baixo do número</span>
+            <select id="dRodapeVisivel">
+              <option value="sim">Mostrar</option>
+              <option value="nao">Esconder</option>
+            </select>
+          </label>
+          <label class="campo"><span>Conteúdo do rodapé</span>
+            <select id="dRodape">
+              <option value="tudo">Senha anterior e total emitido</option>
+              <option value="anterior">Só a senha anterior</option>
+              <option value="nada">Nada</option>
+            </select>
+          </label>
+        </div>
+        <label class="campo"><span>Total de senhas no rodapé</span>
+          <select id="dMostrarTotal">
+            <option value="nao">Não mostrar</option>
+            <option value="sim">Mostrar (ex.: 7 de 99)</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="aba" data-aba="aspeto" hidden>
+        <div class="par">
+          <label class="campo"><span>Tema</span>
+            <select id="dTema">
+              <option value="escuro">Escuro — para ecrã de parede</option>
+              <option value="preto">Preto absoluto — mais contraste</option>
+              <option value="azul">Azul-noite</option>
+              <option value="verde">Verde-escuro</option>
+              <option value="vinho">Vinho</option>
+              <option value="claro">Claro</option>
+              <option value="creme">Creme</option>
+              <option value="arctm-tri">ARCTM tricolor — claro</option>
+              <option value="arctm-tri-noite">ARCTM tricolor — noite</option>
+              <option value="arctm">ARCTM verde — claro</option>
+              <option value="arctm-noite">ARCTM verde — noite</option>
+              <option value="arctm-azul">ARCTM azul — claro</option>
+              <option value="arctm-azul-noite">ARCTM azul — noite</option>
+              <option value="arctm-amarelo">ARCTM amarelo — claro</option>
+              <option value="arctm-amarelo-noite">ARCTM amarelo — noite</option>
+              <option value="papel">Papel — preto sobre branco</option>
+            </select>
+          </label>
+          <label class="campo"><span>Tamanho dos textos</span>
+            <select id="dEscTexto">
+              <option value="0.8">Pequeno</option>
+              <option value="1">Normal</option>
+              <option value="1.3">Grande</option>
+              <option value="1.6">Muito grande</option>
+              <option value="2">Enorme</option>
+            </select>
+          </label>
+          <label class="campo"><span>Contador na barra</span>
+            <select id="dContador">
+              <option value="nao">Escondido</option>
+              <option value="sim">Visível</option>
+            </select>
+          </label>
+          <label class="campo"><span>Barra de controlo</span>
+            <select id="dBarra">
+              <option value="sempre">Sempre visível</option>
+              <option value="auto">Esconde-se sozinha</option>
+            </select>
+          </label>
+        </div>
+        <div class="campo"><span>Cor do número</span><div class="cores" id="dCores"></div>
+      <p class="sub" style="margin:8px 0 0">Cada tema traz a sua cor. Se escolher uma aqui, ela passa a mandar — use "Seguir o tema" para voltar atrás.</p>
+      <button class="btn" id="dCorTema" type="button" style="margin-top:10px">Seguir o tema</button>
+    </div>
+      </section>
+
+      <section class="aba" data-aba="uso" hidden>
+        <div class="par">
+          <label class="campo"><span>Som ao chamar</span>
+            <select id="dSom">
+              <option value="nao">Desligado</option>
+              <option value="dois">Dois toques — clássico</option>
+              <option value="tres">Três toques ascendentes</option>
+              <option value="campainha">Campainha</option>
+              <option value="grave">Gongo grave</option>
+              <option value="bip">Bip curto</option>
+            </select>
+          </label>
+          <label class="campo"><span>Volume — <b id="lblVolume">70%</b></span>
+            <input id="dVolume" type="range" min="0" max="100" step="5" style="padding:0">
+          </label>
+          <label class="campo"><span>Repetições do som</span>
+            <select id="dRepeticoes">
+              <option value="1">Uma vez</option>
+              <option value="2">Duas vezes</option>
+              <option value="3">Três vezes</option>
+            </select>
+          </label>
+          <label class="campo"><span>Experimentar</span>
+            <button class="btn" id="dTestarSom" type="button" style="width:100%">Tocar som</button>
+          </label>
+          <label class="campo"><span>Botão de trás do comando</span>
+            <select id="dBotaoTras">
+              <option value="mesmo">Chamar o mesmo — repete a chamada</option>
+              <option value="recuar">Recuar uma senha (pede confirmação)</option>
+            </select>
+          </label>
+          <label class="campo"><span>Toque no ecrã</span>
+            <select id="dToque">
+              <option value="nao">Desligado — só pelos botões</option>
+              <option value="todo">Toda a área chama a seguinte</option>
+              <option value="metades">Metade direita chama, esquerda repete</option>
+              <option value="deslizar">Deslizar para o lado</option>
+              <option value="metades-deslizar">Metades e deslizar</option>
+            </select>
+          </label>
+          <label class="campo"><span>Partilhar entre dispositivos</span>
+            <select id="dPartilha">
+              <option value="nao">Não — só este ecrã</option>
+              <option value="sala">Sala com código — sem contas</option>
+              <option value="claude">Conta Claude — precisa de sessão iniciada</option>
+            </select>
+          </label>
+          <label class="campo" id="campoCodigo" style="display:none"><input id="dCodigo" type="hidden"></label>
+        </div>
+        <div class="par" id="camposSala">
+          <label class="campo"><span>Nome da sala</span>
+            <input id="dSalaNome" type="text" autocomplete="off" spellcheck="false" placeholder="ex.: arctm-festa">
+          </label>
+          <label class="campo"><span>Palavra-passe da sala</span>
+            <input id="dSalaPasse" type="password" autocomplete="new-password" placeholder="inventada por si">
+          </label>
+        </div>
+        <details class="aviso-cx" id="avancadoSala" style="padding:0;border-left-width:3px">
+          <summary style="cursor:pointer;padding:12px 14px;font-weight:600">Servidor de mensagens (avançado)</summary>
+          <div style="padding:0 14px 14px">
+            <label class="campo"><span>Endereço</span>
+              <input id="dSalaServidor" type="text" autocomplete="off" spellcheck="false" placeholder="wss://broker.emqx.io:8084/mqtt">
+            </label>
+            <div class="par">
+              <label class="campo"><span>Utilizador (se o servidor exigir)</span>
+                <input id="dSalaUtilizador" type="text" autocomplete="off">
+              </label>
+              <label class="campo"><span>Palavra-passe do servidor</span>
+                <input id="dSalaServidorPasse" type="password" autocomplete="new-password">
+              </label>
+            </div>
+          </div>
+        </details>
+        <div class="par" style="display:none">
+        </div>
+        <label class="campo"><span>Definições deste visor</span>
+          <div class="fila">
+            <button class="btn" id="dCopiarDefs" type="button">Copiar</button>
+            <button class="btn" id="dColarDefs" type="button">Colar</button>
+          </div>
+        </label>
+        <p class="sub" style="margin:-8px 0 16px">Copie daqui e cole no outro ecrã para ficar tudo igual — letras, cores, tamanhos, som e gestos. O número da senha não é copiado.</p>
+        <textarea id="dTextoDefs" rows="3" hidden style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 4%, var(--painel));font-family:ui-monospace,monospace;font-size:12.5px;margin-bottom:16px"></textarea>
+
+        <div class="aviso">
+          <b>Comandos de apresentação e teclado.</b> Chamam a seguinte: barra de espaços, Enter, seta direita,
+          seta baixo, Page Down e N. O botão de trás — seta esquerda, seta cima, Page Up, Backspace ou P — faz o que
+          escolher acima. R repete sempre a chamada. Ligue o comando por USB ou Bluetooth e ele funciona sem mais nada;
+          basta que esta janela esteja em primeiro plano.
+          <br><br><b>Ecrã tátil.</b> Escolha acima como responde ao toque: toda a área a chamar, metade direita a chamar
+          e esquerda a repetir, ou deslizar — para a esquerda chama a seguinte, para a direita faz o que definiu para o
+          botão de trás. As metades e o deslizar podem funcionar em conjunto.
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="folha" id="folhaDefinir" role="dialog" aria-modal="true">
+  <div class="painel">
+    <h2>Definir a senha</h2>
+    <p class="sub">Indique o número que deve aparecer agora no visor. A contagem segue a partir daí.</p>
+    <label class="campo"><span>Número</span>
+      <input id="campoNumero" type="number" inputmode="numeric" min="0" step="1">
+    </label>
+    <div class="fila">
+      <button class="btn" id="numCancelar" type="button">Cancelar</button>
+      <button class="btn forte" id="numOk" type="button">Mostrar este número</button>
+    </div>
+  </div>
+</div>
+
+<div class="folha" id="folhaConfirmar" role="dialog" aria-modal="true">
+  <div class="painel">
+    <h2 id="cfT">Confirmar</h2>
+    <p class="sub" id="cfM"></p>
+    <div class="fila">
+      <button class="btn" id="cfNao" type="button">Cancelar</button>
+      <button class="btn forte" id="cfSim" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(s){ return document.querySelector(s); };
+  var LS = {
+    ler:function(k,d){ try{ var v=localStorage.getItem("senhas:"+k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
+    esc:function(k,v){ try{ localStorage.setItem("senhas:"+k, JSON.stringify(v)); }catch(e){} }
+  };
+  // todas de largura fixa, com o peso mais cheio disponível
+  var FONTES = [
+    {f:"Azeret Mono",    p:800, n:"Azeret Mono — cheia e quadrada"},
+    {f:"Martian Mono",   p:700, n:"Martian Mono — larga e robusta"},
+    {f:"Rubik Mono One", p:400, n:"Rubik Mono One — bloco maciço"},
+    {f:"Chivo Mono",     p:800, n:"Chivo Mono — cheia e aberta"},
+    {f:"JetBrains Mono", p:800, n:"JetBrains Mono — moderna"},
+    {f:"IBM Plex Mono",  p:700, n:"IBM Plex Mono — sóbria"},
+    {f:"Roboto Mono",    p:700, n:"Roboto Mono — neutra"},
+    {f:"Red Hat Mono",   p:700, n:"Red Hat Mono — arredondada"},
+    {f:"Sometype Mono",  p:700, n:"Sometype Mono — humanista"},
+    {f:"Space Mono",     p:700, n:"Space Mono — retro"},
+    {f:"Share Tech Mono",p:400, n:"Mostrador — estilo digital"}
+  ];
+  // cada tema traz a sua cor de número; ao trocar de tema, ela acompanha
+  var COR_DO_TEMA = {
+    "escuro":"#22C55E", "preto":"#22C55E", "azul":"#38BDF8", "verde":"#22C55E",
+    "vinho":"#F87171", "claro":"#16A34A", "creme":"#B45309", "papel":"#111827",
+    "arctm":"#1E8F42", "arctm-noite":"#E8C61A",
+    "arctm-tri":"#1E8F42", "arctm-tri-noite":"#E8C61A",
+    "arctm-azul":"#2A8FC4", "arctm-azul-noite":"#3BA7DC",
+    "arctm-amarelo":"#C9A400", "arctm-amarelo-noite":"#E8C61A"
+  };
+  var CORES = ["#1E8F42","#2A8FC4","#E8C61A","#B96B2E","#C9A400","#3BA7DC",
+               "#22C55E","#16A34A","#38BDF8","#0EA5E9","#FBBF24","#F59E0B","#FB923C",
+               "#F87171","#EF4444","#A78BFA","#F472B6","#2DD4BF","#EAF1F8","#111827"];
+
+  var atual = LS.ler("atual", 0);
+  var db = null, subEstado = null;
+
+  /* ---------- avisos ---------- */
+  function copia(x){ try{ return JSON.parse(JSON.stringify(x)); }catch(e){ return x; } }
+  // o corpo do documento vem de uma função: snap.data()
+  function corpoDe(snap){
+    if(!snap) return {};
+    try{
+      if(typeof snap.data === "function"){ return snap.data() || {}; }
+      return snap.data || {};
+    }catch(e){ return {}; }
+  }
+  var tToast;
+  // erros silenciosos passam a ser visíveis, em vez de a app parar sem explicação
+  var avisoErro = 0;
+  function comunicarErro(e){
+    var agora = Date.now();
+    if(agora - avisoErro < 4000) return;
+    avisoErro = agora;
+    try{ toast("Algo falhou: " + ((e && (e.message || (e.reason && e.reason.message))) || "erro inesperado")); }catch(x){}
+  }
+  window.addEventListener("error", comunicarErro);
+  window.addEventListener("unhandledrejection", comunicarErro);
+
+  function toast(m){
+    var t=$("#toast"); t.textContent=m; t.classList.add("on");
+    clearTimeout(tToast); tToast=setTimeout(function(){ t.classList.remove("on"); },2000);
+  }
+  var resolver=null;
+  function confirmar(titulo, texto, rotulo){
+    $("#cfT").textContent=titulo; $("#cfM").textContent=texto;
+    $("#cfSim").textContent=rotulo||"Confirmar";
+    $("#folhaConfirmar").setAttribute("open","");
+    return new Promise(function(res){ resolver=res; });
+  }
+  function responder(v){
+    $("#folhaConfirmar").removeAttribute("open");
+    if(resolver){ var r=resolver; resolver=null; r(v); }
+  }
+  $("#cfSim").addEventListener("click", function(){ responder(true); });
+  $("#cfNao").addEventListener("click", function(){ responder(false); });
+
+  /* ---------- definições ---------- */
+  function temLimite(){ return LS.ler("limite","sem")==="com"; }
+  function max(){ return temLimite() ? Math.max(1, parseInt(LS.ler("max",99),10)||99) : Infinity; }
+  function casas(){
+    if(temLimite()) return String(max()).length;
+    return Math.max(1, Math.min(6, parseInt(LS.ler("casas",2),10)||2));
+  }
+  function modo(){ return LS.ler("modo","centrado"); }
+
+  var proporcoes = {};
+  function fonteNum(){
+    var f = LS.ler("fonte","Roboto Mono");
+    for(var i=0;i<FONTES.length;i++) if(FONTES[i].f===f) return f;
+    return "Roboto Mono";
+  }
+  function pesoNum(){
+    var f = fonteNum();
+    for(var i=0;i<FONTES.length;i++) if(FONTES[i].f===f) return FONTES[i].p;
+    return 700;
+  }
+  function medirGlifo(){
+    var f = fonteNum();
+    if(proporcoes[f]) return proporcoes[f];
+    var p = {alt:0.72, larg:0.6};
+    try{
+      var cv=document.createElement("canvas"), ctx=cv.getContext("2d");
+      ctx.font=pesoNum()+' 200px "'+f+'", ui-monospace, monospace';
+      var m=ctx.measureText("8");
+      if(m.actualBoundingBoxAscent && m.width){
+        p = {
+          alt: (m.actualBoundingBoxAscent + (m.actualBoundingBoxDescent||0))/200,
+          larg: m.width/200
+        };
+      }
+    }catch(e){}
+    proporcoes[f] = p;
+    return p;
+  }
+  function ajustarTamanho(nDigitos){
+    var d = $("#digitos"), zona = $("#zona");
+    if(!d || !zona) return;
+    var p = medirGlifo();
+    d.style.lineHeight = p.alt;                  // a caixa vale a altura real do algarismo
+    d.style.setProperty("--larg-dig", p.larg+"em");
+
+    var alturaLivre = zona.clientHeight - 2;
+    var larguraLivre = zona.clientWidth - 4;
+    if(alturaLivre < 30 || larguraLivre < 30) return;
+
+    var n = Math.max(1, nDigitos);
+    var cabeNaAltura = alturaLivre / p.alt;
+    var cabeNaLargura = larguraLivre / (n * p.larg + (n-1) * 0.02);
+    var maximo = Math.min(cabeNaAltura, cabeNaLargura);   // o maior que cabe mesmo
+
+    var extra = Math.max(100, Math.min(220, parseInt(LS.ler("escalaNum",100),10)||100)) / 100;
+    var escolha = LS.ler("tamanho","88vmin");
+    var tam = maximo;
+    if(escolha!=="auto"){
+      var vmin = Math.min(window.innerWidth, window.innerHeight)/100;
+      var pedido = parseFloat(escolha) * vmin;
+      tam = extra > 1 ? pedido : Math.min(pedido, maximo);
+    }
+    tam = Math.max(24, tam * extra);
+    d.style.fontSize = Math.floor(tam)+"px";
+
+    if(extra > 1) return;   // deixa passar das bordas de propósito
+
+    // confirmação com as medidas reais, para nenhum algarismo ficar cortado
+    var voltas = 0;
+    while(voltas++ < 40 && (d.scrollWidth > larguraLivre + 1 || d.offsetHeight > alturaLivre + 1)){
+      tam = tam * 0.95;
+      if(tam < 24) break;
+      d.style.fontSize = Math.floor(tam)+"px";
+    }
+  }
+  function aplicarTema(){
+    document.documentElement.setAttribute("data-tema", LS.ler("tema","claro"));
+    document.documentElement.style.setProperty("--acento", LS.ler("cor",CORES[0]));
+    var comFantasma = LS.ler("fantasma","vazio")==="fantasma";
+    document.documentElement.style.setProperty("--fantasma-visivel", comFantasma ? "visible" : "hidden");
+    document.documentElement.style.setProperty("--fantasma-off", comFantasma ? "visible" : "hidden");
+    document.documentElement.style.setProperty("--esc-texto", LS.ler("escTexto","1"));
+    document.documentElement.style.setProperty("--fonte-num", '"'+fonteNum()+'"');
+    document.documentElement.style.setProperty("--peso-num", pesoNum());
+    $("#rotulo").textContent = LS.ler("rotulo","Senha");
+    var msg = LS.ler("mensagem","");
+    $("#mensagem").hidden = !msg;
+    $("#mensagem").textContent = msg;
+    var b=$("#barra"), auto = LS.ler("barra","sempre")==="auto";
+    b.classList.toggle("escondida", auto && !barraVisivel);
+  }
+
+  /* ---------- visor ---------- */
+  function desenhar(piscar){
+    var n = Math.max(0, temLimite() ? Math.min(max(), atual) : atual);
+    var texto = String(n);
+    var total = Math.max(casas(), texto.length);
+    var d = $("#digitos");
+    d.innerHTML = "";
+    var apresentar = modo()==="fixas"
+      ? texto.padStart(total, " ")
+      : texto;
+    var comFantasma = LS.ler("fantasma","vazio")==="fantasma";
+    apresentar.split("").forEach(function(ch){
+      var vazio = ch===" ";
+      var span = document.createElement("span");
+      span.className = "dig" + (vazio ? " off" : "") + (piscar && !vazio ? " piscar" : "");
+      span.innerHTML =
+        '<span class="fantasma">8</span>'+
+        '<span class="valor">'+(vazio ? "" : ch)+'</span>';
+      d.appendChild(span);
+    });
+    ajustarTamanho(apresentar.length);
+
+    var visivel = LS.ler("rodapeVisivel","sim")==="sim";
+    var rod = LS.ler("rodape","tudo"), r=$("#rodape");
+    r.hidden = !visivel;
+    if(!visivel || rod==="nada" || n===0){ r.innerHTML=""; }
+    else if(rod==="anterior"){
+      r.innerHTML = n>1 ? ("anterior <b>"+(n-1)+"</b>") : "";
+    } else {
+      var comTotal = temLimite() && LS.ler("mostrarTotal","nao")==="sim";
+      r.innerHTML = (n>1 ? ("anterior <b>"+(n-1)+"</b>") : "") +
+        (n>1 ? "<span>·</span>" : "") +
+        "emitidas <b>"+n+"</b>" + (comTotal ? (" de "+max()) : "");
+    }
+    $("#btnAnterior").disabled = n<=0;
+    $("#btnRepetir").disabled = n<=0;
+    $("#btnSeguinte").disabled = temLimite() && n>=max();
+    var prefixo = "";
+    var modo=partilha();
+    if(modo==="claude"){
+      prefixo = estadoNuvem==="ligado" ? "partilhado · "
+              : estadoNuvem==="a ligar" ? "a ligar… · " : "sem ligação · ";
+    } else if(modo==="sala"){
+      prefixo = SALA.estado==="ligada" ? "sala · " : SALA.estado+" · ";
+    }
+    var mostrarContador = LS.ler("contador","nao")==="sim";
+    var e2=$("#estado");
+    if(mostrarContador){
+      e2.hidden=false;
+      e2.textContent = prefixo + n + (temLimite() ? (" / "+max()) : "");
+    } else {
+      // sem contador, mantém-se só o aviso de ligação quando há problema
+      var maLigacao = (modo==="claude" && estadoNuvem!=="ligado") || (modo==="sala" && SALA.estado!=="ligada");
+      var alerta = maLigacao ? prefixo.replace(/ · $/,"") : "";
+      e2.hidden = !alerta;
+      e2.textContent = alerta;
+    }
+  }
+
+  /* ---------- som ---------- */
+  var audio=null;
+  var SONS = {
+    dois:      {ondas:[[880,0,.22],[1320,.18,.24]], tipo:"sine"},
+    tres:      {ondas:[[660,0,.16],[880,.14,.16],[1175,.28,.3]], tipo:"sine"},
+    campainha: {ondas:[[1568,0,.5],[2093,.02,.45]], tipo:"triangle"},
+    grave:     {ondas:[[196,0,.9],[293,.05,.8]], tipo:"sine"},
+    bip:       {ondas:[[1000,0,.12]], tipo:"square"}
+  };
+  function volume(){
+    var v = parseInt(LS.ler("volume",100),10);
+    return isNaN(v) ? 0.7 : Math.max(0, Math.min(1, v/100));
+  }
+  function tocarSom(nome){
+    var som = SONS[nome];
+    if(!som) return;
+    var vol = volume();
+    if(vol <= 0) return;
+    try{
+      audio = audio || new (window.AudioContext||window.webkitAudioContext)();
+      if(audio.state==="suspended") audio.resume();
+      var repeticoes = Math.max(1, Math.min(3, parseInt(LS.ler("repeticoes",1),10)||1));
+      var duracao = som.ondas.reduce(function(m,o){ return Math.max(m, o[1]+o[2]); }, 0) + 0.18;
+      for(var r=0; r<repeticoes; r++){
+        var base = audio.currentTime + r*duracao;
+        som.ondas.forEach(function(o){
+          var osc=audio.createOscillator(), g=audio.createGain();
+          osc.type = som.tipo;
+          osc.frequency.value = o[0];
+          var inicio = base + o[1], fim = inicio + o[2];
+          g.gain.setValueAtTime(0.0001, inicio);
+          g.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.32*vol), inicio + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, fim);
+          osc.connect(g); g.connect(audio.destination);
+          osc.start(inicio); osc.stop(fim + 0.02);
+        });
+      }
+    }catch(e){}
+  }
+  function apitar(){
+    var escolha = LS.ler("som","nao");
+    if(escolha==="nao") return;
+    tocarSom(escolha==="sim" ? "dois" : escolha);
+  }
+
+  /* ---------- alterar a senha ---------- */
+  function guardar(){
+    LS.esc("atual", atual);
+    publicarSala();
+    if(partilha()==="claude" && db){
+      db.doc("senhas/estado").set({atual:atual, ts:Date.now()}).catch(function(){
+        estadoNuvem="sem ligação"; desenhar(false);
+        toast("Sem ligação — guardado só neste dispositivo");
+      });
+    }
+  }
+  function definir(n, piscar, comSom){
+    atual = Math.max(0, temLimite() ? Math.min(max(), n) : n);
+    guardar(); desenhar(piscar);
+    if(comSom) apitar();
+  }
+  function seguinte(){
+    if(temLimite() && atual >= max()){ toast("Chegou ao total de senhas"); return; }
+    definir(atual+1, true, true);
+  }
+  function anterior(){
+    if(atual<=0) return;
+    confirmar("Recuar para "+(atual-1)+"?", "O visor volta atrás uma senha. Faça-o só se chamou a seguinte por engano.", "Recuar")
+      .then(function(ok){ if(ok) definir(atual-1, false, false); });
+  }
+  function repetir(){ if(atual>0){ desenhar(true); apitar(); } }
+
+  /* ---------- barra que se esconde ---------- */
+  var barraVisivel = true, tBarra=null;
+  function mostrarBarra(){
+    barraVisivel = true;
+    $("#barra").classList.remove("escondida");
+    clearTimeout(tBarra);
+    if(LS.ler("barra","sempre")==="auto"){
+      tBarra = setTimeout(function(){
+        barraVisivel = false;
+        if(!$("#folhaDefs").hasAttribute("open")) $("#barra").classList.add("escondida");
+      }, 4000);
+    }
+  }
+  ["pointermove","pointerdown","keydown"].forEach(function(ev){
+    document.addEventListener(ev, mostrarBarra, {passive:true});
+  });
+
+  /* ---------- nuvem ---------- */
+  var promessaDb = null, estadoNuvem = "desligado", tentarDeNovo = null;
+
+  function partilha(){
+    var v = LS.ler("partilha", null);
+    if(v) return v;
+    return LS.ler("nuvem","nao")==="sim" ? "claude" : "nao";
+  }
+  var APP_SALA = "senhas";
+  /* ---------- sala protegida: nome + palavra-passe, conteúdo cifrado ---------- */
+  function nomeSala(){ return String(LS.ler("salaNome","")).trim(); }
+  function passeSala(){ return String(LS.ler("salaPasse","")); }
+  function servidorSala(){ return String(LS.ler("salaServidor","wss://broker.emqx.io:8084/mqtt")).trim(); }
+
+  var chaveSala = null, chaveDe = "";
+  function bytes(txt){ return new TextEncoder().encode(txt); }
+  function hex(buf){
+    return Array.prototype.map.call(new Uint8Array(buf), function(b){
+      return ("0"+b.toString(16)).slice(-2);
+    }).join("");
+  }
+  // o próprio caminho da sala nasce do nome e da palavra-passe: não se adivinha
+  function caminhoSala(){
+    return crypto.subtle.digest("SHA-256", bytes("arctm|"+nomeSala()+"|"+passeSala()+"|"+APP_SALA))
+      .then(function(h){ return "arctm/" + hex(h).slice(0,32); });
+  }
+  function chave(){
+    var marca = nomeSala()+"|"+passeSala();
+    if(chaveSala && chaveDe===marca) return Promise.resolve(chaveSala);
+    return crypto.subtle.importKey("raw", bytes(passeSala()), "PBKDF2", false, ["deriveKey"])
+      .then(function(base){
+        return crypto.subtle.deriveKey(
+          {name:"PBKDF2", salt:bytes("arctm|"+nomeSala()), iterations:120000, hash:"SHA-256"},
+          base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+      })
+      .then(function(k){ chaveSala=k; chaveDe=marca; return k; });
+  }
+  function cifrar(obj){
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    return chave().then(function(k){
+      return crypto.subtle.encrypt({name:"AES-GCM", iv:iv}, k, bytes(JSON.stringify(obj)));
+    }).then(function(cif){
+      return JSON.stringify({v:1, iv:hex(iv), d:hex(cif)});
+    });
+  }
+  function deHex(t){
+    var a=new Uint8Array(t.length/2);
+    for(var i=0;i<a.length;i++) a[i]=parseInt(t.substr(i*2,2),16);
+    return a;
+  }
+  function decifrar(texto){
+    var pacote;
+    try{ pacote=JSON.parse(texto); }catch(e){ return Promise.reject(new Error("formato")); }
+    if(!pacote || !pacote.iv || !pacote.d) return Promise.reject(new Error("formato"));
+    return chave().then(function(k){
+      return crypto.subtle.decrypt({name:"AES-GCM", iv:deHex(pacote.iv)}, k, deHex(pacote.d));
+    }).then(function(claro){
+      return JSON.parse(new TextDecoder().decode(claro));
+    });
+  }
+
+  var SALA = {cli:null, estado:"desligada", id:Math.random().toString(36).slice(2,10), topico:""};
+  function carregarMqtt(){
+    if(window.mqtt) return Promise.resolve(window.mqtt);
+    return new Promise(function(res, rej){
+      var sc=document.createElement("script");
+      sc.src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.15.2/mqtt.min.js";
+      sc.onload=function(){ window.mqtt ? res(window.mqtt) : rej(new Error("biblioteca não carregou")); };
+      sc.onerror=function(){ rej(new Error("não foi possível carregar a biblioteca")); };
+      document.head.appendChild(sc);
+    });
+  }
+  function desligarSala(){
+    if(SALA.cli){ try{ SALA.cli.end(true); }catch(e){} SALA.cli=null; }
+    SALA.estado="desligada";
+  }
+  function ligarSala(){
+    if(partilha()!=="sala"){ desligarSala(); return; }
+    if(!nomeSala() || !passeSala()){
+      desligarSala(); SALA.estado="falta nome ou palavra-passe"; desenhar(false); return;
+    }
+    SALA.estado="a ligar"; desenhar(false);
+    Promise.all([carregarMqtt(), caminhoSala()]).then(function(r){
+      var mqtt=r[0]; SALA.topico=r[1];
+      desligarSala();
+      var opcoes = {clientId:"arctm-"+SALA.id, reconnectPeriod:4000, connectTimeout:8000, clean:true};
+      var u=String(LS.ler("salaUtilizador","")).trim(), pw=String(LS.ler("salaServidorPasse",""));
+      if(u){ opcoes.username=u; opcoes.password=pw; }
+      var cli = mqtt.connect(servidorSala(), opcoes);
+      SALA.cli=cli;
+      cli.on("connect", function(){
+        SALA.estado="ligada";
+        cli.subscribe(SALA.topico, {qos:0});
+        publicarSala(); desenhar(false);
+      });
+      cli.on("reconnect", function(){ SALA.estado="a ligar"; desenhar(false); });
+      cli.on("close", function(){ if(SALA.estado==="ligada"){ SALA.estado="sem ligação"; desenhar(false); } });
+      cli.on("error", function(){ SALA.estado="sem ligação"; desenhar(false); });
+      cli.on("message", function(t, corpo){
+        decifrar(corpo.toString()).then(function(d){
+          if(!d || d.de===SALA.id) return;   // eco do próprio ecrã
+          if(typeof d.atual==="number" && d.atual!==atual){
+            var subiu=d.atual>atual;
+            atual=d.atual; LS.esc("atual",atual);
+            desenhar(subiu); if(subiu) apitar();
+          }
+        }).catch(function(){ /* mensagem de outra sala ou palavra-passe errada: ignorar */ });
+      });
+    }).catch(function(){ SALA.estado="sem ligação"; desenhar(false); });
+  }
+  function publicarSala(){
+    if(partilha()!=="sala" || !SALA.cli || !SALA.cli.connected || !SALA.topico) return;
+    cifrar({atual:atual, ts:Date.now(), de:SALA.id}).then(function(txt){
+      try{ SALA.cli.publish(SALA.topico, txt, {qos:0, retain:true}); }catch(e){}
+    }).catch(function(){});
+  }
+
+
+  function ligarNuvem(){
+    if(promessaDb) return promessaDb;
+    if(!window.claude || typeof window.claude.use!=="function"){
+      promessaDb = Promise.resolve(null);
+      return promessaDb;
+    }
+    promessaDb = window.claude.use("db").then(function(ns){ db=ns; return ns; })
+      .catch(function(){ db=null; return null; });
+    return promessaDb;
+  }
+  function marcarEstado(e){ estadoNuvem = e; desenhar(false); }
+
+  function subscrever(){
+    if(subEstado){ try{ subEstado(); }catch(err){} subEstado=null; }
+    clearTimeout(tentarDeNovo);
+    if(partilha()!=="claude" || !db){ estadoNuvem="desligado"; return; }
+    estadoNuvem = "a ligar";
+    try{
+      subEstado = db.doc("senhas/estado").onSnapshot(function(snap){
+        estadoNuvem = "ligado";
+        var d = corpoDe(snap);
+        if(snap && snap.exists && typeof d.atual === "number"){
+          if(d.atual !== atual){
+            var subiu = d.atual > atual;
+            atual = d.atual; LS.esc("atual", atual);
+            desenhar(subiu); if(subiu) apitar();
+            return;
+          }
+        }
+        desenhar(false);
+      }, function(){
+        estadoNuvem = "sem ligação";
+        desenhar(false);
+        tentarDeNovo = setTimeout(subscrever, 5000);   // volta a tentar sozinho
+      });
+    }catch(err){
+      estadoNuvem = "sem ligação";
+      tentarDeNovo = setTimeout(subscrever, 5000);
+    }
+  }
+
+  function activarNuvem(){
+    return ligarNuvem().then(function(ns){
+      if(!ns){
+        LS.esc("nuvem","nao"); LS.esc("partilha","nao");
+        if($("#dPartilha")) $("#dPartilha").value="nao";
+        estadoNuvem="desligado"; desenhar(false);
+        toast("A partilha não está disponível aqui");
+        return false;
+      }
+      // adopta o número que já estiver na nuvem, em vez de o substituir
+      return db.doc("senhas/estado").get().then(function(snap){
+        var d = corpoDe(snap);
+        if(snap && snap.exists && typeof d.atual === "number"){
+          atual = d.atual; LS.esc("atual", atual);
+        } else {
+          return db.doc("senhas/estado").set({atual:atual, ts:Date.now()});
+        }
+      }).catch(function(){}).then(function(){
+        subscrever(); desenhar(false);
+        toast("Partilha ligada — abra este mesmo link no outro dispositivo");
+        return true;
+      });
+    });
+  }
+
+  // ao voltar ao ecrã, confirma que continua a receber
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState==="visible" && partilha()==="claude" && estadoNuvem!=="ligado"){
+      subscrever();
+    }
+  });
+
+  /* ---------- ligações ---------- */
+  /* ---------- toque e gestos ---------- */
+  function modoToque(){
+    var m = LS.ler("toqueChama","nao");
+    if(m==="sim") m = "todo";              // compatível com a versão anterior
+    return m;
+  }
+  function acaoTras(){
+    if(LS.ler("botaoTras","mesmo")==="recuar") anterior(); else repetir();
+  }
+  (function(){
+    var visor=$("#visor"), inicio=null;
+    visor.addEventListener("pointerdown", function(e){
+      if(modoToque()==="nao") return;
+      inicio = {x:e.clientX, y:e.clientY, t:Date.now()};
+    }, {passive:true});
+    visor.addEventListener("pointerup", function(e){
+      var m = modoToque();
+      if(m==="nao" || !inicio) return;
+      var dx = e.clientX - inicio.x, dy = e.clientY - inicio.y;
+      var tempo = Date.now() - inicio.t;
+      inicio = null;
+      var deslizou = Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)*1.4 && tempo < 900;
+
+      if(deslizou && (m==="deslizar" || m==="metades-deslizar")){
+        if(dx < 0) seguinte(); else acaoTras();
+        return;
+      }
+      if(Math.abs(dx) > 24 || Math.abs(dy) > 24) return;   // arrastou sem chegar a gesto
+      if(m==="todo"){ seguinte(); return; }
+      if(m==="metades" || m==="metades-deslizar"){
+        var meio = visor.getBoundingClientRect().left + visor.clientWidth/2;
+        if(e.clientX >= meio) seguinte(); else acaoTras();
+      }
+    }, {passive:true});
+    visor.addEventListener("pointercancel", function(){ inicio=null; }, {passive:true});
+    visor.addEventListener("contextmenu", function(e){ if(modoToque()!=="nao") e.preventDefault(); });
+  })();
+  $("#btnSeguinte").addEventListener("click", function(e){ e.stopPropagation(); seguinte(); });
+  $("#btnAnterior").addEventListener("click", anterior);
+  $("#btnRepetir").addEventListener("click", function(e){ e.stopPropagation(); repetir(); });
+
+  $("#btnEcra").addEventListener("click", function(){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(function(){
+      toast("O ecrã inteiro não é permitido aqui");
+    });
+  });
+  var abaDefs = "contagem";
+  function mostrarAba(nome){
+    abaDefs = nome;
+    document.querySelectorAll("#dAbas button").forEach(function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.aba===nome));
+    });
+    document.querySelectorAll(".aba").forEach(function(sec){ sec.hidden = sec.dataset.aba !== nome; });
+    var corpo=document.querySelector(".painel.largo .corpo"); if(corpo) corpo.scrollTop=0;
+  }
+  document.querySelectorAll("#dAbas button").forEach(function(b){
+    b.addEventListener("click", function(){ mostrarAba(b.dataset.aba); });
+  });
+  $("#btnDefs").addEventListener("click", function(){ sincronizar(); mostrarAba(abaDefs); $("#folhaDefs").setAttribute("open",""); });
+  document.querySelectorAll("[data-fechar]").forEach(function(b){
+    b.addEventListener("click", function(){ $("#folhaDefs").removeAttribute("open"); });
+  });
+  $("#folhaDefs").addEventListener("click", function(e){ if(e.target===this) this.removeAttribute("open"); });
+
+  // teclas usadas pelos comandos de apresentação (o botão da frente e o de trás)
+  var TECLAS_FRENTE = [" ", "Spacebar", "Enter", "ArrowRight", "ArrowDown", "PageDown", "MediaTrackNext", "N", "n"];
+  var TECLAS_TRAS   = ["ArrowLeft", "ArrowUp", "PageUp", "Backspace", "MediaTrackPrevious", "P", "p"];
+  document.addEventListener("keydown", function(e){
+    if($("#folhaDefs").hasAttribute("open") || $("#folhaConfirmar").hasAttribute("open") || $("#folhaDefinir").hasAttribute("open")) return;
+    var alvo = e.target;
+    if(alvo && (alvo.tagName==="INPUT" || alvo.tagName==="SELECT" || alvo.tagName==="TEXTAREA")) return;
+
+    if(TECLAS_FRENTE.indexOf(e.key) >= 0){ e.preventDefault(); seguinte(); return; }
+    if(TECLAS_TRAS.indexOf(e.key) >= 0){
+      e.preventDefault();
+      if(LS.ler("botaoTras","mesmo")==="recuar") anterior(); else repetir();
+      return;
+    }
+    if(e.key && e.key.toLowerCase()==="r"){ e.preventDefault(); repetir(); }
+  });
+
+  function exemplo(){
+    var lim = temLimite();
+    var t = modo()==="fixas"
+      ? "Reserva "+casas()+(casas()===1?" casa":" casas")+": a senha 7 fica com as casas da frente vazias e vai ocupando-as à medida que o número cresce."
+      : "O número aparece centrado e cresce à medida que avança: 7, depois 42, depois 350.";
+    t += lim ? (" Pára nas "+max()+" senhas.") : " Sem limite: conta sem parar e ganha casas conforme precisa.";
+    $("#dExemplo").textContent = t;
+  }
+  function desenharCores(){
+    var c=$("#dCores"); c.innerHTML="";
+    var atualCor = LS.ler("cor",CORES[0]);
+    CORES.forEach(function(cor){
+      var b=document.createElement("button"); b.type="button"; b.style.background=cor;
+      b.setAttribute("aria-label","Cor"); b.setAttribute("aria-pressed", String(cor===atualCor));
+      b.addEventListener("click", function(){
+        LS.esc("cor",cor); LS.esc("corManual","sim");
+        aplicarTema(); desenharCores(); actualizarAmostra();
+      });
+      c.appendChild(b);
+    });
+  }
+  function sincronizar(){
+    $("#dLimite").value = temLimite() ? "com" : "sem";
+    $("#dMax").value = temLimite() ? max() : (parseInt(LS.ler("max",99),10)||99);
+    $("#dCasas").value = String(casas());
+    $("#dModo").value = modo();
+    var sel=$("#dFonte");
+    if(!sel.options.length){
+      FONTES.forEach(function(o){
+        var op=document.createElement("option");
+        op.value=o.f; op.textContent=o.n;
+        op.style.fontFamily='"'+o.f+'", monospace';
+        sel.appendChild(op);
+      });
+    }
+    sel.value = fonteNum();
+    actualizarAmostra();
+    camposLimite();
+    $("#dRotulo").value = LS.ler("rotulo","Senha");
+    $("#dMensagem").value = LS.ler("mensagem","");
+    $("#dTamanho").value = LS.ler("tamanho","88vmin");
+    var ex = parseInt(LS.ler("escalaNum",100),10)||100;
+    $("#dEscalaNum").value = ex; $("#lblEscalaNum").textContent = ex+"%";
+    $("#dFantasma").value = LS.ler("fantasma","vazio");
+    $("#dTema").value = LS.ler("tema","claro");
+    $("#dEscTexto").value = String(LS.ler("escTexto","1"));
+    $("#dRodape").value = LS.ler("rodape","tudo");
+    $("#dMostrarTotal").value = LS.ler("mostrarTotal","nao");
+    $("#dRodapeVisivel").value = LS.ler("rodapeVisivel","sim");
+    var somGuardado = LS.ler("som","nao");
+    if(somGuardado==="sim") somGuardado="dois";
+    $("#dSom").value = somGuardado;
+    var vol = parseInt(LS.ler("volume",100),10);
+    $("#dVolume").value = vol; $("#lblVolume").textContent = vol+"%";
+    $("#dRepeticoes").value = String(LS.ler("repeticoes",1));
+    var tq = LS.ler("toqueChama","nao");
+    if(tq==="sim") tq="todo";
+    $("#dToque").value = tq;
+    $("#dBotaoTras").value = LS.ler("botaoTras","mesmo");
+    $("#dBarra").value = LS.ler("barra","sempre");
+    $("#dContador").value = LS.ler("contador","nao");
+    $("#dPartilha").value = partilha();
+    $("#dSalaNome").value = nomeSala();
+    $("#dSalaPasse").value = passeSala();
+    $("#dSalaServidor").value = LS.ler("salaServidor","");
+    $("#dSalaUtilizador").value = LS.ler("salaUtilizador","");
+    $("#dSalaServidorPasse").value = LS.ler("salaServidorPasse","");
+    camposPartilha();
+    desenharCores(); exemplo();
+  }
+
+  function camposLimite(){
+    var lim = temLimite();
+    $("#campoMax").hidden = !lim;
+    $("#campoCasas").hidden = lim;
+  }
+  $("#dLimite").addEventListener("change", function(){
+    LS.esc("limite", this.value); camposLimite(); exemplo(); desenhar(false);
+  });
+  $("#dCasas").addEventListener("change", function(){
+    LS.esc("casas", parseInt(this.value,10)||2); exemplo(); desenhar(false);
+  });
+  $("#dMax").addEventListener("change", function(){
+    var v = Math.max(1, Math.min(999999, parseInt(this.value,10)||99));
+    LS.esc("max", v); this.value=v;
+    if(atual>v) definir(v,false,false);
+    exemplo(); desenhar(false);
+  });
+  $("#dModo").addEventListener("change", function(){ LS.esc("modo",this.value); exemplo(); desenhar(false); });
+  function actualizarAmostra(){
+    var n = String(atual||8);
+    $("#amostraNum").textContent = n.length>3 ? n.slice(-3) : n;
+  }
+  function remedir(){
+    proporcoes = {};                    // esquece as medidas antigas
+    desenhar(false);                    // volta a calcular o tamanho para o ecrã
+  }
+  function garantirFonte(f){
+    var peso = pesoNum();
+    // espera que a letra esteja mesmo carregada antes de medir o algarismo
+    if(document.fonts && document.fonts.load){
+      document.fonts.load(peso+' 200px "'+f+'"', "0123456789")
+        .then(remedir).catch(remedir);
+    }
+    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(remedir); }
+    requestAnimationFrame(remedir);
+    [120, 350, 800, 1600].forEach(function(ms){ setTimeout(remedir, ms); });
+  }
+  function aplicarFonte(f){
+    LS.esc("fonte", f);
+    $("#dFonte").value = f;
+    aplicarTema(); actualizarAmostra();
+    remedir();
+    garantirFonte(f);
+  }
+  function saltarFonte(passo){
+    var actual = fonteNum(), i = 0;
+    FONTES.forEach(function(o,idx){ if(o.f===actual) i=idx; });
+    var nova = FONTES[(i + passo + FONTES.length) % FONTES.length];
+    aplicarFonte(nova.f);
+    toast(nova.n.split(" — ")[0]);
+  }
+  $("#dFonte").addEventListener("change", function(){ aplicarFonte(this.value); });
+  $("#amostraAnterior").addEventListener("click", function(){ saltarFonte(-1); });
+  $("#amostraSeguinte").addEventListener("click", function(){ saltarFonte(1); });
+  (function(){
+    var b=$("#amostraEspreitar"), folha=$("#folhaDefs");
+    function ligar(){ folha.classList.add("espreitar"); }
+    function desligar(){ folha.classList.remove("espreitar"); }
+    ["pointerdown","touchstart"].forEach(function(ev){ b.addEventListener(ev, ligar, {passive:true}); });
+    ["pointerup","pointercancel","touchend","mouseleave","blur"].forEach(function(ev){ b.addEventListener(ev, desligar); });
+    b.addEventListener("click", function(e){ e.preventDefault(); });
+  })();
+  $("#dRotulo").addEventListener("input", function(){ LS.esc("rotulo",this.value); aplicarTema(); });
+  $("#dMensagem").addEventListener("input", function(){ LS.esc("mensagem",this.value); aplicarTema(); });
+  $("#dTamanho").addEventListener("change", function(){ LS.esc("tamanho",this.value); aplicarTema(); remedir(); });
+  $("#dEscalaNum").addEventListener("input", function(){
+    LS.esc("escalaNum", parseInt(this.value,10));
+    $("#lblEscalaNum").textContent = this.value+"%";
+    remedir();
+  });
+  $("#dFantasma").addEventListener("change", function(){ LS.esc("fantasma",this.value); aplicarTema(); desenhar(false); });
+  var tRedim=null;
+  window.addEventListener("resize", function(){
+    clearTimeout(tRedim); tRedim=setTimeout(remedir, 120);
+  });
+  window.addEventListener("orientationchange", function(){ setTimeout(remedir, 250); });
+  document.addEventListener("fullscreenchange", function(){ setTimeout(remedir, 120); });
+  $("#dTema").addEventListener("change", function(){
+    LS.esc("tema", this.value);
+    var sugerida = COR_DO_TEMA[this.value];
+    if(sugerida && LS.ler("corManual","nao")!=="sim"){ LS.esc("cor", sugerida); }
+    aplicarTema(); desenharCores(); actualizarAmostra(); desenhar(false);
+  });
+  $("#dCorTema").addEventListener("click", function(){
+    LS.esc("corManual","nao");
+    var sugerida = COR_DO_TEMA[LS.ler("tema","claro")];
+    if(sugerida) LS.esc("cor", sugerida);
+    aplicarTema(); desenharCores(); actualizarAmostra(); desenhar(false);
+    toast("A cor passa a seguir o tema");
+  });
+  $("#dEscTexto").addEventListener("change", function(){ LS.esc("escTexto",this.value); aplicarTema(); remedir(); });
+  $("#dRodape").addEventListener("change", function(){ LS.esc("rodape",this.value); desenhar(false); });
+  $("#dRodapeVisivel").addEventListener("change", function(){
+    LS.esc("rodapeVisivel", this.value); desenhar(false);
+  });
+  $("#dMostrarTotal").addEventListener("change", function(){ LS.esc("mostrarTotal",this.value); desenhar(false); });
+  $("#dSom").addEventListener("change", function(){ LS.esc("som",this.value); apitar(); });
+  $("#dVolume").addEventListener("input", function(){
+    LS.esc("volume", parseInt(this.value,10));
+    $("#lblVolume").textContent = this.value+"%";
+  });
+  $("#dVolume").addEventListener("change", function(){ apitar(); });
+  $("#dRepeticoes").addEventListener("change", function(){ LS.esc("repeticoes", parseInt(this.value,10)); apitar(); });
+  $("#dTestarSom").addEventListener("click", apitar);
+  $("#dBotaoTras").addEventListener("change", function(){ LS.esc("botaoTras", this.value); });
+  $("#dToque").addEventListener("change", function(){
+    LS.esc("toqueChama", this.value);
+    $("#visor").style.cursor = this.value==="nao" ? "default" : "pointer";
+  });
+  $("#dBarra").addEventListener("change", function(){ LS.esc("barra",this.value); mostrarBarra(); });
+  $("#dContador").addEventListener("change", function(){ LS.esc("contador",this.value); desenhar(false); });
+  function camposPartilha(){
+    var sala = partilha()==="sala";
+    $("#camposSala").hidden = !sala;
+    $("#avancadoSala").hidden = !sala;
+  }
+  $("#dPartilha").addEventListener("change", function(){
+    LS.esc("partilha", this.value);
+    LS.esc("nuvem", this.value==="claude" ? "sim" : "nao");
+    camposPartilha(); desligarSala();
+    if(this.value==="claude") activarNuvem();
+    else if(this.value==="sala"){ subscrever(); ligarSala(); toast((nomeSala()&&passeSala())?"A ligar à sala":"Escreva o nome e a palavra-passe da sala"); }
+    else { subscrever(); estadoNuvem="desligado"; desenhar(false); toast("Partilha desligada"); }
+  });
+  [["#dSalaNome","salaNome"],["#dSalaPasse","salaPasse"],
+   ["#dSalaServidor","salaServidor"],["#dSalaUtilizador","salaUtilizador"],
+   ["#dSalaServidorPasse","salaServidorPasse"]].forEach(function(par){
+    var el=$(par[0]);
+    if(!el) return;
+    el.addEventListener("change", function(){
+      LS.esc(par[1], this.value.trim());
+      chaveSala=null;
+      if(partilha()==="sala") ligarSala();
+    });
+  });
+
+  function abrirDefinir(){
+    var campo=$("#campoNumero");
+    campo.value = String(atual);
+    if(temLimite()) campo.max = String(max()); else campo.removeAttribute("max");
+    $("#folhaDefinir").setAttribute("open","");
+    setTimeout(function(){ campo.focus(); campo.select(); }, 60);
+  }
+  function confirmarDefinir(){
+    var n = parseInt(String($("#campoNumero").value).replace(/[^0-9]/g,""),10);
+    if(isNaN(n)){ toast("Número inválido"); return; }
+    if(temLimite() && n>max()){ toast("O total definido é "+max()); return; }
+    if(n===atual){
+      $("#folhaDefinir").removeAttribute("open");
+      toast("O visor já está em "+n);
+      return;
+    }
+    var salto = n>atual ? ("Salta "+(n-atual)+(n-atual===1?" senha à frente":" senhas à frente")+".")
+                        : ("Recua "+(atual-n)+(atual-n===1?" senha":" senhas")+".");
+    confirmar(
+      "Mudar de "+atual+" para "+n+"?",
+      salto+" O visor passa a mostrar "+n+" e a contagem segue a partir daí.",
+      "Mostrar "+n
+    ).then(function(ok){
+      if(!ok) return;
+      $("#folhaDefinir").removeAttribute("open");
+      definir(n, true, false);
+      toast("Senha definida em "+n);
+    });
+  }
+  $("#btnDefinir").addEventListener("click", function(e){ e.stopPropagation(); abrirDefinir(); });
+  $("#dDefinir").addEventListener("click", function(){ $("#folhaDefs").removeAttribute("open"); abrirDefinir(); });
+  $("#numOk").addEventListener("click", confirmarDefinir);
+  $("#numCancelar").addEventListener("click", function(){ $("#folhaDefinir").removeAttribute("open"); });
+  $("#campoNumero").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); confirmarDefinir(); } });
+  $("#folhaDefinir").addEventListener("click", function(e){ if(e.target===this) this.removeAttribute("open"); });
+  $("#dReiniciar").addEventListener("click", function(){
+    confirmar("Reiniciar a zero?", "O visor volta a zero e a contagem recomeça. Não há forma de recuperar o número atual.", "Reiniciar")
+      .then(function(ok){ if(ok){ definir(0,false,false); toast("Reiniciado"); } });
+  });
+
+  /* ---------- dicas ao passar o rato ---------- */
+  var DICAS = {
+    btnAnterior: "Recuar uma senha",
+    btnDefinir: "Definir o número que aparece",
+    btnRepetir: "Chamar outra vez a mesma senha",
+    btnSeguinte: "Chamar a senha seguinte",
+    btnEcra: "Ecrã inteiro",
+    btnDefs: "Definições do visor",
+    dDefinir: "Escolher o número a mostrar",
+    dReiniciar: "Voltar a zero",
+    dTestarSom: "Ouvir o som escolhido",
+    amostraAnterior: "Letra anterior",
+    amostraSeguinte: "Letra seguinte",
+    amostraEspreitar: "Manter premido para ver no visor",
+    dCopiarDefs: "Copiar as definições deste visor",
+    dColarDefs: "Aplicar definições copiadas de outro ecrã",
+    numOk: "Mostrar este número",
+    numCancelar: "Fechar sem alterar",
+    cfSim: "Confirmar",
+    cfNao: "Cancelar"
+  };
+  function aplicarDicas(){
+    Object.keys(DICAS).forEach(function(id){
+      var el=document.getElementById(id);
+      if(el && !el.title) el.title = DICAS[id];
+    });
+    document.querySelectorAll("button[aria-label]:not([title])").forEach(function(b){
+      b.title = b.getAttribute("aria-label");
+    });
+  }
+  aplicarDicas();
+  new MutationObserver(function(){ aplicarDicas(); }).observe(document.body, {childList:true, subtree:true});
+
+  /* ---------- copiar e colar definições ---------- */
+  var CHAVES_DEFS = ["limite","max","casas","modo","fantasma","tamanho","escalaNum","fonte",
+                     "rotulo","mensagem","rodape","rodapeVisivel","mostrarTotal",
+                     "tema","cor","escTexto","barra","som","volume","repeticoes",
+                     "botaoTras","toqueChama","corManual","contador","escalaNum","partilha","salaNome","salaServidor","salaUtilizador"];
+  $("#dCopiarDefs").addEventListener("click", function(){
+    var pacote = {app:"visor-senhas", versao:1};
+    CHAVES_DEFS.forEach(function(k){
+      var v = LS.ler(k, null);
+      if(v!==null) pacote[k] = v;
+    });
+    var texto = JSON.stringify(pacote);
+    var ta=$("#dTextoDefs");
+    ta.hidden=false; ta.value=texto;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texto).then(function(){ toast("Definições copiadas"); },
+        function(){ ta.focus(); ta.select(); toast("Copie o texto abaixo"); });
+    } else { ta.focus(); ta.select(); toast("Copie o texto abaixo"); }
+  });
+  $("#dColarDefs").addEventListener("click", function(){
+    var ta=$("#dTextoDefs");
+    if(ta.hidden || !ta.value.trim()){
+      ta.hidden=false; ta.value=""; ta.focus();
+      toast("Cole aqui o texto e carregue outra vez em Colar");
+      return;
+    }
+    var pacote;
+    try{ pacote = JSON.parse(ta.value.trim()); }
+    catch(e){ toast("O texto não é válido"); return; }
+    if(!pacote || pacote.app!=="visor-senhas"){ toast("Essas definições não são deste visor"); return; }
+    confirmar("Aplicar estas definições?", "Substitui as definições deste ecrã. O número da senha mantém-se.", "Aplicar")
+      .then(function(ok){
+        if(!ok) return;
+        CHAVES_DEFS.forEach(function(k){ if(k in pacote) LS.esc(k, pacote[k]); });
+        ta.hidden=true; ta.value="";
+        aplicarTema(); sincronizar(); garantirFonte(fonteNum()); remedir();
+        toast("Definições aplicadas");
+      });
+  });
+
+  /* ---------- arranque ---------- */
+  if(LS.ler("max",null)===null) LS.esc("max",99);
+  if(LS.ler("limite",null)===null) LS.esc("limite","sem");
+  aplicarTema(); desenhar(false); mostrarBarra();
+  garantirFonte(fonteNum());
+  $("#visor").style.cursor = modoToque()==="nao" ? "default" : "pointer";
+  if(partilha()==="sala") ligarSala();
+  ligarNuvem().then(function(ns){
+    if(!ns){
+      var opc=$("#dPartilha").querySelector('option[value="claude"]');
+      if(opc){ opc.textContent="Conta Claude (indisponível aqui)"; opc.disabled=true; }
+      desenhar(false); return;
+    }
+    if(partilha()==="claude") activarNuvem();
+  });
+})();
+</script>
 </body>
 </html>

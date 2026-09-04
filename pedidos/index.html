@@ -2,43 +2,1609 @@
 <html lang="pt-PT">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Visor de pedidos — a abrir</title>
-
-<!-- ============================================================
-     Para mudar o destino desta aplicação, altere o endereço nas
-     TRÊS linhas assinaladas com  <<< DESTINO  e guarde o ficheiro.
-     ============================================================ -->
-<meta http-equiv="refresh" content="0; url=https://claude.ai/code/artifact/975672d0-1cf0-45fa-9b2e-a2b6217e8831">   <!-- <<< DESTINO -->
-<link rel="canonical" href="https://claude.ai/code/artifact/975672d0-1cf0-45fa-9b2e-a2b6217e8831">                  <!-- <<< DESTINO -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visor de pedidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Azeret+Mono:wght@700;800&family=Martian+Mono:wght@700&family=JetBrains+Mono:wght@800&family=IBM+Plex+Mono:wght@700&family=Roboto+Mono:wght@700&family=Rubik+Mono+One&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-  :root{ --verde:#1E8F42; --papel:#F3F8F4; --tinta:#10301D; --linha:#CFE0D6; }
+  :root{
+    --fundo:#0B0F14; --painel:#141B24; --linha:#26313D;
+    --texto:#EAF1F8; --texto-2:#8A9AAB;
+    --acento:#22C55E; --acc2:#38BDF8; --aviso:#FBBF24;
+    --topo:66; --radius:16px;
+    color-scheme:dark;
+  }
+  :root[data-tema="claro"]{
+    --fundo:#F6F7F9; --painel:#FFFFFF; --linha:#DCE2E8;
+    --texto:#101720; --texto-2:#5C6B7A; color-scheme:light;
+  }
+  :root[data-tema="arctm"]{
+    --fundo:#F3F8F4; --painel:#FFFFFF; --linha:#CFE0D6;
+    --texto:#10301D; --texto-2:#4C6B57; --acento:#1E8F42; --acc2:#2A8FC4; --aviso:#C9A400;
+    color-scheme:light;
+  }
+  :root[data-tema="arctm-noite"]{
+    --fundo:#07160E; --painel:#0E2318; --linha:#20372A;
+    --texto:#EAF6EE; --texto-2:#8FB6A5; --acento:#E8C61A; --acc2:#3BA7DC; --aviso:#3BA7DC;
+    color-scheme:dark;
+  }
+  :root[data-tema="preto"]{
+    --fundo:#000000; --painel:#0B0B0B; --linha:#242424;
+    --texto:#FFFFFF; --texto-2:#9A9A9A; --acc2:#38BDF8; color-scheme:dark;
+  }
+  :root[data-tema="azul"]{
+    --fundo:#0A1A2F; --painel:#11263F; --linha:#1F3A5C;
+    --texto:#E7F0FA; --texto-2:#8AA6C4; --acc2:#7DD3FC; color-scheme:dark;
+  }
+  :root[data-tema="verde"]{
+    --fundo:#08170F; --painel:#0F2419; --linha:#1D3A2A;
+    --texto:#E6F5EC; --texto-2:#8FB6A0; --acc2:#5EEAD4; color-scheme:dark;
+  }
+  :root[data-tema="vinho"]{
+    --fundo:#1A0B10; --painel:#26121A; --linha:#3E2029;
+    --texto:#F7E9ED; --texto-2:#BE9AA5; --acc2:#FBBF24; color-scheme:dark;
+  }
+  :root[data-tema="creme"]{
+    --fundo:#F5EFE2; --painel:#FFFBF2; --linha:#E0D5C0;
+    --texto:#2B2216; --texto-2:#6E6150; --acc2:#B45309; color-scheme:light;
+  }
+  :root[data-tema="papel"]{
+    --fundo:#FFFFFF; --painel:#FFFFFF; --linha:#C9C9C9;
+    --texto:#000000; --texto-2:#4A4A4A; --acc2:#0B57D0; color-scheme:light;
+  }
+  :root[data-tema="arctm-azul"]{
+    --fundo:#F1F8FC; --painel:#FFFFFF; --linha:#C9E1EF;
+    --texto:#0E2434; --texto-2:#4B667A; --acc2:#1E8F42; --aviso:#C9A400; color-scheme:light;
+  }
+  :root[data-tema="arctm-azul-noite"]{
+    --fundo:#06131C; --painel:#0D1F2B; --linha:#1B3546;
+    --texto:#E6F2FA; --texto-2:#8FAEC2; --acc2:#22C55E; --aviso:#E8C61A; color-scheme:dark;
+  }
+  :root[data-tema="arctm-amarelo"]{
+    --fundo:#FDF9E7; --painel:#FFFDF4; --linha:#EADFAE;
+    --texto:#2E2708; --texto-2:#6D6134; --acc2:#2A8FC4; --aviso:#B8402A; color-scheme:light;
+  }
+  :root[data-tema="arctm-amarelo-noite"]{
+    --fundo:#161206; --painel:#221C0B; --linha:#3A3115;
+    --texto:#F7F0D4; --texto-2:#A99C6B; --acc2:#3BA7DC; --aviso:#E0715A; color-scheme:dark;
+  }
+  :root[data-tema="arctm-tri"]{
+    --fundo:#F3F8F4; --painel:#FFFFFF; --linha:#CFE0D6;
+    --texto:#10301D; --texto-2:#4C6B57; --acc2:#2A8FC4; --aviso:#D8B417; color-scheme:light;
+  }
+  :root[data-tema="arctm-tri-noite"]{
+    --fundo:#07160E; --painel:#0E2318; --linha:#20372A;
+    --texto:#EAF6EE; --texto-2:#8FB6A5; --acc2:#3BA7DC; --aviso:#E8C61A; color-scheme:dark;
+  }
+
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
-    margin:0;min-height:100dvh;display:grid;place-items:center;background:var(--papel);color:var(--tinta);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px;text-align:center;
+    margin:0;background:var(--fundo);color:var(--texto);overflow:hidden;
+    font-family:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;
   }
-  .cartao{
-    background:#fff;border:1px solid var(--linha);border-top:4px solid var(--verde);
-    border-radius:16px;padding:32px 28px;max-width:460px;box-shadow:0 10px 30px rgba(16,48,29,.08);
+  button{font:inherit;color:inherit;cursor:pointer}
+  input,select{font:inherit;color:inherit}
+  :focus-visible{outline:3px solid var(--acento);outline-offset:2px}
+
+  .ecra{height:100dvh;display:grid;grid-template-rows:calc(var(--topo) * 1%) 1fr auto}
+
+  /* ---------- chamada em curso ---------- */
+  .chamada{
+    min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;
+    justify-items:center;gap:.6vmin;padding:1.4vmin 1vmin .6vmin;position:relative;overflow:hidden;
   }
-  .icone{font-size:44px;line-height:1;margin-bottom:10px}
-  h1{margin:0 0 6px;font-size:22px}
-  p{margin:0 0 20px;color:#4C6B57;font-size:15px;line-height:1.5}
-  a.botao{
-    display:inline-block;background:var(--verde);color:#fff;text-decoration:none;font-weight:600;
-    padding:14px 22px;border-radius:12px;font-size:16px;
+  .rotulo{
+    font-size:calc(clamp(13px, 3vmin, 40px) * var(--esc, 1));letter-spacing:.3em;text-transform:uppercase;
+    font-weight:700;color:color-mix(in srgb, var(--acc2) 70%, var(--texto-2));padding-left:.3em;
   }
-  .nota{margin-top:18px;font-size:13px;color:#6A8375;line-height:1.5;border-top:1px solid var(--linha);padding-top:14px}
+  .zona{width:100%;min-height:0;overflow:hidden;display:grid;place-items:center;position:relative}
+  .numero{
+    font-family:var(--fonte, "Azeret Mono"),ui-monospace,monospace;
+    font-weight:var(--peso, 800);font-variant-numeric:tabular-nums;
+    line-height:.78;color:var(--acento);white-space:nowrap;
+  }
+  .numero.vazio{
+    color:var(--texto-2);opacity:.45;font-family:inherit;font-weight:600;
+    font-size:calc(clamp(15px, 3.2vmin, 44px) * var(--esc,1)) !important;
+    letter-spacing:.12em;text-transform:uppercase;line-height:1.2 !important;
+  }
+  .numero.piscar{animation:bater .58s ease 4}
+  @keyframes bater{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.18;transform:scale(.97)}}
+  @media (prefers-reduced-motion: reduce){.numero.piscar{animation:none}}
+  .sub-chamada{
+    font-size:calc(clamp(12px, 2.1vmin, 24px) * var(--esc, 1));color:var(--texto-2);font-weight:600;
+    display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center;
+    min-height:1.4em;line-height:1.3;
+  }
+  .zona{contain:strict}
+
+  /* ---------- em preparação ---------- */
+  .fila{
+    min-height:0;border-top:2px solid color-mix(in srgb, var(--acc2) 45%, var(--linha));
+    background:color-mix(in srgb, var(--texto) 3%, var(--painel));
+    display:flex;flex-direction:column;padding:2px 12px 4px;gap:8px;position:relative;
+  }
+  .pega{height:16px;display:grid;place-items:center;cursor:row-resize;touch-action:none;margin:0 -12px}
+  .pega i{display:block;width:52px;height:4px;border-radius:2px;background:var(--linha)}
+  .pega:hover i,.pega:focus-visible i{background:var(--acento)}
+  :root[data-arrastar] *{user-select:none}
+  .fila-topo{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .fila-topo h2{
+    margin:0;font-size:calc(clamp(12px,1.9vmin,20px) * var(--esc,1));letter-spacing:.14em;
+    text-transform:uppercase;color:var(--texto-2);font-weight:700;
+  }
+  .fila-topo .conta{font-size:calc(clamp(12px,1.9vmin,20px) * var(--esc,1));color:var(--texto-2);font-weight:600}
+  .colunas{
+    flex:1;min-height:0;display:grid;
+    grid-template-columns:1fr var(--col-prontos, 40%);gap:12px;
+    transition:grid-template-columns .35s ease;
+  }
+  @media (prefers-reduced-motion: reduce){ .colunas{transition:none} }
+  .coluna{min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .coluna.prontos{
+    border-left:2px solid color-mix(in srgb, var(--acento) 45%, var(--linha));
+    padding-left:12px;
+  }
+  .coluna.prontos .fila-topo h2{color:var(--acento)}
+  @media (max-width:640px){
+    .colunas{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
+    .coluna.prontos{border-left:0;border-top:2px solid color-mix(in srgb, var(--acento) 45%, var(--linha));padding-left:0;padding-top:8px}
+  }
+  .cartoes{
+    flex:1;min-height:0;overflow-y:auto;display:grid;gap:9px;align-content:start;
+    grid-template-columns:repeat(auto-fill,minmax(calc(96px * var(--cartao,1)),1fr));
+    padding-bottom:6px;scrollbar-width:thin;
+  }
+  .pedido{
+    border:2px solid var(--linha);border-radius:14px;background:var(--painel);
+    padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .pedido .n{
+    font-family:var(--fonte, "Azeret Mono"),ui-monospace,monospace;font-weight:var(--peso,800);
+    font-size:calc(30px * var(--cartao,1));line-height:1;font-variant-numeric:tabular-nums;
+  }
+  .pedido .tempo{font-size:12px;color:var(--texto-2);font-weight:600}
+  .pedido.chamado{
+    border-color:var(--acento);
+    background:color-mix(in srgb, var(--acento) 16%, var(--painel));
+  }
+  .pedido.chamado .n{color:var(--acento)}
+  .pedido.demora{border-color:var(--aviso)}
+  .pedido .acoes{display:flex;gap:6px;width:100%}
+  .pedido .acoes button{
+    flex:1;border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 6%, var(--painel));
+    border-radius:9px;padding:7px 0;display:grid;place-items:center;
+  }
+  .pedido .acoes button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pedido .acoes .chamar{border-color:color-mix(in srgb, var(--acento) 50%, var(--linha));color:var(--acento)}
+  .pedido .acoes .entregar{border-color:color-mix(in srgb, var(--acc2) 50%, var(--linha));color:var(--acc2)}
+  .sem-fila{color:var(--texto-2);font-size:15px;padding:14px 4px;text-align:center;grid-column:1/-1}
+
+  /* modo só mostrar: sem controlos, tudo maior */
+  :root[data-modo="mostrar"] .pedido .acoes{display:none}
+  :root[data-modo="mostrar"] .pedido{padding:10px 6px;cursor:default}
+  :root[data-modo="mostrar"] .pedido .n{font-size:calc(38px * var(--cartao,1))}
+  :root[data-modo="mostrar"] .cartoes{
+    grid-template-columns:repeat(auto-fill,minmax(calc(110px * var(--cartao,1)),1fr));
+  }
+  :root[data-modo="mostrar"] .barra{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  :root[data-modo="mostrar"] .barra.escondida{opacity:0;transform:translateY(100%);pointer-events:none}
+  :root[data-modo="mostrar"] .ecra{grid-template-rows:calc(var(--topo) * 1%) 1fr 0}
+  :root[data-modo="mostrar"] .fila{padding-top:0}
+  :root[data-modo="mostrar"] .pega{
+    opacity:0;transition:opacity .25s ease;
+  }
+  :root[data-modo="mostrar"] .pega.visivel{opacity:1}
+  :root[data-modo="mostrar"] .barra{gap:10px;justify-content:flex-end;background:transparent;border-top:0}
+  .altura-barra{display:flex;align-items:center;gap:10px;flex:1;min-width:220px}
+  .altura-barra span{font-size:13px;color:var(--texto-2);font-weight:600;white-space:nowrap}
+  .altura-barra input[type=range]{flex:1;min-width:0;padding:0}
+  .altura-barra input[type=number]{
+    width:64px;flex:none;text-align:center;font-weight:600;padding:9px 6px;
+    border-radius:10px;border:1px solid var(--linha);
+    background:color-mix(in srgb, var(--texto) 4%, var(--painel));
+  }
+  .altura-barra{display:none}
+  :root[data-modo="mostrar"] #btnNovo,
+  :root[data-modo="mostrar"] #btnRepetir,
+  :root[data-modo="mostrar"] #btnManual,
+  :root[data-modo="mostrar"] #btnEcra{display:none}
+
+  /* ---------- barra ---------- */
+  .barra{
+    display:flex;align-items:center;gap:8px;padding:10px 12px calc(env(safe-area-inset-bottom) + 10px);
+    border-top:1px solid var(--linha);background:var(--painel);flex-wrap:wrap;
+  }
+  .btn{
+    border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 5%, var(--painel));
+    border-radius:12px;padding:12px 16px;font-weight:600;font-size:15px;
+  }
+  .btn.forte{background:var(--acento);border-color:var(--acento);color:#06120A;flex:1;min-width:200px;font-size:17px}
+  .btn.segundo{
+    flex:1;min-width:150px;border:2px solid var(--acc2);
+    background:color-mix(in srgb, var(--acc2) 22%, var(--painel));
+  }
+  .btn.icone{width:46px;padding:12px 0;display:grid;place-items:center}
+  .btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .btn[disabled]{opacity:.4}
+  .estado{margin-left:auto;font-size:13px;color:var(--texto-2);font-weight:600;white-space:nowrap}
+
+  /* ---------- painéis ---------- */
+  .folha{position:fixed;inset:0;z-index:40;display:none;background:rgba(0,0,0,.6)}
+  .folha[open]{display:block}
+  #folhaConfirmar{z-index:60}
+  .folha .painel{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:min(100%,560px);
+    max-height:88dvh;overflow-y:auto;background:var(--painel);border:1px solid var(--linha);
+    border-radius:18px 18px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 22px);
+  }
+  .folha .painel.largo{
+    width:min(100%,820px);height:min(86dvh,700px);max-height:calc(100dvh - 32px);
+    display:flex;flex-direction:column;overflow:hidden;padding:22px 0 0;
+  }
+  .folha .painel.largo > h2,.folha .painel.largo > p.sub{padding:0 64px 0 22px}
+  .folha .painel.largo > .abas{padding:0 22px}
+  .folha .painel.largo .corpo{flex:1;min-height:0;overflow-y:auto;padding:4px 22px calc(env(safe-area-inset-bottom) + 22px)}
+  @media (min-width:680px){ .folha .painel{border-radius:18px;bottom:16px} }
+  .folha h2{margin:0 0 6px;font-size:20px}
+  .folha p.sub{margin:0 0 16px;color:var(--texto-2);font-size:14px;line-height:1.5}
+  .abas{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 16px}
+  .abas button{
+    border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 5%, var(--painel));
+    border-radius:999px;padding:9px 15px;font-size:14px;font-weight:600;color:var(--texto-2);
+  }
+  .abas button[aria-pressed="true"]{background:var(--acento);border-color:var(--acento);color:#06120A}
+  .aba[hidden]{display:none}
+  .campo{display:block;margin-bottom:16px}
+  .campo span{display:block;font-size:13px;color:var(--texto-2);margin-bottom:6px;font-weight:500}
+  .campo input,.campo select{
+    width:100%;padding:12px;border-radius:11px;border:1px solid var(--linha);
+    background:color-mix(in srgb, var(--texto) 4%, var(--painel));
+  }
+  .par{display:flex;gap:14px;flex-wrap:wrap}
+  .par .campo{flex:1;min-width:210px}
+  .linha-cursor{display:flex;align-items:center;gap:10px}
+  .linha-cursor input[type=range]{flex:1;min-width:0;padding:0}
+  .linha-cursor input[type=number]{width:76px;flex:none;text-align:center;font-weight:600}
+  .fila-botoes{display:flex;gap:9px}
+  .fila-botoes .btn{flex:1;justify-content:center;text-align:center}
+  .fechar{position:absolute;top:18px;right:18px;z-index:2}
+  .cores{display:flex;gap:8px;flex-wrap:wrap}
+  .cores button{width:38px;height:38px;border-radius:10px;border:2px solid transparent}
+  .cores button[aria-pressed="true"]{border-color:var(--texto)}
+  .aviso-cx{
+    border:1px solid var(--linha);border-left:3px solid var(--acc2);border-radius:10px;
+    padding:12px 14px;font-size:13.5px;color:var(--texto-2);line-height:1.55;margin-bottom:16px;
+    background:color-mix(in srgb, var(--texto) 4%, var(--painel));
+  }
+  .toast{
+    position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--texto);color:var(--fundo);
+    padding:11px 18px;border-radius:999px;font-weight:600;z-index:70;opacity:0;pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .toast.on{opacity:1}
 </style>
 </head>
 <body>
-  <div class="cartao">
-    <div class="icone">🍽️</div>
-    <h1>Visor de pedidos</h1>
-    <p>A abrir a aplicação. Se não avançar sozinho, use o botão.</p>
-    <a class="botao" href="https://claude.ai/code/artifact/975672d0-1cf0-45fa-9b2e-a2b6217e8831">Abrir Visor de pedidos</a>   <!-- <<< DESTINO -->
-    <div class="nota">É preciso ter sessão iniciada na conta do Claude neste dispositivo.</div>
+<div class="ecra">
+  <section class="chamada" id="chamada">
+    <div class="rotulo" id="rotulo">A ser servido</div>
+    <div class="zona" id="zona"><div class="numero vazio" id="numero">—</div></div>
+    <div class="sub-chamada" id="subChamada"></div>
+  </section>
+
+  <section class="fila">
+    <div class="pega" id="pega" role="separator" tabindex="0" aria-label="Arraste para mudar a altura da chamada" title="Arraste para mudar a altura da chamada"><i></i></div>
+    <div class="colunas">
+      <div class="coluna">
+        <div class="fila-topo">
+          <h2 id="tituloFila">Em preparação</h2>
+          <span class="conta" id="contaFila"></span>
+        </div>
+        <div class="cartoes" id="cartoes"></div>
+      </div>
+      <div class="coluna prontos" id="colunaProntos">
+        <div class="fila-topo">
+          <h2 id="tituloProntos">A entregar</h2>
+          <span class="conta" id="contaProntos"></span>
+        </div>
+        <div class="cartoes" id="cartoesProntos"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="barra">
+    <button class="btn forte" id="btnNovo" type="button">+ Pedido</button>
+    <button class="btn icone" id="btnRepetir" type="button" aria-label="Repetir a chamada">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 20v-6h6"/></svg>
+    </button>
+    <button class="btn icone" id="btnManual" type="button" aria-label="Juntar um número à mão">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h11M4 17h7"/><path d="M18 14v7M14.5 17.5h7"/></svg>
+    </button>
+    <button class="btn icone" id="btnEcra" type="button" aria-label="Ecrã inteiro">
+      <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+    <button class="btn icone" id="btnDefs" type="button" aria-label="Definições">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+    <span class="estado" id="estado"></span>
   </div>
+</div>
+
+<!-- Definições -->
+<div class="folha" id="folhaDefs" role="dialog" aria-modal="true">
+  <div class="painel largo">
+    <button class="btn icone fechar" type="button" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2>Definições do visor de pedidos</h2>
+    <p class="sub">Fica tudo guardado neste dispositivo.</p>
+    <div class="abas" id="dAbas">
+      <button type="button" data-aba="fila">Fila</button>
+      <button type="button" data-aba="ecra">Ecrã</button>
+      <button type="button" data-aba="letra">Letra</button>
+      <button type="button" data-aba="uso">Uso</button>
+    </div>
+    <div class="corpo">
+      <section class="aba" data-aba="fila">
+        <div class="par">
+          <label class="campo"><span>Numeração começa em</span>
+            <input id="dInicio" type="number" min="0" step="1" inputmode="numeric">
+          </label>
+          <label class="campo"><span>Volta a zero depois de</span>
+            <input id="dMax" type="number" min="0" step="1" inputmode="numeric" placeholder="0 = nunca">
+          </label>
+        </div>
+        <label class="campo"><span>Avisar quando um pedido passar de</span>
+          <div class="linha-cursor">
+            <input id="dDemora" type="range" min="0" max="60" step="1">
+            <input id="dDemoraNum" type="number" min="0" max="60" step="1" inputmode="numeric">
+            <span style="color:var(--texto-2);font-weight:600;font-size:13px">min</span>
+          </div>
+        </label>
+        <div class="aviso-cx">Os pedidos que passem desse tempo ficam com contorno de aviso. Zero desliga o aviso.</div>
+        <div class="fila-botoes">
+          <button class="btn" id="dLimparFila" type="button">Esvaziar a fila</button>
+          <button class="btn" id="dReiniciar" type="button">Reiniciar a numeração</button>
+        </div>
+      </section>
+
+      <section class="aba" data-aba="ecra" hidden>
+        <label class="campo"><span>Altura da chamada — <b id="lblTopo">66%</b></span>
+          <div class="linha-cursor">
+            <input id="dTopo" type="range" min="40" max="85" step="1">
+            <input id="dTopoNum" type="number" min="40" max="85" step="1" inputmode="numeric">
+            <span style="color:var(--texto-2);font-weight:600;font-size:13px">%</span>
+          </div>
+        </label>
+        <label class="campo"><span>Ecrã</span>
+          <button class="btn" id="dEcraInteiro" type="button" style="width:100%">Ecrã inteiro</button>
+        </label>
+        <div class="par">
+          <label class="campo"><span>Contagens nos títulos</span>
+            <select id="dContagens">
+              <option value="nao">Esconder</option>
+              <option value="sim">Mostrar “3 a preparar”</option>
+            </select>
+          </label>
+          <label class="campo"><span>Contador na barra</span>
+            <select id="dEstado">
+              <option value="nao">Esconder</option>
+              <option value="sim">Mostrar total e ligação</option>
+            </select>
+          </label>
+        </div>
+        <label class="campo"><span>Divisão das duas colunas</span>
+          <select id="dModoColunas">
+            <option value="auto">Automática — conforme os pedidos de cada lado</option>
+            <option value="fixo">Fixa — largura que eu definir</option>
+          </select>
+        </label>
+        <label class="campo" id="campoColProntos"><span>Largura da coluna “a entregar” — <b id="lblColProntos">40%</b></span>
+          <div class="linha-cursor">
+            <input id="dColProntos" type="range" min="20" max="65" step="1">
+            <input id="dColProntosNum" type="number" min="20" max="65" step="1" inputmode="numeric">
+            <span style="color:var(--texto-2);font-weight:600;font-size:13px">%</span>
+          </div>
+        </label>
+        <label class="campo"><span>Tamanho dos cartões da fila — <b id="lblCartao">100%</b></span>
+          <div class="linha-cursor">
+            <input id="dCartao" type="range" min="70" max="220" step="5">
+            <input id="dCartaoNum" type="number" min="70" max="220" step="5" inputmode="numeric">
+            <span style="color:var(--texto-2);font-weight:600;font-size:13px">%</span>
+          </div>
+        </label>
+        <div class="par">
+          <label class="campo"><span>Tema</span>
+            <select id="dTema">
+              <option value="escuro">Escuro</option>
+              <option value="preto">Preto absoluto</option>
+              <option value="azul">Azul-noite</option>
+              <option value="verde">Verde-escuro</option>
+              <option value="vinho">Vinho</option>
+              <option value="claro">Claro</option>
+              <option value="creme">Creme</option>
+              <option value="papel">Papel</option>
+              <option value="arctm">ARCTM verde — claro</option>
+              <option value="arctm-noite">ARCTM verde — noite</option>
+              <option value="arctm-azul">ARCTM azul — claro</option>
+              <option value="arctm-azul-noite">ARCTM azul — noite</option>
+              <option value="arctm-amarelo">ARCTM amarelo — claro</option>
+              <option value="arctm-amarelo-noite">ARCTM amarelo — noite</option>
+              <option value="arctm-tri">ARCTM tricolor — claro</option>
+              <option value="arctm-tri-noite">ARCTM tricolor — noite</option>
+            </select>
+          </label>
+          <label class="campo"><span>Tamanho dos textos</span>
+            <select id="dEsc">
+              <option value="0.85">Pequeno</option>
+              <option value="1">Normal</option>
+              <option value="1.25">Grande</option>
+              <option value="1.5">Muito grande</option>
+            </select>
+          </label>
+        </div>
+        <div class="campo"><span>Cor do número</span>
+          <div class="cores" id="dCores"></div>
+          <p class="sub" style="margin:8px 0 0">Cada tema traz a sua cor. Se escolher uma aqui, ela passa a mandar.</p>
+          <button class="btn" id="dCorTema" type="button" style="margin-top:10px">Seguir o tema</button>
+        </div>
+      </section>
+
+      <section class="aba" data-aba="letra" hidden>
+        <label class="campo"><span>Letra dos números</span><select id="dFonte"></select></label>
+        <label class="campo"><span>Rótulo por cima</span>
+          <input id="dRotulo" type="text" autocomplete="off" placeholder="A ser servido">
+        </label>
+        <div class="par">
+          <label class="campo"><span>Título da coluna esquerda</span>
+            <input id="dTituloFila" type="text" autocomplete="off" placeholder="Em preparação">
+          </label>
+          <label class="campo"><span>Título da coluna direita</span>
+            <input id="dTituloProntos" type="text" autocomplete="off" placeholder="A entregar">
+          </label>
+        </div>
+      </section>
+
+      <section class="aba" data-aba="uso" hidden>
+        <div class="par">
+          <label class="campo"><span>Som ao chamar</span>
+            <select id="dSom">
+              <option value="nao">Desligado</option>
+              <option value="dois">Dois toques</option>
+              <option value="tres">Três toques</option>
+              <option value="campainha">Campainha</option>
+              <option value="grave">Gongo grave</option>
+            </select>
+          </label>
+          <label class="campo"><span>Volume — <b id="lblVolume">70%</b></span>
+            <div class="linha-cursor">
+              <input id="dVolume" type="range" min="0" max="100" step="5">
+              <input id="dVolumeNum" type="number" min="0" max="100" step="5" inputmode="numeric">
+              <span style="color:var(--texto-2);font-weight:600;font-size:13px">%</span>
+            </div>
+          </label>
+        </div>
+        <label class="campo"><span>Função deste ecrã</span>
+          <select id="dModo">
+            <option value="controlo">Controlo — cria, chama e entrega</option>
+            <option value="mostrar">Só mostrar — informação, sem botões</option>
+          </select>
+        </label>
+        <div class="aviso-cx">
+          No modo <b>Só mostrar</b> desaparecem a barra e os botões dos cartões: fica apenas o número em serviço e a
+          lista em preparação. Ligue a partilha nos dois aparelhos para este ecrã acompanhar o que fizer no outro.
+          A barra reaparece por uns segundos se mexer o rato ou tocar no ecrã, para poder voltar às definições.
+        </div>
+        <div class="par">
+          <label class="campo"><span>Tocar num cartão</span>
+            <select id="dToqueCartao">
+              <option value="chamar">Chama esse pedido</option>
+              <option value="nada">Não faz nada — só pelos botões</option>
+            </select>
+          </label>
+          <label class="campo"><span>Partilhar entre dispositivos</span>
+            <select id="dPartilha">
+              <option value="nao">Não — só este ecrã</option>
+              <option value="sala">Sala com código — sem contas</option>
+              <option value="claude">Conta Claude — precisa de sessão iniciada</option>
+            </select>
+          </label>
+        </div>
+        <label class="campo" id="campoCodigo" hidden><input id="dCodigo" type="hidden"></label>
+        <div class="par" id="camposSala">
+          <label class="campo"><span>Nome da sala</span>
+            <input id="dSalaNome" type="text" autocomplete="off" spellcheck="false" placeholder="ex.: arctm-festa">
+          </label>
+          <label class="campo"><span>Palavra-passe da sala</span>
+            <input id="dSalaPasse" type="password" autocomplete="new-password" placeholder="inventada por si">
+          </label>
+        </div>
+        <details class="aviso-cx" id="avancadoSala" style="padding:0;border-left-width:3px">
+          <summary style="cursor:pointer;padding:12px 14px;font-weight:600">Servidor de mensagens (avançado)</summary>
+          <div style="padding:0 14px 14px">
+            <label class="campo"><span>Endereço</span>
+              <input id="dSalaServidor" type="text" autocomplete="off" spellcheck="false" placeholder="wss://broker.emqx.io:8084/mqtt">
+            </label>
+            <div class="par">
+              <label class="campo"><span>Utilizador (se o servidor exigir)</span>
+                <input id="dSalaUtilizador" type="text" autocomplete="off">
+              </label>
+              <label class="campo"><span>Palavra-passe do servidor</span>
+                <input id="dSalaServidorPasse" type="password" autocomplete="new-password">
+              </label>
+            </div>
+          </div>
+        </details>
+        <div class="aviso-cx" id="notaSala">
+          Todos os ecrãs com o mesmo código veem os mesmos pedidos. Escolha um código difícil de adivinhar —
+          a ligação passa por um servidor público de mensagens, sem contas nem registo. Funciona quando as
+          aplicações estão alojadas por si; dentro do Claude, use a partilha por conta.
+        </div>
+        <label class="campo"><span>Estado da partilha</span>
+          <div class="fila-botoes">
+            <button class="btn" id="dTestarNuvem" type="button">Testar ligação</button>
+            <button class="btn" id="dEnviarNuvem" type="button">Enviar este ecrã</button>
+          </div>
+        </label>
+        <div class="aviso-cx" id="dDiagnostico">Carregue em “Testar ligação” para ver o estado.</div>
+
+        <label class="campo"><span>Definições deste visor</span>
+          <div class="fila-botoes">
+            <button class="btn" id="dCopiarDefs" type="button">Copiar</button>
+            <button class="btn" id="dColarDefs" type="button">Colar</button>
+          </div>
+          <div class="fila-botoes" style="margin-top:9px">
+            <button class="btn" id="dGuardarDefs" type="button">Guardar ficheiro</button>
+            <label class="btn" style="text-align:center;cursor:pointer" for="dFicheiroDefs">Abrir ficheiro</label>
+            <input id="dFicheiroDefs" type="file" accept=".json,application/json,text/plain" hidden>
+          </div>
+        </label>
+        <textarea id="dTextoDefs" rows="3" hidden style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 4%, var(--painel));font-family:ui-monospace,monospace;font-size:12.5px;margin-bottom:16px"></textarea>
+        <div class="aviso-cx">
+          <b>Teclado e comandos.</b> Espaço, Enter, seta direita ou Page Down criam um pedido novo.
+          Seta esquerda ou Page Up chamam o mais antigo. R repete a chamada. E entrega o pedido chamado.
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- Número à mão -->
+<div class="folha" id="folhaManual" role="dialog" aria-modal="true">
+  <div class="painel">
+    <h2>Juntar um número</h2>
+    <p class="sub">Para pedidos que vêm com número próprio, de talão ou de outro sítio.</p>
+    <label class="campo"><span>Número</span>
+      <input id="campoManual" type="number" min="0" step="1" inputmode="numeric">
+    </label>
+    <div class="fila-botoes">
+      <button class="btn" id="manCancelar" type="button">Cancelar</button>
+      <button class="btn forte" id="manOk" type="button">Juntar à fila</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmação -->
+<div class="folha" id="folhaConfirmar" role="dialog" aria-modal="true">
+  <div class="painel">
+    <h2 id="cfT">Confirmar</h2>
+    <p class="sub" id="cfM"></p>
+    <div class="fila-botoes">
+      <button class="btn" id="cfNao" type="button">Cancelar</button>
+      <button class="btn forte" id="cfSim" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(s){ return document.querySelector(s); };
+  var LS = {
+    ler:function(k,d){ try{ var v=localStorage.getItem("pedidos:"+k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
+    esc:function(k,v){ try{ localStorage.setItem("pedidos:"+k, JSON.stringify(v)); }catch(e){} }
+  };
+  var CORES = ["#22C55E","#16A34A","#1E8F42","#38BDF8","#2A8FC4","#3BA7DC","#E8C61A","#C9A400",
+               "#FB923C","#F87171","#A78BFA","#2DD4BF","#EAF1F8","#111827"];
+  // cada tema traz a sua cor de número
+  var COR_DO_TEMA = {
+    "escuro":"#22C55E","preto":"#22C55E","azul":"#38BDF8","verde":"#2DD4BF","vinho":"#F87171",
+    "claro":"#16A34A","creme":"#B45309","papel":"#111827",
+    "arctm":"#1E8F42","arctm-noite":"#E8C61A",
+    "arctm-azul":"#2A8FC4","arctm-azul-noite":"#3BA7DC",
+    "arctm-amarelo":"#C9A400","arctm-amarelo-noite":"#E8C61A",
+    "arctm-tri":"#1E8F42","arctm-tri-noite":"#E8C61A"
+  };
+  var FONTES = [
+    {f:"Azeret Mono", p:800, n:"Azeret Mono — cheia"},
+    {f:"Martian Mono", p:700, n:"Martian Mono — larga"},
+    {f:"Rubik Mono One", p:400, n:"Rubik Mono One — bloco"},
+    {f:"JetBrains Mono", p:800, n:"JetBrains Mono"},
+    {f:"IBM Plex Mono", p:700, n:"IBM Plex Mono"},
+    {f:"Roboto Mono", p:700, n:"Roboto Mono"},
+    {f:"Share Tech Mono", p:400, n:"Mostrador digital"}
+  ];
+
+  // estado: lista de pedidos e número em chamada
+  var pedidos = LS.ler("lista", []) || [];   // {n, estado:"espera"|"chamado", ts}
+  var atual = LS.ler("atual", null);
+  var contador = LS.ler("contador", null);
+
+  var db=null, promessaDb=null, subEstado=null, estadoNuvem="desligado", tentar=null;
+
+  // como está a partilhar: "nao", "sala" (código, sem contas) ou "claude" (conta iniciada)
+  function partilha(){
+    var v = LS.ler("partilha", null);
+    if(v) return v;
+    return LS.ler("nuvem","nao")==="sim" ? "claude" : "nao";   // compatível com a versão anterior
+  }
+  var APP_SALA = "pedidos";
+  /* ---------- sala protegida: nome + palavra-passe, conteúdo cifrado ---------- */
+  function nomeSala(){ return String(LS.ler("salaNome","")).trim(); }
+  function passeSala(){ return String(LS.ler("salaPasse","")); }
+  function servidorSala(){ return String(LS.ler("salaServidor","wss://broker.emqx.io:8084/mqtt")).trim(); }
+
+  var chaveSala = null, chaveDe = "";
+  function bytes(txt){ return new TextEncoder().encode(txt); }
+  function hex(buf){
+    return Array.prototype.map.call(new Uint8Array(buf), function(b){
+      return ("0"+b.toString(16)).slice(-2);
+    }).join("");
+  }
+  // o próprio caminho da sala nasce do nome e da palavra-passe: não se adivinha
+  function caminhoSala(){
+    return crypto.subtle.digest("SHA-256", bytes("arctm|"+nomeSala()+"|"+passeSala()+"|"+APP_SALA))
+      .then(function(h){ return "arctm/" + hex(h).slice(0,32); });
+  }
+  function chave(){
+    var marca = nomeSala()+"|"+passeSala();
+    if(chaveSala && chaveDe===marca) return Promise.resolve(chaveSala);
+    return crypto.subtle.importKey("raw", bytes(passeSala()), "PBKDF2", false, ["deriveKey"])
+      .then(function(base){
+        return crypto.subtle.deriveKey(
+          {name:"PBKDF2", salt:bytes("arctm|"+nomeSala()), iterations:120000, hash:"SHA-256"},
+          base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+      })
+      .then(function(k){ chaveSala=k; chaveDe=marca; return k; });
+  }
+  function cifrar(obj){
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    return chave().then(function(k){
+      return crypto.subtle.encrypt({name:"AES-GCM", iv:iv}, k, bytes(JSON.stringify(obj)));
+    }).then(function(cif){
+      return JSON.stringify({v:1, iv:hex(iv), d:hex(cif)});
+    });
+  }
+  function deHex(t){
+    var a=new Uint8Array(t.length/2);
+    for(var i=0;i<a.length;i++) a[i]=parseInt(t.substr(i*2,2),16);
+    return a;
+  }
+  function decifrar(texto){
+    var pacote;
+    try{ pacote=JSON.parse(texto); }catch(e){ return Promise.reject(new Error("formato")); }
+    if(!pacote || !pacote.iv || !pacote.d) return Promise.reject(new Error("formato"));
+    return chave().then(function(k){
+      return crypto.subtle.decrypt({name:"AES-GCM", iv:deHex(pacote.iv)}, k, deHex(pacote.d));
+    }).then(function(claro){
+      return JSON.parse(new TextDecoder().decode(claro));
+    });
+  }
+
+  var SALA = {cli:null, estado:"desligada", id:Math.random().toString(36).slice(2,10), topico:""};
+  function carregarMqtt(){
+    if(window.mqtt) return Promise.resolve(window.mqtt);
+    return new Promise(function(res, rej){
+      var sc=document.createElement("script");
+      sc.src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.15.2/mqtt.min.js";
+      sc.onload=function(){ window.mqtt ? res(window.mqtt) : rej(new Error("biblioteca não carregou")); };
+      sc.onerror=function(){ rej(new Error("não foi possível carregar a biblioteca")); };
+      document.head.appendChild(sc);
+    });
+  }
+  function desligarSala(){
+    if(SALA.cli){ try{ SALA.cli.end(true); }catch(e){} SALA.cli=null; }
+    SALA.estado="desligada";
+  }
+  function ligarSala(){
+    if(partilha()!=="sala"){ desligarSala(); return; }
+    if(!nomeSala() || !passeSala()){
+      desligarSala(); SALA.estado="falta nome ou palavra-passe"; desenhar(); return;
+    }
+    SALA.estado="a ligar"; desenhar();
+    Promise.all([carregarMqtt(), caminhoSala()]).then(function(r){
+      var mqtt=r[0]; SALA.topico=r[1];
+      desligarSala();
+      var opcoes = {clientId:"arctm-"+SALA.id, reconnectPeriod:4000, connectTimeout:8000, clean:true};
+      var u=String(LS.ler("salaUtilizador","")).trim(), pw=String(LS.ler("salaServidorPasse",""));
+      if(u){ opcoes.username=u; opcoes.password=pw; }
+      var cli = mqtt.connect(servidorSala(), opcoes);
+      SALA.cli=cli;
+      cli.on("connect", function(){
+        SALA.estado="ligada";
+        cli.subscribe(SALA.topico, {qos:0});
+        publicarSala(); desenhar();
+      });
+      cli.on("reconnect", function(){ SALA.estado="a ligar"; desenhar(); });
+      cli.on("close", function(){ if(SALA.estado==="ligada"){ SALA.estado="sem ligação"; desenhar(); } });
+      cli.on("error", function(){ SALA.estado="sem ligação"; desenhar(); });
+      cli.on("message", function(t, corpo){
+        decifrar(corpo.toString()).then(function(d){
+          if(!d || d.de===SALA.id) return;   // eco do próprio ecrã
+          ultimaRecebida=Date.now();
+          aplicarRemoto(d, true);
+        }).catch(function(){ /* mensagem de outra sala ou palavra-passe errada: ignorar */ });
+      });
+    }).catch(function(){ SALA.estado="sem ligação"; desenhar(); });
+  }
+  function publicarSala(){
+    if(partilha()!=="sala" || !SALA.cli || !SALA.cli.connected || !SALA.topico) return;
+    cifrar({lista:pedidos, atual:atual, contador:contador, ts:Date.now(), de:SALA.id}).then(function(txt){
+      try{ SALA.cli.publish(SALA.topico, txt, {qos:0, retain:true}); }catch(e){}
+    }).catch(function(){});
+  }
+
+
+  // o corpo do documento vem de uma função: snap.data()
+  // os dados vindos da nuvem chegam congelados: trabalhamos sempre sobre uma cópia
+  function copia(v){
+    try{ return JSON.parse(JSON.stringify(v)); }catch(e){ return v; }
+  }
+  function corpoDe(snap){
+    if(!snap) return {};
+    try{
+      if(typeof snap.data === "function"){ return snap.data() || {}; }
+      return snap.data || {};
+    }catch(e){ return {}; }
+  }
+  var tToast;
+  // erros silenciosos passam a ser visíveis, em vez de a app parar sem explicação
+  var avisoErro = 0;
+  function comunicarErro(e){
+    var agora = Date.now();
+    if(agora - avisoErro < 4000) return;
+    avisoErro = agora;
+    try{ toast("Algo falhou: " + ((e && (e.message || (e.reason && e.reason.message))) || "erro inesperado")); }catch(x){}
+  }
+  window.addEventListener("error", comunicarErro);
+  window.addEventListener("unhandledrejection", comunicarErro);
+
+  function toast(m){
+    var t=$("#toast"); t.textContent=m; t.classList.add("on");
+    clearTimeout(tToast); tToast=setTimeout(function(){ t.classList.remove("on"); }, 2200);
+  }
+  var resolver=null;
+  function confirmar(titulo, texto, rotulo){
+    $("#cfT").textContent=titulo; $("#cfM").textContent=texto;
+    $("#cfSim").textContent=rotulo||"Confirmar";
+    $("#folhaConfirmar").setAttribute("open","");
+    return new Promise(function(res){ resolver=res; });
+  }
+  function responder(v){
+    $("#folhaConfirmar").removeAttribute("open");
+    if(resolver){ var r=resolver; resolver=null; r(v); }
+  }
+  $("#cfSim").addEventListener("click", function(){ responder(true); });
+  $("#cfNao").addEventListener("click", function(){ responder(false); });
+
+  /* ---------- aspeto ---------- */
+  function fonteNum(){
+    var f=LS.ler("fonte","Azeret Mono");
+    for(var i=0;i<FONTES.length;i++) if(FONTES[i].f===f) return f;
+    return "Azeret Mono";
+  }
+  function pesoNum(){
+    var f=fonteNum();
+    for(var i=0;i<FONTES.length;i++) if(FONTES[i].f===f) return FONTES[i].p;
+    return 800;
+  }
+  function soMostrar(){ return LS.ler("modo","controlo")==="mostrar"; }
+  function aplicarAspeto(){
+    var r=document.documentElement;
+    r.setAttribute("data-tema", LS.ler("tema","escuro"));
+    r.setAttribute("data-modo", LS.ler("modo","controlo"));
+    r.style.setProperty("--acento", LS.ler("cor", CORES[0]));
+    r.style.setProperty("--esc", LS.ler("esc","1"));
+    r.style.setProperty("--topo", LS.ler("topo",66));
+    r.style.setProperty("--cartao", (parseInt(LS.ler("cartao",100),10)||100)/100);
+    r.style.setProperty("--fonte", '"'+fonteNum()+'"');
+    r.style.setProperty("--peso", pesoNum());
+    $("#rotulo").textContent = LS.ler("rotulo","A ser servido");
+    $("#tituloFila").textContent = LS.ler("tituloFila","Em preparação");
+    $("#tituloProntos").textContent = LS.ler("tituloProntos","A entregar");
+    if(LS.ler("modoColunas","auto")!=="auto"){
+      r.style.setProperty("--col-prontos", (parseInt(LS.ler("colProntos",40),10)||40)+"%");
+    }
+  }
+
+  /* ---------- tamanho do número ---------- */
+  var proporcoes={};
+  function medirGlifo(){
+    var f=fonteNum();
+    if(proporcoes[f]) return proporcoes[f];
+    var p={alt:0.72, larg:0.6};
+    try{
+      var cv=document.createElement("canvas"), ctx=cv.getContext("2d");
+      ctx.font=pesoNum()+' 200px "'+f+'", ui-monospace, monospace';
+      var m=ctx.measureText("8");
+      if(m.actualBoundingBoxAscent && m.width){
+        p={alt:(m.actualBoundingBoxAscent+(m.actualBoundingBoxDescent||0))/200, larg:m.width/200};
+      }
+    }catch(e){}
+    proporcoes[f]=p;
+    return p;
+  }
+  function ajustarNumero(){
+    var el=$("#numero"), zona=$("#zona");
+    if(!el||!zona) return;
+    if(el.classList.contains("vazio")){ el.style.fontSize=""; el.style.lineHeight=""; return; }
+    var p=medirGlifo();
+    el.style.lineHeight=p.alt;
+    var ah=(zona.clientHeight-4)*0.97, aw=(zona.clientWidth-8)*0.98;
+    if(ah<24||aw<24) return;
+    var n=Math.max(1, String(el.textContent||"").length);
+    var tam=Math.max(28, Math.min(ah/p.alt, aw/(n*p.larg+0.04)));
+    el.style.fontSize=Math.floor(tam)+"px";
+    // confirmação com as medidas reais do que ficou desenhado
+    var voltas=0;
+    function transborda(){
+      var r=el.getBoundingClientRect(), z=zona.getBoundingClientRect();
+      return r.width > z.width-4 || r.height > z.height-4;
+    }
+    while(voltas++<40 && transborda()){
+      tam*=0.95; if(tam<28) break;
+      el.style.fontSize=Math.floor(tam)+"px";
+    }
+  }
+  function remedir(){ proporcoes={}; desenhar(); }
+
+  /* ---------- som ---------- */
+  var audio=null;
+  var SONS={
+    dois:{ondas:[[880,0,.22],[1320,.18,.24]],tipo:"sine"},
+    tres:{ondas:[[660,0,.16],[880,.14,.16],[1175,.28,.3]],tipo:"sine"},
+    campainha:{ondas:[[1568,0,.5],[2093,.02,.45]],tipo:"triangle"},
+    grave:{ondas:[[196,0,.9],[293,.05,.8]],tipo:"sine"}
+  };
+  function apitar(){
+    var som=SONS[LS.ler("som","dois")];
+    var vol=(parseInt(LS.ler("volume",70),10)||0)/100;
+    if(!som || vol<=0) return;
+    try{
+      audio = audio || new (window.AudioContext||window.webkitAudioContext)();
+      if(audio.state==="suspended") audio.resume();
+      som.ondas.forEach(function(o){
+        var osc=audio.createOscillator(), g=audio.createGain();
+        osc.type=som.tipo; osc.frequency.value=o[0];
+        var ini=audio.currentTime+o[1], fim=ini+o[2];
+        g.gain.setValueAtTime(0.0001, ini);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0002,0.32*vol), ini+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, fim);
+        osc.connect(g); g.connect(audio.destination);
+        osc.start(ini); osc.stop(fim+0.02);
+      });
+    }catch(e){}
+  }
+
+  /* ---------- dados ---------- */
+  function guardar(){
+    LS.esc("lista", pedidos); LS.esc("atual", atual); LS.esc("contador", contador);
+    publicarSala();
+    if(partilha()==="claude" && db){
+      db.doc("pedidos/estado").set({lista:pedidos, atual:atual, contador:contador, ts:Date.now()})
+        .then(function(){ ultimaEnviada=Date.now(); ultimoErro=null; })
+        .catch(function(err){
+          ultimoErro=String(err && err.message || err);
+          estadoNuvem="sem ligação"; desenhar();
+        });
+    }
+  }
+  function proximoNumero(){
+    var inicio = parseInt(LS.ler("inicio",1),10); if(isNaN(inicio)) inicio=1;
+    var limite = parseInt(LS.ler("max",0),10) || 0;
+    if(contador===null || contador===undefined) contador = inicio - 1;
+    var n = contador + 1;
+    if(limite && n > limite) n = inicio;
+    contador = n;
+    return n;
+  }
+  function novoPedido(){
+    var n = proximoNumero();
+    pedidos = pedidos.concat([{n:n, estado:"espera", ts:Date.now()}]);
+    guardar(); desenhar();
+    toast("Pedido "+n+" na fila");
+  }
+  function juntarManual(n){
+    pedidos = pedidos.concat([{n:n, estado:"espera", ts:Date.now()}]);
+    if(contador===null || n>contador) contador=n;
+    guardar(); desenhar();
+    toast("Pedido "+n+" na fila");
+  }
+  function chamar(n){
+    var achou=false;
+    pedidos = pedidos.map(function(p){
+      if(p.n!==n) return p;
+      achou=true;
+      return {n:p.n, estado:"chamado", ts:p.ts, chamado:Date.now()};
+    });
+    if(!achou) return;
+    atual = n;
+    guardar(); desenhar(true); apitar();
+  }
+  function chamarMaisAntigo(){
+    var espera = pedidos.filter(function(p){ return p.estado==="espera"; });
+    if(!espera.length){
+      var chamados = pedidos.filter(function(p){ return p.estado==="chamado"; });
+      if(chamados.length){ toast("Já estão todos chamados"); return; }
+      toast("A fila está vazia"); return;
+    }
+    espera.sort(function(a,b){ return a.ts-b.ts; });
+    chamar(espera[0].n);
+  }
+  function repetir(){
+    if(atual===null || atual===undefined){ toast("Ainda não chamou nenhum"); return; }
+    desenhar(true); apitar();
+  }
+  function entregar(n){
+    var p = pedidos.filter(function(x){ return x.n===n; })[0];
+    if(!p) return;
+    confirmar("Pedido "+n+" entregue?", "Sai da fila. Se ainda estiver a ser servido, deixa também de aparecer em cima.", "Entregue")
+      .then(function(ok){
+        if(!ok) return;
+        pedidos = pedidos.filter(function(x){ return x.n!==n; });
+        if(atual===n){
+          var chamados = pedidos.filter(function(x){ return x.estado==="chamado"; });
+          atual = chamados.length ? chamados[chamados.length-1].n : null;
+        }
+        guardar(); desenhar();
+        toast("Pedido "+n+" entregue");
+      });
+  }
+
+  /* ---------- desenho ---------- */
+  var tPisca=null;
+  function piscarNumero(){
+    var el=$("#numero");
+    if(!el || el.classList.contains("vazio")) return;
+    el.classList.remove("piscar");
+    void el.offsetWidth;              // reinicia a animação
+    el.classList.add("piscar");
+    clearTimeout(tPisca);
+    tPisca=setTimeout(function(){ el.classList.remove("piscar"); }, 2600);
+  }
+  function minutos(ts){ return Math.floor((Date.now()-ts)/60000); }
+  function desenhar(piscar){
+    var el=$("#numero");
+    var semChamada = (atual===null || atual===undefined);
+    if(semChamada){
+      el.textContent="sem chamada"; el.classList.add("vazio");
+    } else {
+      el.textContent=String(atual); el.classList.remove("vazio");
+    }
+    if(piscar) piscarNumero();   // um redesenho normal nunca interrompe o piscar
+
+    var chamados = pedidos.filter(function(p){ return p.estado==="chamado"; });
+    var espera = pedidos.filter(function(p){ return p.estado==="espera"; });
+    var outros = chamados.filter(function(p){ return p.n!==atual; }).map(function(p){ return p.n; });
+    $("#subChamada").innerHTML = outros.length
+      ? ("também prontos: <b style='color:var(--texto)'>"+outros.join(" · ")+"</b>")
+      : "";
+
+    if(LS.ler("modoColunas","auto")==="auto"){
+      var nE = espera.length, nP = chamados.length;
+      var parte;
+      if(!nE && !nP) parte = 40;                       // ambos vazios: meio-termo
+      else if(!nP) parte = 22;                          // nada por entregar: quase tudo à esquerda
+      else if(!nE) parte = 66;                          // nada em preparação: espaço para a direita
+      else parte = Math.round(nP/(nE+nP)*100);
+      parte = Math.max(22, Math.min(66, parte));
+      document.documentElement.style.setProperty("--col-prontos", parte+"%");
+    }
+    var verContagens = LS.ler("contagens","nao")==="sim";
+    $("#contaFila").textContent = (verContagens && espera.length) ? (espera.length+" a preparar") : "";
+    $("#contaProntos").textContent = (verContagens && chamados.length) ? (chamados.length+" à espera") : "";
+
+    var limiteDemora = parseInt(LS.ler("demora",0),10) || 0;
+    var c=$("#cartoes"), cp=$("#cartoesProntos");
+    c.innerHTML=""; cp.innerHTML="";
+
+    var emEspera = espera.slice().sort(function(a,b){ return a.ts-b.ts; });
+    var jaChamados = chamados.slice().sort(function(a,b){ return (b.chamado||b.ts)-(a.chamado||a.ts); });
+
+    if(!emEspera.length){
+      var v1=document.createElement("div"); v1.className="sem-fila";
+      v1.textContent = pedidos.length ? "Nada em preparação." : "Sem pedidos. Toque em “+ Pedido” para começar.";
+      c.appendChild(v1);
+    }
+    if(!jaChamados.length){
+      var v2=document.createElement("div"); v2.className="sem-fila";
+      v2.textContent="Nada por entregar.";
+      cp.appendChild(v2);
+    }
+
+    emEspera.concat(jaChamados).forEach(function(p){
+      var d=document.createElement("div");
+      var min=minutos(p.ts);
+      d.className="pedido"+(p.estado==="chamado"?" chamado":"")+
+        ((limiteDemora && min>=limiteDemora && p.estado==="espera")?" demora":"");
+      d.innerHTML =
+        '<span class="n">'+p.n+'</span>'+
+        '<span class="tempo">'+(min<1?"agora":min+" min")+(p.estado==="chamado"?" · chamado":"")+'</span>'+
+        '<div class="acoes">'+
+          '<button class="chamar" type="button" title="'+(p.estado==="chamado"?"Chamar outra vez o pedido ":"Chamar o pedido ")+p.n+'" aria-label="Chamar o pedido '+p.n+'">'+
+            '<svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1Z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>'+
+          '<button class="entregar" type="button" title="Marcar o pedido '+p.n+' como entregue" aria-label="Entregue">'+
+            '<svg viewBox="0 0 24 24"><path d="m4 12.5 5 5L20 6.5"/></svg></button>'+
+        '</div>';
+      var bs=d.querySelectorAll("button");
+      bs[0].addEventListener("click", function(e){ e.stopPropagation(); chamar(p.n); });
+      bs[1].addEventListener("click", function(e){ e.stopPropagation(); entregar(p.n); });
+      if(!soMostrar()){
+        d.addEventListener("click", function(){
+          if(LS.ler("toqueCartao","chamar")==="chamar") chamar(p.n);
+        });
+      }
+      (p.estado==="chamado" ? cp : c).appendChild(d);
+    });
+
+    var verEstado = LS.ler("estadoBarra","nao")==="sim";
+    var modo = partilha();
+    var ligacaoMa = (modo==="claude" && estadoNuvem!=="ligado") || (modo==="sala" && SALA.estado!=="ligada");
+    var e2=$("#estado");
+    if(verEstado){
+      var prefixo = modo==="claude"
+        ? (estadoNuvem==="ligado" ? "partilhado · " : estadoNuvem==="a ligar" ? "a ligar… · " : "sem ligação · ")
+        : modo==="sala"
+        ? (SALA.estado==="ligada" ? "sala · " : SALA.estado+" · ")
+        : "";
+      e2.hidden=false;
+      e2.textContent = prefixo + pedidos.length + (pedidos.length===1?" pedido":" pedidos");
+    } else {
+      // escondido, mas um problema de ligação continua a avisar
+      e2.hidden = !ligacaoMa;
+      e2.textContent = ligacaoMa ? (modo==="sala" ? SALA.estado : (estadoNuvem==="a ligar" ? "a ligar…" : "sem ligação")) : "";
+    }
+    $("#btnRepetir").disabled = (atual===null || atual===undefined);
+    ajustarNumero();
+    // depois de o desenho assentar, confirma que continua a caber
+    requestAnimationFrame(ajustarNumero);
+  }
+  setInterval(function(){ desenhar(); }, 30000);   // atualiza os minutos
+
+  /* ---------- nuvem ---------- */
+  function ligarNuvem(){
+    if(promessaDb) return promessaDb;
+    if(!window.claude || typeof window.claude.use!=="function"){ promessaDb=Promise.resolve(null); return promessaDb; }
+    promessaDb = window.claude.use("db").then(function(ns){ db=ns; return ns; }).catch(function(){ db=null; return null; });
+    return promessaDb;
+  }
+  var sondagem=null;
+  function aplicarRemoto(d, comSom){
+    if(!d || !Array.isArray(d.lista)) return false;
+    var novoAtual = (d.atual===undefined ? null : d.atual);
+    var mudou = JSON.stringify(d.lista)!==JSON.stringify(pedidos) || novoAtual!==atual;
+    if(!mudou) return false;
+    var subiu = novoAtual!==null && novoAtual!==atual;
+    pedidos = copia(d.lista);
+    atual = novoAtual;
+    if(typeof d.contador==="number") contador = d.contador;
+    LS.esc("lista",pedidos); LS.esc("atual",atual); LS.esc("contador",contador);
+    ultimaRecebida = Date.now();
+    desenhar(subiu);
+    if(subiu && comSom) apitar();
+    return true;
+  }
+  function sondar(){
+    clearInterval(sondagem);
+    if(partilha()!=="claude") return;
+    sondagem = setInterval(function(){
+      if(!db || document.visibilityState!=="visible") return;
+      db.doc("pedidos/estado").get().then(function(snap){
+        var d=corpoDe(snap);
+        estadoNuvem="ligado"; ultimoErro=null;
+        if(snap && snap.exists) aplicarRemoto(d, true);
+      }).catch(function(err){
+        ultimoErro=String(err && err.message || err);
+        estadoNuvem="sem ligação";
+      });
+    }, 4000);
+  }
+  function subscrever(){
+    if(subEstado){ try{ subEstado(); }catch(e){} subEstado=null; }
+    clearTimeout(tentar);
+    if(partilha()!=="claude" || !db){ estadoNuvem="desligado"; clearInterval(sondagem); return; }
+    estadoNuvem="a ligar";
+    sondar();
+    try{
+      subEstado = db.doc("pedidos/estado").onSnapshot(function(snap){
+        estadoNuvem="ligado"; ultimaRecebida=Date.now(); ultimoErro=null;
+        var d=corpoDe(snap);
+        if(snap && snap.exists && aplicarRemoto(d, true)) return;
+        desenhar();
+      }, function(err){
+        ultimoErro=String(err && err.message || err);
+        estadoNuvem="sem ligação"; desenhar();
+        tentar=setTimeout(subscrever, 5000);
+      });
+    }catch(e){ estadoNuvem="sem ligação"; tentar=setTimeout(subscrever,5000); }
+  }
+  function activarNuvem(){
+    return ligarNuvem().then(function(ns){
+      if(!ns){
+        LS.esc("nuvem","nao"); LS.esc("partilha","nao");
+        if($("#dPartilha")) $("#dPartilha").value="nao";
+        estadoNuvem="desligado"; desenhar();
+        toast("A partilha não está disponível aqui"); return;
+      }
+      return db.doc("pedidos/estado").get().then(function(snap){
+        var d=corpoDe(snap);
+        if(snap && snap.exists && Array.isArray(d.lista)){
+          pedidos=copia(d.lista); atual=(d.atual===undefined?null:d.atual);
+          contador=(typeof d.contador==="number")?d.contador:contador;
+          LS.esc("lista",pedidos); LS.esc("atual",atual); LS.esc("contador",contador);
+        } else {
+          return db.doc("pedidos/estado").set({lista:pedidos, atual:atual, contador:contador, ts:Date.now()});
+        }
+      }).catch(function(){}).then(function(){
+        subscrever(); desenhar();
+        toast("Partilha ligada — abra o mesmo link no outro aparelho");
+      });
+    });
+  }
+  var ultimaRecebida = null, ultimaEnviada = null, ultimoErro = null;
+
+  function diagnostico(){
+    var linhas = [];
+    var modo=partilha();
+    linhas.push("<b>Partilha:</b> " + (modo==="sala" ? ("sala “"+(nomeSala()||"sem nome")+"”")
+                                     : modo==="claude" ? "conta Claude" : "desligada neste ecrã"));
+    linhas.push("<b>Ligação:</b> " + (modo==="sala" ? SALA.estado : estadoNuvem + (db ? "" : " (sem acesso à nuvem)")));
+    linhas.push("<b>Última receção:</b> " + (ultimaRecebida ? new Date(ultimaRecebida).toLocaleTimeString("pt-PT") : "ainda nenhuma"));
+    linhas.push("<b>Último envio:</b> " + (ultimaEnviada ? new Date(ultimaEnviada).toLocaleTimeString("pt-PT") : "ainda nenhum"));
+    linhas.push("<b>Na fila:</b> " + pedidos.length + " · <b>em serviço:</b> " + (atual===null||atual===undefined ? "—" : atual));
+    if(ultimoErro) linhas.push("<b>Erro:</b> " + ultimoErro);
+    if(modo==="nao") linhas.push("Ligue a partilha nos dois aparelhos.");
+    else if(modo==="sala") linhas.push("Os dois aparelhos têm de ter o mesmo código. A sala não funciona dentro do Claude — use as aplicações alojadas por si.");
+    else if(!db) linhas.push("Este ecrã não tem acesso à nuvem — abra o link publicado da aplicação.");
+    else linhas.push("Os dois aparelhos têm de abrir o mesmo link e estar na mesma conta.");
+    $("#dDiagnostico").innerHTML = linhas.join("<br>");
+  }
+  $("#dTestarNuvem").addEventListener("click", function(){
+    diagnostico();
+    if(partilha()==="sala"){
+      ligarSala();
+      toast(SALA.estado==="ligada" ? "Sala ligada" : "A ligar à sala…");
+      setTimeout(diagnostico, 1500);
+      return;
+    }
+    ligarNuvem().then(function(ns){
+      if(!ns){ ultimoErro="a nuvem não está disponível nesta janela"; diagnostico(); return; }
+      db.doc("pedidos/estado").get().then(function(snap){
+        var d=corpoDe(snap);
+        ultimoErro = null;
+        ultimaRecebida = Date.now();
+        toast(snap && snap.exists
+          ? ("Na nuvem: " + ((d.lista&&d.lista.length)||0) + " pedidos")
+          : "A nuvem ainda não tem nada guardado");
+        diagnostico();
+      }).catch(function(err){
+        ultimoErro = String(err && err.message || err);
+        diagnostico();
+      });
+    });
+  });
+  $("#dEnviarNuvem").addEventListener("click", function(){
+    if(partilha()==="sala"){ publicarSala(); diagnostico(); toast("Enviado para a sala"); return; }
+    if(partilha()!=="claude"){ toast("Ligue primeiro a partilha"); return; }
+    ligarNuvem().then(function(ns){
+      if(!ns){ toast("Sem acesso à nuvem"); return; }
+      db.doc("pedidos/estado").set({lista:pedidos, atual:atual, contador:contador, ts:Date.now()})
+        .then(function(){ ultimaEnviada=Date.now(); ultimoErro=null; diagnostico(); toast("Enviado para a nuvem"); })
+        .catch(function(err){ ultimoErro=String(err && err.message || err); diagnostico(); toast("Falhou o envio"); });
+    });
+  });
+
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState==="visible" && partilha()==="claude" && estadoNuvem!=="ligado") subscrever();
+  });
+
+  /* ---------- definições ---------- */
+  var abaDefs="fila";
+  function mostrarAba(nome){
+    abaDefs=nome;
+    document.querySelectorAll("#dAbas button").forEach(function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.aba===nome));
+    });
+    document.querySelectorAll(".aba").forEach(function(sec){ sec.hidden = sec.dataset.aba!==nome; });
+    var corpo=document.querySelector(".painel.largo .corpo"); if(corpo) corpo.scrollTop=0;
+  }
+  document.querySelectorAll("#dAbas button").forEach(function(b){
+    b.addEventListener("click", function(){ mostrarAba(b.dataset.aba); });
+  });
+  function desenharCores(){
+    var c=$("#dCores"); c.innerHTML="";
+    var atualCor=LS.ler("cor",CORES[0]);
+    CORES.forEach(function(cor){
+      var b=document.createElement("button"); b.type="button"; b.style.background=cor;
+      b.setAttribute("aria-label","Cor"); b.title="Cor do número";
+      b.setAttribute("aria-pressed", String(cor.toLowerCase()===String(atualCor).toLowerCase()));
+      b.addEventListener("click", function(){
+        LS.esc("cor",cor); LS.esc("corManual","sim"); aplicarAspeto(); desenharCores();
+      });
+      c.appendChild(b);
+    });
+  }
+  function sincronizar(){
+    $("#dInicio").value = LS.ler("inicio",1);
+    $("#dMax").value = LS.ler("max",0);
+    var dm=parseInt(LS.ler("demora",0),10)||0;
+    $("#dDemora").value=dm; $("#dDemoraNum").value=dm;
+    var tp=parseInt(LS.ler("topo",66),10)||66;
+    $("#dTopo").value=tp; $("#dTopoNum").value=tp; $("#lblTopo").textContent=tp+"%";
+    var ct=parseInt(LS.ler("cartao",100),10)||100;
+    $("#dCartao").value=ct; $("#dCartaoNum").value=ct; $("#lblCartao").textContent=ct+"%";
+    $("#dTema").value = LS.ler("tema","escuro");
+    $("#dEsc").value = String(LS.ler("esc","1"));
+    $("#dRotulo").value = LS.ler("rotulo","A ser servido");
+    $("#dTituloFila").value = LS.ler("tituloFila","Em preparação");
+    $("#dTituloProntos").value = LS.ler("tituloProntos","A entregar");
+    $("#dModoColunas").value = LS.ler("modoColunas","auto");
+    $("#campoColProntos").hidden = LS.ler("modoColunas","auto")==="auto";
+    $("#dContagens").value = LS.ler("contagens","nao");
+    $("#dEstado").value = LS.ler("estadoBarra","nao");
+    var cp2=parseInt(LS.ler("colProntos",40),10)||40;
+    $("#dColProntos").value=cp2; $("#dColProntosNum").value=cp2; $("#lblColProntos").textContent=cp2+"%";
+    $("#dSom").value = LS.ler("som","dois");
+    var vol=parseInt(LS.ler("volume",70),10);
+    $("#dVolume").value=vol; $("#dVolumeNum").value=vol; $("#lblVolume").textContent=vol+"%";
+    $("#dToqueCartao").value = LS.ler("toqueCartao","chamar");
+    $("#dModo").value = LS.ler("modo","controlo");
+    $("#dPartilha").value = partilha();
+    $("#dSalaNome").value = nomeSala();
+    $("#dSalaPasse").value = passeSala();
+    $("#dSalaServidor").value = LS.ler("salaServidor","");
+    $("#dSalaUtilizador").value = LS.ler("salaUtilizador","");
+    $("#dSalaServidorPasse").value = LS.ler("salaServidorPasse","");
+    camposPartilha();
+    var sel=$("#dFonte");
+    if(!sel.options.length){
+      FONTES.forEach(function(o){
+        var op=document.createElement("option"); op.value=o.f; op.textContent=o.n;
+        op.style.fontFamily='"'+o.f+'", monospace';
+        sel.appendChild(op);
+      });
+    }
+    sel.value=fonteNum();
+    desenharCores();
+  }
+
+  function ligarPar(idRange, idNum, chave, aoMudar){
+    function aplicar(v){
+      LS.esc(chave, v);
+      $(idRange).value=v; $(idNum).value=v;
+      if(aoMudar) aoMudar(v);
+      aplicarAspeto();
+  desenhar(); mostrarBarra();
+    }
+    $(idRange).addEventListener("input", function(){ aplicar(parseInt(this.value,10)); });
+    $(idNum).addEventListener("change", function(){
+      var min=parseInt($(idRange).min,10), max=parseInt($(idRange).max,10);
+      var v=parseInt(this.value,10);
+      if(isNaN(v)) v=parseInt(LS.ler(chave,min),10);
+      aplicar(Math.max(min, Math.min(max, v)));
+    });
+  }
+  ligarPar("#dTopo","#dTopoNum","topo", function(v){ $("#lblTopo").textContent=v+"%"; });
+  ligarPar("#dCartao","#dCartaoNum","cartao", function(v){ $("#lblCartao").textContent=v+"%"; });
+  ligarPar("#dColProntos","#dColProntosNum","colProntos", function(v){ $("#lblColProntos").textContent=v+"%"; });
+  $("#dModoColunas").addEventListener("change", function(){
+    LS.esc("modoColunas", this.value);
+    $("#campoColProntos").hidden = this.value==="auto";
+    aplicarAspeto(); desenhar();
+  });
+  ligarPar("#dDemora","#dDemoraNum","demora");
+
+  $("#dInicio").addEventListener("change", function(){
+    var v=parseInt(this.value,10); if(isNaN(v)||v<0) v=1;
+    LS.esc("inicio",v); this.value=v;
+  });
+  $("#dMax").addEventListener("change", function(){
+    var v=parseInt(this.value,10); if(isNaN(v)||v<0) v=0;
+    LS.esc("max",v); this.value=v;
+  });
+  $("#dTema").addEventListener("change", function(){
+    LS.esc("tema", this.value);
+    var sugerida = COR_DO_TEMA[this.value];
+    if(sugerida && LS.ler("corManual","nao")!=="sim") LS.esc("cor", sugerida);
+    aplicarAspeto(); desenharCores(); desenhar();
+  });
+  $("#dCorTema").addEventListener("click", function(){
+    LS.esc("corManual","nao");
+    var sugerida = COR_DO_TEMA[LS.ler("tema","escuro")];
+    if(sugerida) LS.esc("cor", sugerida);
+    aplicarAspeto(); desenharCores(); desenhar();
+    toast("A cor passa a seguir o tema");
+  });
+  $("#dEsc").addEventListener("change", function(){ LS.esc("esc",this.value); aplicarAspeto(); desenhar(); });
+  $("#dFonte").addEventListener("change", function(){
+    LS.esc("fonte",this.value); aplicarAspeto();
+    if(document.fonts && document.fonts.load){
+      document.fonts.load(pesoNum()+' 200px "'+this.value+'"', "0123456789").then(remedir).catch(remedir);
+    }
+    [80,300,800].forEach(function(ms){ setTimeout(remedir, ms); });
+    remedir();
+  });
+  $("#dRotulo").addEventListener("input", function(){ LS.esc("rotulo",this.value); aplicarAspeto(); });
+  $("#dTituloFila").addEventListener("input", function(){ LS.esc("tituloFila",this.value); aplicarAspeto(); });
+  $("#dTituloProntos").addEventListener("input", function(){ LS.esc("tituloProntos",this.value); aplicarAspeto(); });
+  $("#dContagens").addEventListener("change", function(){ LS.esc("contagens",this.value); desenhar(); });
+  $("#dEstado").addEventListener("change", function(){ LS.esc("estadoBarra",this.value); desenhar(); });
+  $("#dSom").addEventListener("change", function(){ LS.esc("som",this.value); apitar(); });
+  $("#dVolume").addEventListener("input", function(){
+    LS.esc("volume", parseInt(this.value,10));
+    $("#dVolumeNum").value = this.value;
+    $("#lblVolume").textContent=this.value+"%";
+  });
+  $("#dVolume").addEventListener("change", apitar);
+  $("#dVolumeNum").addEventListener("change", function(){
+    var v=parseInt(this.value,10); if(isNaN(v)) v=parseInt(LS.ler("volume",70),10);
+    v=Math.max(0,Math.min(100,v));
+    LS.esc("volume",v); this.value=v; $("#dVolume").value=v; $("#lblVolume").textContent=v+"%";
+    apitar();
+  });
+  $("#dToqueCartao").addEventListener("change", function(){ LS.esc("toqueCartao",this.value); });
+  $("#dModo").addEventListener("change", function(){
+    LS.esc("modo", this.value);
+    aplicarAspeto(); mostrarBarra(); desenhar();
+    toast(this.value==="mostrar" ? "Este ecrã passa a só mostrar" : "Este ecrã volta a controlar");
+  });
+  function camposPartilha(){
+    var modo=partilha();
+    $("#camposSala").hidden = modo!=="sala";
+    $("#avancadoSala").hidden = modo!=="sala";
+    $("#notaSala").hidden = modo!=="sala";
+  }
+  $("#dPartilha").addEventListener("change", function(){
+    LS.esc("partilha", this.value);
+    LS.esc("nuvem", this.value==="claude" ? "sim" : "nao");
+    camposPartilha();
+    desligarSala();
+    if(this.value==="claude"){ activarNuvem().then(diagnostico); }
+    else if(this.value==="sala"){ subscrever(); ligarSala(); toast((nomeSala()&&passeSala()) ? "A ligar à sala" : "Escreva o nome e a palavra-passe da sala"); }
+    else { subscrever(); estadoNuvem="desligado"; desenhar(); toast("Partilha desligada"); }
+  });
+  [["#dSalaNome","salaNome"],["#dSalaPasse","salaPasse"],
+   ["#dSalaServidor","salaServidor"],["#dSalaUtilizador","salaUtilizador"],
+   ["#dSalaServidorPasse","salaServidorPasse"]].forEach(function(par){
+    var el=$(par[0]);
+    if(!el) return;
+    el.addEventListener("change", function(){
+      LS.esc(par[1], this.value.trim());
+      chaveSala=null;
+      if(partilha()==="sala") ligarSala();
+    });
+  });
+
+  $("#dLimparFila").addEventListener("click", function(){
+    if(!pedidos.length){ toast("A fila já está vazia"); return; }
+    confirmar("Esvaziar a fila?", "Saem os "+pedidos.length+" pedidos, incluindo os que estão a ser servidos. Não há forma de recuperar.", "Esvaziar")
+      .then(function(ok){
+        if(!ok) return;
+        pedidos=[]; atual=null; guardar(); desenhar(); toast("Fila esvaziada");
+      });
+  });
+  $("#dReiniciar").addEventListener("click", function(){
+    confirmar("Reiniciar a numeração?", "O próximo pedido volta a começar em "+(parseInt(LS.ler("inicio",1),10)||1)+". A fila mantém-se.", "Reiniciar")
+      .then(function(ok){
+        if(!ok) return;
+        contador=null; guardar(); toast("Numeração reiniciada");
+      });
+  });
+
+  /* ---------- copiar e colar definições ---------- */
+  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","partilha","salaNome","salaServidor","salaUtilizador","som","volume","toqueCartao","modo"];
+  $("#dCopiarDefs").addEventListener("click", function(){
+    var texto=JSON.stringify(pacoteDefs()), ta=$("#dTextoDefs");
+    ta.hidden=false; ta.value=texto;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(texto).then(function(){ toast("Definições copiadas"); },
+        function(){ ta.focus(); ta.select(); });
+    } else { ta.focus(); ta.select(); }
+  });
+  function pacoteDefs(){
+    var pacote={app:"visor-pedidos", versao:1, exportado:new Date().toISOString()};
+    CHAVES.forEach(function(k){ var v=LS.ler(k,null); if(v!==null) pacote[k]=v; });
+    return pacote;
+  }
+  function aplicarPacote(pacote){
+    if(!pacote || pacote.app!=="visor-pedidos"){ toast("Essas definições não são deste visor"); return; }
+    confirmar("Aplicar estas definições?","Substitui as preferências deste ecrã. A fila de pedidos mantém-se.","Aplicar")
+      .then(function(ok){
+        if(!ok) return;
+        CHAVES.forEach(function(k){ if(k in pacote) LS.esc(k, pacote[k]); });
+        var ta=$("#dTextoDefs"); ta.hidden=true; ta.value="";
+        aplicarAspeto(); sincronizar(); mostrarBarra(); remedir();
+        toast("Definições aplicadas");
+      });
+  }
+  $("#dGuardarDefs").addEventListener("click", function(){
+    var texto = JSON.stringify(pacoteDefs(), null, 1);
+    var nome = "visor-pedidos-definicoes.json";
+    function guardarBlob(){
+      try{
+        var blob=new Blob([texto],{type:"application/json;charset=utf-8"});
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement("a"); a.href=url; a.download=nome; a.rel="noopener";
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); },1500);
+        toast("Se o download não aparecer, use Copiar");
+      }catch(e){
+        var ta=$("#dTextoDefs"); ta.hidden=false; ta.value=texto; ta.focus(); ta.select();
+        toast("Copie o texto abaixo");
+      }
+    }
+    if(window.claude && typeof window.claude.use==="function"){
+      window.claude.use("downloads").then(function(dl){
+        if(!dl) return guardarBlob();
+        dl.save({filename:nome, data:texto}).then(function(){ toast("Ficheiro guardado"); }, guardarBlob);
+      }).catch(guardarBlob);
+    } else guardarBlob();
+  });
+  $("#dFicheiroDefs").addEventListener("change", function(){
+    var f=this.files && this.files[0];
+    this.value="";
+    if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      var pacote;
+      try{ pacote=JSON.parse(String(r.result||"")); }
+      catch(e){ toast("O ficheiro não é válido"); return; }
+      aplicarPacote(pacote);
+    };
+    r.onerror=function(){ toast("Não consegui ler o ficheiro"); };
+    r.readAsText(f);
+  });
+  $("#dColarDefs").addEventListener("click", function(){
+    var ta=$("#dTextoDefs");
+    if(ta.hidden || !ta.value.trim()){ ta.hidden=false; ta.value=""; ta.focus(); toast("Cole o texto e carregue outra vez"); return; }
+    var pacote;
+    try{ pacote=JSON.parse(ta.value.trim()); }catch(e){ toast("O texto não é válido"); return; }
+    aplicarPacote(pacote);
+  });
+
+  /* ---------- barra e atalhos ---------- */
+  $("#btnNovo").addEventListener("click", novoPedido);
+  $("#btnRepetir").addEventListener("click", repetir);
+  $("#btnManual").addEventListener("click", function(){
+    $("#campoManual").value = String(((typeof contador==="number")?contador:0)+1);
+    $("#folhaManual").setAttribute("open","");
+    setTimeout(function(){ $("#campoManual").focus(); $("#campoManual").select(); },60);
+  });
+  $("#manCancelar").addEventListener("click", function(){ $("#folhaManual").removeAttribute("open"); });
+  $("#manOk").addEventListener("click", function(){
+    var n=parseInt(String($("#campoManual").value).replace(/[^0-9]/g,""),10);
+    if(isNaN(n)){ toast("Número inválido"); return; }
+    if(pedidos.some(function(p){ return p.n===n; })){ toast("Esse número já está na fila"); return; }
+    $("#folhaManual").removeAttribute("open");
+    juntarManual(n);
+  });
+  $("#campoManual").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); $("#manOk").click(); } });
+  $("#folhaManual").addEventListener("click", function(e){ if(e.target===this) this.removeAttribute("open"); });
+
+  function alternarEcraInteiro(){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else if(document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen().catch(function(){ toast("O ecrã inteiro não é permitido aqui"); });
+    }
+  }
+  $("#btnEcra").addEventListener("click", alternarEcraInteiro);
+  $("#dEcraInteiro").addEventListener("click", alternarEcraInteiro);
+  $("#btnDefs").addEventListener("click", function(){ sincronizar(); mostrarAba(abaDefs); $("#folhaDefs").setAttribute("open",""); });
+  document.querySelectorAll("[data-fechar]").forEach(function(b){
+    b.addEventListener("click", function(){ $("#folhaDefs").removeAttribute("open"); });
+  });
+  $("#folhaDefs").addEventListener("click", function(e){ if(e.target===this) this.removeAttribute("open"); });
+
+  var FRENTE=[" ","Spacebar","Enter","ArrowRight","ArrowDown","PageDown","N","n"];
+  var TRAS=["ArrowLeft","ArrowUp","PageUp","Backspace","P","p"];
+  document.addEventListener("keydown", function(e){
+    if($("#folhaDefs").hasAttribute("open")||$("#folhaConfirmar").hasAttribute("open")||$("#folhaManual").hasAttribute("open")) return;
+    var alvo=e.target;
+    if(alvo && (alvo.tagName==="INPUT"||alvo.tagName==="SELECT"||alvo.tagName==="TEXTAREA")) return;
+    if(soMostrar()) return;
+    if(FRENTE.indexOf(e.key)>=0){ e.preventDefault(); novoPedido(); return; }
+    if(TRAS.indexOf(e.key)>=0){ e.preventDefault(); chamarMaisAntigo(); return; }
+    if(e.key && e.key.toLowerCase()==="r"){ e.preventDefault(); repetir(); return; }
+    if(e.key && e.key.toLowerCase()==="e"){ e.preventDefault(); if(atual!==null && atual!==undefined) entregar(atual); }
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key!=="Escape") return;
+    if($("#folhaConfirmar").hasAttribute("open")){ responder(false); return; }
+    document.querySelectorAll(".folha[open]").forEach(function(f){ f.removeAttribute("open"); });
+  });
+
+  (function(){
+    var pega=$("#pega"); if(!pega) return;
+    var arrasto=null;
+    pega.addEventListener("pointerdown", function(e){
+      arrasto={y:e.clientY, topo:parseInt(LS.ler("topo",66),10)||66, altura:window.innerHeight||800};
+      document.documentElement.setAttribute("data-arrastar","");
+      try{ pega.setPointerCapture(e.pointerId); }catch(err){}
+      e.preventDefault();
+    });
+    pega.addEventListener("pointermove", function(e){
+      if(!arrasto) return;
+      var delta=(e.clientY-arrasto.y)/arrasto.altura*100;
+      aplicarTopo(arrasto.topo+delta);
+    });
+    ["pointerup","pointercancel"].forEach(function(ev){
+      pega.addEventListener(ev, function(e){
+        if(!arrasto) return;
+        arrasto=null;
+        document.documentElement.removeAttribute("data-arrastar");
+        try{ pega.releasePointerCapture(e.pointerId); }catch(err){}
+        desenhar();
+      });
+    });
+    pega.addEventListener("keydown", function(e){
+      var passo = e.key==="ArrowUp" ? 2 : e.key==="ArrowDown" ? -2 : 0;
+      if(!passo) return;
+      e.preventDefault();
+      aplicarTopo((parseInt(LS.ler("topo",66),10)||66)+passo);
+    });
+  })();
+
+  function aplicarTopo(v){
+    v = Math.max(40, Math.min(85, Math.round(v)));
+    LS.esc("topo", v);
+    document.documentElement.style.setProperty("--topo", v);
+    if($("#dTopo")){ $("#dTopo").value=v; $("#dTopoNum").value=v; $("#lblTopo").textContent=v+"%"; }
+    desenhar();
+  }
+
+  var tBarra=null;
+  function mostrarBarra(){
+    var b=document.querySelector(".barra");
+    if(!b) return;
+    if(!soMostrar()){ b.classList.remove("escondida"); clearTimeout(tBarra); return; }
+    b.classList.remove("escondida");
+    var pg=$("#pega"); if(pg) pg.classList.add("visivel");
+    clearTimeout(tBarra);
+    tBarra=setTimeout(function(){
+      if(soMostrar() && !$("#folhaDefs").hasAttribute("open")){
+        b.classList.add("escondida");
+        if(pg) pg.classList.remove("visivel");
+      }
+    }, 6000);
+  }
+  ["pointermove","pointerdown","keydown"].forEach(function(ev){
+    document.addEventListener(ev, mostrarBarra, {passive:true});
+  });
+
+  var tRedim=null;
+  window.addEventListener("resize", function(){ clearTimeout(tRedim); tRedim=setTimeout(function(){ desenhar(); },120); });
+  document.addEventListener("fullscreenchange", function(){ setTimeout(desenhar,120); });
+
+  /* ---------- arranque ---------- */
+  aplicarAspeto(); desenhar();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(remedir);
+  if(partilha()==="sala") ligarSala();
+  ligarNuvem().then(function(ns){
+    if(!ns){ $("#dPartilha").querySelector('option[value="claude"]').disabled = true; return; }
+    if(partilha()==="claude") activarNuvem();
+  });
+  // dicas em todos os botões
+  document.querySelectorAll("button[aria-label]:not([title])").forEach(function(b){ b.title=b.getAttribute("aria-label"); });
+})();
+</script>
 </body>
 </html>
