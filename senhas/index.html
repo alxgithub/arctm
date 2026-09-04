@@ -735,8 +735,8 @@
     }
   }
   function aplicarTema(){
-    document.documentElement.setAttribute("data-tema", LS.ler("tema","claro"));
-    document.documentElement.style.setProperty("--acento", LS.ler("cor",CORES[0]));
+    document.documentElement.setAttribute("data-tema", LS.ler("tema","arctm-azul"));
+    document.documentElement.style.setProperty("--acento", LS.ler("cor","#2A8FC4"));
     var comFantasma = LS.ler("fantasma","vazio")==="fantasma";
     document.documentElement.style.setProperty("--fantasma-visivel", comFantasma ? "visible" : "hidden");
     document.documentElement.style.setProperty("--fantasma-off", comFantasma ? "visible" : "hidden");
@@ -1183,7 +1183,7 @@
   }
   function desenharCores(){
     var c=$("#dCores"); c.innerHTML="";
-    var atualCor = LS.ler("cor",CORES[0]);
+    var atualCor = LS.ler("cor","#2A8FC4");
     CORES.forEach(function(cor){
       var b=document.createElement("button"); b.type="button"; b.style.background=cor;
       b.setAttribute("aria-label","Cor"); b.setAttribute("aria-pressed", String(cor===atualCor));
@@ -1217,7 +1217,7 @@
     var ex = parseInt(LS.ler("escalaNum",100),10)||100;
     $("#dEscalaNum").value = ex; $("#lblEscalaNum").textContent = ex+"%";
     $("#dFantasma").value = LS.ler("fantasma","vazio");
-    $("#dTema").value = LS.ler("tema","claro");
+    $("#dTema").value = LS.ler("tema","arctm-azul");
     $("#dEscTexto").value = String(LS.ler("escTexto","1"));
     $("#dRodape").value = LS.ler("rodape","tudo");
     $("#dMostrarTotal").value = LS.ler("mostrarTotal","nao");
@@ -1329,7 +1329,7 @@
   });
   $("#dCorTema").addEventListener("click", function(){
     LS.esc("corManual","nao");
-    var sugerida = COR_DO_TEMA[LS.ler("tema","claro")];
+    var sugerida = COR_DO_TEMA[LS.ler("tema","arctm-azul")];
     if(sugerida) LS.esc("cor", sugerida);
     aplicarTema(); desenharCores(); actualizarAmostra(); desenhar(false);
     toast("A cor passa a seguir o tema");

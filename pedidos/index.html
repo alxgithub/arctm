@@ -185,7 +185,7 @@
 
   /* modo só mostrar: sem controlos, tudo maior */
   :root[data-modo="mostrar"] .pedido .acoes{display:none}
-  :root[data-modo="mostrar"] .pedido{padding:10px 6px;cursor:default}
+  :root[data-modo="mostrar"] .pedido{padding:14px 6px;cursor:default;justify-content:center;gap:0}
   :root[data-modo="mostrar"] .pedido .n{font-size:calc(38px * var(--cartao,1))}
   :root[data-modo="mostrar"] .cartoes{
     grid-template-columns:repeat(auto-fill,minmax(calc(110px * var(--cartao,1)),1fr));
@@ -225,7 +225,17 @@
     border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 5%, var(--painel));
     border-radius:12px;padding:12px 16px;font-weight:600;font-size:15px;
   }
-  .btn.forte{background:var(--acento);border-color:var(--acento);color:#06120A;flex:1;min-width:200px;font-size:17px}
+  .btn.forte{background:var(--acento);border-color:var(--acento);color:#06120A;flex:1;min-width:160px;font-size:17px}
+  .grupo-novo{display:flex;align-items:stretch;gap:8px;flex:1;min-width:230px}
+  .grupo-novo input{
+    width:84px;flex:none;text-align:center;font-weight:700;font-size:17px;
+    border:2px solid color-mix(in srgb, var(--acento) 45%, var(--linha));border-radius:12px;
+    background:color-mix(in srgb, var(--acento) 10%, var(--painel));color:var(--texto);
+    font-variant-numeric:tabular-nums;
+  }
+  .grupo-novo input:focus{outline:none;border-color:var(--acento)}
+  .grupo-novo input.mau{border-color:var(--vermelho, #E0715A);background:color-mix(in srgb, #E0715A 14%, var(--painel))}
+  :root[data-modo="mostrar"] .grupo-novo{display:none}
   .btn.segundo{
     flex:1;min-width:150px;border:2px solid var(--acc2);
     background:color-mix(in srgb, var(--acc2) 22%, var(--painel));
@@ -320,7 +330,11 @@
   </section>
 
   <div class="barra">
-    <button class="btn forte" id="btnNovo" type="button">+ Pedido</button>
+    <div class="grupo-novo">
+      <button class="btn forte" id="btnNovo" type="button">+ Pedido</button>
+      <input id="proximoNum" type="number" min="0" step="1" inputmode="numeric"
+             aria-label="Número do próximo pedido" title="Número do próximo pedido — pode corrigi-lo">
+    </div>
     <button class="btn icone" id="btnRepetir" type="button" aria-label="Repetir a chamada">
       <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 20v-6h6"/></svg>
     </button>
@@ -391,6 +405,12 @@
             <select id="dContagens">
               <option value="nao">Esconder</option>
               <option value="sim">Mostrar “3 a preparar”</option>
+            </select>
+          </label>
+          <label class="campo"><span>“Também prontos” por baixo do número</span>
+            <select id="dOutrosProntos">
+              <option value="nao">Esconder</option>
+              <option value="sim">Mostrar</option>
             </select>
           </label>
           <label class="campo"><span>Contador na barra</span>
@@ -908,14 +928,33 @@
         });
     }
   }
-  function proximoNumero(){
+  var proximoForcado = null;   // número escrito à mão para o pedido seguinte
+  function numeroSugerido(){
+    if(proximoForcado!==null) return proximoForcado;
     var inicio = parseInt(LS.ler("inicio",1),10); if(isNaN(inicio)) inicio=1;
     var limite = parseInt(LS.ler("max",0),10) || 0;
-    if(contador===null || contador===undefined) contador = inicio - 1;
-    var n = contador + 1;
+    var base = (contador===null || contador===undefined) ? inicio-1 : contador;
+    var n = base + 1;
     if(limite && n > limite) n = inicio;
+    // salta os que já estão na fila, para nunca repetir
+    var voltas = 0;
+    while(pedidos.some(function(p){ return p.n===n; }) && voltas++ < 10000){
+      n++;
+      if(limite && n > limite) n = inicio;
+    }
+    return n;
+  }
+  function proximoNumero(){
+    var n = numeroSugerido();
+    proximoForcado = null;
     contador = n;
     return n;
+  }
+  function mostrarProximo(){
+    var el=$("#proximoNum");
+    if(!el || el === document.activeElement) return;   // não mexer enquanto escreve
+    el.value = numeroSugerido();
+    el.classList.remove("mau");
   }
   function novoPedido(){
     var n = proximoNumero();
@@ -934,7 +973,8 @@
     pedidos = pedidos.map(function(p){
       if(p.n!==n) return p;
       achou=true;
-      return {n:p.n, estado:"chamado", ts:p.ts, chamado:Date.now()};
+      // se já estava a entregar, guarda o momento original: a ordem não salta
+      return {n:p.n, estado:"chamado", ts:p.ts, chamado:(p.estado==="chamado" && p.chamado) ? p.chamado : Date.now()};
     });
     if(!achou) return;
     atual = n;
@@ -995,7 +1035,9 @@
     var chamados = pedidos.filter(function(p){ return p.estado==="chamado"; });
     var espera = pedidos.filter(function(p){ return p.estado==="espera"; });
     var outros = chamados.filter(function(p){ return p.n!==atual; }).map(function(p){ return p.n; });
-    $("#subChamada").innerHTML = outros.length
+    // os outros prontos já aparecem na coluna “a entregar”: aqui só ocupavam espaço
+    var verOutros = LS.ler("outrosProntos","nao")==="sim";
+    $("#subChamada").innerHTML = (verOutros && outros.length)
       ? ("também prontos: <b style='color:var(--texto)'>"+outros.join(" · ")+"</b>")
       : "";
 
@@ -1018,7 +1060,7 @@
     c.innerHTML=""; cp.innerHTML="";
 
     var emEspera = espera.slice().sort(function(a,b){ return a.ts-b.ts; });
-    var jaChamados = chamados.slice().sort(function(a,b){ return (b.chamado||b.ts)-(a.chamado||a.ts); });
+    var jaChamados = chamados.slice().sort(function(a,b){ return (a.chamado||a.ts)-(b.chamado||b.ts); });
 
     if(!emEspera.length){
       var v1=document.createElement("div"); v1.className="sem-fila";
@@ -1038,7 +1080,7 @@
         ((limiteDemora && min>=limiteDemora && p.estado==="espera")?" demora":"");
       d.innerHTML =
         '<span class="n">'+p.n+'</span>'+
-        '<span class="tempo">'+(min<1?"agora":min+" min")+(p.estado==="chamado"?" · chamado":"")+'</span>'+
+        (soMostrar() ? "" : '<span class="tempo">'+(min<1?"agora":min+" min")+(p.estado==="chamado"?" · chamado":"")+'</span>')+
         '<div class="acoes">'+
           '<button class="chamar" type="button" title="'+(p.estado==="chamado"?"Chamar outra vez o pedido ":"Chamar o pedido ")+p.n+'" aria-label="Chamar o pedido '+p.n+'">'+
             '<svg viewBox="0 0 24 24"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1Z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>'+
@@ -1073,6 +1115,7 @@
       e2.hidden = !ligacaoMa;
       e2.textContent = ligacaoMa ? (modo==="sala" ? SALA.estado : (estadoNuvem==="a ligar" ? "a ligar…" : "sem ligação")) : "";
     }
+    mostrarProximo();
     $("#btnRepetir").disabled = (atual===null || atual===undefined);
     ajustarNumero();
     // depois de o desenho assentar, confirma que continua a caber
@@ -1261,6 +1304,7 @@
     $("#campoColProntos").hidden = LS.ler("modoColunas","auto")==="auto";
     $("#dContagens").value = LS.ler("contagens","nao");
     $("#dEstado").value = LS.ler("estadoBarra","nao");
+    $("#dOutrosProntos").value = LS.ler("outrosProntos","nao");
     var cp2=parseInt(LS.ler("colProntos",40),10)||40;
     $("#dColProntos").value=cp2; $("#dColProntosNum").value=cp2; $("#lblColProntos").textContent=cp2+"%";
     $("#dSom").value = LS.ler("som","dois");
@@ -1348,6 +1392,7 @@
   $("#dTituloProntos").addEventListener("input", function(){ LS.esc("tituloProntos",this.value); aplicarAspeto(); });
   $("#dContagens").addEventListener("change", function(){ LS.esc("contagens",this.value); desenhar(); });
   $("#dEstado").addEventListener("change", function(){ LS.esc("estadoBarra",this.value); desenhar(); });
+  $("#dOutrosProntos").addEventListener("change", function(){ LS.esc("outrosProntos",this.value); desenhar(); });
   $("#dSom").addEventListener("change", function(){ LS.esc("som",this.value); apitar(); });
   $("#dVolume").addEventListener("input", function(){
     LS.esc("volume", parseInt(this.value,10));
@@ -1411,7 +1456,7 @@
   });
 
   /* ---------- copiar e colar definições ---------- */
-  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","partilha","salaNome","salaServidor","salaUtilizador","som","volume","toqueCartao","modo"];
+  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","outrosProntos","partilha","salaNome","salaServidor","salaUtilizador","som","volume","toqueCartao","modo"];
   $("#dCopiarDefs").addEventListener("click", function(){
     var texto=JSON.stringify(pacoteDefs()), ta=$("#dTextoDefs");
     ta.hidden=false; ta.value=texto;
@@ -1483,6 +1528,35 @@
 
   /* ---------- barra e atalhos ---------- */
   $("#btnNovo").addEventListener("click", novoPedido);
+  (function(){
+    var el=$("#proximoNum");
+    function validar(aviso){
+      var v = parseInt(String(el.value).replace(/[^0-9]/g,""),10);
+      if(isNaN(v) || v<0){ proximoForcado=null; mostrarProximo(); return false; }
+      if(pedidos.some(function(p){ return p.n===v; })){
+        el.classList.add("mau");
+        if(aviso) toast("O número "+v+" já está na fila");
+        return false;
+      }
+      var limite = parseInt(LS.ler("max",0),10) || 0;
+      if(limite && v>limite){
+        el.classList.add("mau");
+        if(aviso) toast("O total definido é "+limite);
+        return false;
+      }
+      el.classList.remove("mau");
+      proximoForcado = v;
+      return true;
+    }
+    el.addEventListener("input", function(){ validar(false); });
+    el.addEventListener("change", function(){ if(!validar(true)) mostrarProximo(); });
+    el.addEventListener("keydown", function(e){
+      if(e.key==="Enter"){ e.preventDefault(); if(validar(true)) novoPedido(); }
+      if(e.key==="Escape"){ e.preventDefault(); proximoForcado=null; mostrarProximo(); el.blur(); }
+    });
+    el.addEventListener("focus", function(){ el.select(); });
+    el.addEventListener("blur", function(){ if(!validar(false)) mostrarProximo(); });
+  })();
   $("#btnRepetir").addEventListener("click", repetir);
   $("#btnManual").addEventListener("click", function(){
     $("#campoManual").value = String(((typeof contador==="number")?contador:0)+1);

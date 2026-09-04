@@ -78,9 +78,12 @@
   .icon-btn{border:1px solid var(--line);background:transparent;border-radius:11px;width:calc(40px * var(--ctl));height:calc(40px * var(--ctl));display:grid;place-items:center;flex:none}
   .icon-btn svg{width:calc(20px * var(--ctl));height:calc(20px * var(--ctl));stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-  main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 12px 4px}
-  #areaGrelha{flex:1;min-height:0;overflow:hidden;padding-top:2px}
-  .barra-grelha{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0 2px;flex-wrap:wrap}
+  main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 12px 0;overflow:hidden}
+  #areaGrelha{flex:1;min-height:0;overflow:hidden;padding:2px 2px 0}
+  .barra-grelha{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:10px 2px 12px;flex-wrap:wrap;flex:none;
+  }
   .acoes-grelha{display:flex;gap:7px;flex:1;min-width:0}
   .acoes-grelha button{
     display:flex;align-items:center;gap:6px;border:1px dashed var(--line);background:transparent;
@@ -1416,7 +1419,7 @@
   }
   var mediaEscura = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
   function estaEscuro(){
-    var t = LS.ler("tema","auto");
+    var t = LS.ler("tema","claro");
     if (t==="escuro") return true;
     if (t==="claro") return false;
     return !!(mediaEscura && mediaEscura.matches);
@@ -1435,7 +1438,7 @@
     var r = document.documentElement;
     r.setAttribute("data-theme", escuro ? "dark" : "light");
 
-    var pal = PALETAS[LS.ler("paleta","neutro")] || PALETAS.neutro;
+    var pal = PALETAS[LS.ler("paleta","arctmAzul")] || PALETAS.arctmAzul;
     var base = escuro ? pal.escuro : pal.claro;
     var over = manuais();
     var t = {};
@@ -1447,7 +1450,7 @@
     r.style.setProperty("--line", t.line);
     r.style.setProperty("--shade", escuro ? "rgba(0,0,0,.35)" : "rgba(20,32,28,.07)");
 
-    var nomePal = LS.ler("paleta","neutro");
+    var nomePal = LS.ler("paleta","arctmAzul");
     var acc = (LS.ler("acentoManual","nao")==="sim")
       ? LS.ler("acento", ACENTOS[0].c)
       : (pal.acento || ACENTOS[0].c);
@@ -1462,7 +1465,7 @@
     r.style.setProperty("--escala", (ESCALAS[LS.ler("escala","normal")] || 16) + "px");
     r.setAttribute("data-cor", LS.ler("nivelCor","destaques"));
     var larguras = {pequena:"900px", media:"1240px", total:"100%"};
-    r.style.setProperty("--app-max", larguras[LS.ler("larguraApp","pequena")] || "900px");
+    r.style.setProperty("--app-max", larguras[LS.ler("larguraApp","total")] || "900px");
   }
   if (mediaEscura && mediaEscura.addEventListener) mediaEscura.addEventListener("change", function(){ aplicarTema(); });
 
@@ -1717,7 +1720,7 @@
       : "Tudo fica guardado só neste browser, sem contas nem internet. Se limpar os dados do browser, perde a informação.";
   }
   function pintarChip(){
-    var modo = LS.ler("indicadorVendas","oculto");
+    var modo = LS.ler("indicadorVendas","numero");
     var chip=$("#btnHoje"), ic=$("#btnHojeIcone");
     chip.hidden = modo==="oculto";
     ic.hidden = modo!=="oculto";
@@ -2143,10 +2146,28 @@
   }
   var pagina = 0;
 
+  // a área da grelha muda de altura quando a barra de páginas aparece ou desaparece:
+  // é preciso recalcular com a medida real, senão a última fila fica cortada
+  var ultimaArea = "", aRedesenhar = false;
+  function vigiarArea(){
+    var area = $("#areaGrelha");
+    if(!area || typeof ResizeObserver !== "function") return;
+    new ResizeObserver(function(){
+      var marca = Math.round(area.clientWidth)+"x"+Math.round(area.clientHeight);
+      if(marca === ultimaArea || aRedesenhar) return;
+      ultimaArea = marca;
+      aRedesenhar = true;
+      requestAnimationFrame(function(){
+        aRedesenhar = false;
+        desenharGrelha();
+      });
+    }).observe(area);
+  }
+
   // largura e altura dos botões em percentagem da área da grelha
   function medidas(){
-    var w = parseFloat(LS.ler("tileWp", 25)) || 25;
-    var h = parseFloat(LS.ler("tileHp", 30)) || 30;
+    var w = parseFloat(LS.ler("tileWp", 15)) || 15;
+    var h = parseFloat(LS.ler("tileHp", 19)) || 19;
     return {wp: Math.max(8, Math.min(100, w)), hp: Math.max(10, Math.min(100, h))};
   }
   function aplicarMedidas(){
@@ -2154,7 +2175,7 @@
     r.setProperty("--talao-linhas", LS.ler("talaoLinhas",3));
     var pctCol = Math.max(15, Math.min(70, parseFloat(LS.ler("colTalaoPc", 32)) || 32));
     r.setProperty("--col-talao", pctCol+"%");
-    document.documentElement.setAttribute("data-disp", LS.ler("disposicao","empilhado"));
+    document.documentElement.setAttribute("data-disp", LS.ler("disposicao","colunas"));
     var CTL = {compacto:0.85, normal:1, grande:1.2, enorme:1.4};
     r.setProperty("--ctl", CTL[LS.ler("controlos","normal")] || 1);
   }
@@ -2196,13 +2217,15 @@
 
   function desenharGrelha(){
     var g=$("#grelha"), semEv=$("#semEvento"), semPr=$("#semProdutos"), semRes=$("#semResultados"), nav=$("#paginas");
-    g.innerHTML=""; semRes.hidden=true; nav.hidden=true;
+    var area=$("#areaGrelha");
+    if(area) ultimaArea = Math.round(area.clientWidth)+"x"+Math.round(area.clientHeight);
+    g.innerHTML=""; semRes.hidden=true;
     var e=evAtual();
     $("#barraGrelha").hidden = !e;
-    if(!e){ g.hidden=true; semEv.hidden=false; semPr.hidden=true; $("#procura").hidden=true; return; }
+    if(!e){ g.hidden=true; semEv.hidden=false; semPr.hidden=true; $("#procura").hidden=true; nav.hidden=true; return; }
     semEv.hidden=true;
     var todos=produtos();
-    if(!todos.length){ g.hidden=true; semPr.hidden=false; $("#procura").hidden=true; return; }
+    if(!todos.length){ g.hidden=true; semPr.hidden=false; $("#procura").hidden=true; nav.hidden=true; return; }
     semPr.hidden=true;
     $("#procura").hidden = todos.length < 6;
     if (todos.length < 6 && filtro){ filtro=""; $("#qProduto").value=""; $("#qLimpar").hidden=true; }
@@ -2240,8 +2263,9 @@
       g.appendChild(b);
     });
 
+    nav.style.visibility = total > 1 ? "visible" : "hidden";
+    nav.hidden = false;
     if(total > 1){
-      nav.hidden=false;
       $("#pgConta").textContent = (pagina+1)+" / "+total;
       $("#pgInicio").disabled = pagina===0;
       $("#pgAnterior").disabled = pagina===0;
@@ -3727,13 +3751,13 @@
   }
 
   function coresDoTema(nomePaleta, escuro){
-    var pal = PALETAS[nomePaleta] || PALETAS.neutro;
+    var pal = PALETAS[nomePaleta] || PALETAS.arctmAzul;
     return escuro ? pal.escuro : pal.claro;
   }
   function desenharProntos(){
     var c=$("#aProntos"); if(!c) return;
     c.innerHTML="";
-    var atualP = LS.ler("paleta","neutro"), atualA = String(LS.ler("acento",ACENTOS[0].c)).toLowerCase(), atualT = LS.ler("tema","auto");
+    var atualP = LS.ler("paleta","arctmAzul"), atualA = String(LS.ler("acento",ACENTOS[0].c)).toLowerCase(), atualT = LS.ler("tema","claro");
     TEMAS_PRONTOS.forEach(function(t){
       var cores = coresDoTema(t.paleta, t.tema==="escuro");
       var b=document.createElement("button"); b.type="button"; b.title=t.nome;
@@ -3755,7 +3779,7 @@
   function desenharManuais(){
     var c=$("#aManuais"); if(!c) return;
     c.innerHTML="";
-    var pal = PALETAS[LS.ler("paleta","neutro")] || PALETAS.neutro;
+    var pal = PALETAS[LS.ler("paleta","arctmAzul")] || PALETAS.arctmAzul;
     var base = estaEscuro() ? pal.escuro : pal.claro;
     var over = manuais();
     CHAVES_COR.forEach(function(def){
@@ -3774,7 +3798,7 @@
   }
   function desenharAcentos(){
     var c=$("#aCores"); c.innerHTML="";
-    var palA = PALETAS[LS.ler("paleta","neutro")] || PALETAS.neutro;
+    var palA = PALETAS[LS.ler("paleta","arctmAzul")] || PALETAS.arctmAzul;
     var atual = (LS.ler("acentoManual","nao")==="sim")
       ? LS.ler("acento",ACENTOS[0].c)
       : (palA.acento || ACENTOS[0].c);
@@ -3866,7 +3890,7 @@
     $("#aTextoBotoes").value = LS.ler("textoBotoes","auto");
     $("#aColunas").value = String(LS.ler("colunas","auto"));
     $("#aControlos").value = LS.ler("controlos","normal");
-    $("#aIndicador").value = LS.ler("indicadorVendas","oculto");
+    $("#aIndicador").value = LS.ler("indicadorVendas","numero");
     var nl = Math.round(parseFloat(LS.ler("talaoLinhas",3))||3);
     $("#aLinhasTalao").value = String(nl); $("#aLinhasNum").value = nl;
     $("#lblLinhas").textContent = nl===1 ? "1 linha" : nl+" linhas";
@@ -3893,7 +3917,7 @@
   });
   document.addEventListener("keyup", function(e){ if(ehCursor(e.target)) espreitar(false); });
   function sincronizarDisposicao(){
-    var colunas = LS.ler("disposicao","empilhado")==="colunas";
+    var colunas = LS.ler("disposicao","colunas")==="colunas";
     $("#aDisposicao").value = colunas ? "colunas" : "empilhado";
     $("#campoColuna").hidden = !colunas;
     $("#campoLinhasTalao").hidden = colunas && window.innerWidth >= 760;
@@ -4388,10 +4412,10 @@
 
   /* ------------- arranque ------------- */
   aplicarTema();
-  $("#aTema").value = LS.ler("tema","auto");
-  $("#aPaleta").value = LS.ler("paleta","neutro");
+  $("#aTema").value = LS.ler("tema","claro");
+  $("#aPaleta").value = LS.ler("paleta","arctmAzul");
   $("#aEscala").value = LS.ler("escala","normal");
-  $("#aLarguraApp").value = LS.ler("larguraApp","pequena");
+  $("#aLarguraApp").value = LS.ler("larguraApp","total");
   $("#aNivelCor").value = LS.ler("nivelCor","destaques");
   aplicarMedidas(); sincronizarCursores();
   estado.eventos=LS.ler("eventos",[])||[];
@@ -4401,6 +4425,8 @@
   carregarDia();
   $("#aModo").value=estado.modo;
   notaModo(); pintarChip(); desenharAcentos(); desenharProntos(); desenharManuais(); pintarTudo();
+  vigiarArea();
+  requestAnimationFrame(function(){ desenharGrelha(); });
 
   ligarNuvem().then(function(ns){
     var sel=$("#aModo");
