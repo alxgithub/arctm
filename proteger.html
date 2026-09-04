@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proteger aplicações com palavra-passe</title>
+<style>
+  :root{
+    --papel:#F3F8F4; --cartao:#FFFFFF; --linha:#CFE0D6;
+    --tinta:#10301D; --tinta2:#4C6B57; --verde:#1E8F42; --azul:#2A8FC4; --vermelho:#B8402A;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--papel);color:var(--tinta);padding:32px 20px 60px;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;
+  }
+  .caixa{max-width:720px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 6px}
+  p.sub{margin:0 0 24px;color:var(--tinta2)}
+  .cartao{
+    background:var(--cartao);border:1px solid var(--linha);border-top:4px solid var(--verde);
+    border-radius:16px;padding:22px;margin-bottom:18px;
+  }
+  h2{font-size:16px;margin:0 0 14px;text-transform:uppercase;letter-spacing:.08em;color:var(--verde)}
+  label{display:block;margin-bottom:16px}
+  label span{display:block;font-size:13px;color:var(--tinta2);font-weight:600;margin-bottom:6px}
+  input[type=text],input[type=password],input[type=file]{
+    width:100%;padding:12px;border:1px solid var(--linha);border-radius:11px;background:#fff;font:inherit;
+  }
+  .par{display:flex;gap:14px;flex-wrap:wrap}
+  .par label{flex:1;min-width:220px}
+  .linha-op{display:flex;align-items:center;gap:9px;margin-bottom:14px;font-size:14px}
+  button{
+    font:inherit;font-weight:600;border:0;border-radius:12px;padding:14px 20px;cursor:pointer;
+    background:var(--verde);color:#fff;font-size:16px;
+  }
+  button.sec{background:transparent;border:1px solid var(--linha);color:var(--tinta)}
+  button[disabled]{opacity:.45;cursor:default}
+  .estado{margin-top:14px;font-size:14px;color:var(--tinta2);min-height:22px}
+  .estado.erro{color:var(--vermelho);font-weight:600}
+  .estado.bom{color:var(--verde);font-weight:600}
+  .nota{
+    background:#fff;border:1px solid var(--linha);border-left:3px solid var(--azul);
+    border-radius:10px;padding:14px 16px;font-size:13.5px;color:var(--tinta2);margin-bottom:18px;
+  }
+  .nota b{color:var(--tinta)}
+  ol{margin:8px 0 0;padding-left:20px}
+  li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="caixa">
+  <h1>Proteger aplicações com palavra-passe</h1>
+  <p class="sub">Corre tudo neste computador. A palavra-passe não sai daqui e não é guardada em lado nenhum.</p>
+
+  <div class="nota">
+    <b>O que isto faz.</b> A aplicação inteira fica cifrada dentro do ficheiro protegido, com AES-256.
+    Quem abrir a página vê apenas um pedido de palavra-passe; quem descarregar o ficheiro encontra
+    ruído. Sem a palavra-passe não há forma de recuperar o conteúdo — nem por si, por isso guarde-a.
+  </div>
+
+  <div class="cartao">
+    <h2>1. Ficheiro a proteger</h2>
+    <label><span>Escolha o <code>index.html</code> de uma das aplicações</span>
+      <input id="ficheiro" type="file" accept=".html,text/html">
+    </label>
+    <label><span>Título mostrado no pedido de palavra-passe</span>
+      <input id="titulo" type="text" placeholder="Registadora" value="">
+    </label>
+  </div>
+
+  <div class="cartao">
+    <h2>2. Palavra-passe</h2>
+    <div class="par">
+      <label><span>Palavra-passe</span><input id="passe" type="password" autocomplete="new-password"></label>
+      <label><span>Repetir</span><input id="passe2" type="password" autocomplete="new-password"></label>
+    </div>
+    <div class="linha-op">
+      <input id="lembrar" type="checkbox" checked>
+      <label for="lembrar" style="margin:0"><span style="margin:0;color:var(--tinta);font-weight:500">
+        Deixar o dispositivo lembrar-se depois de acertar uma vez (recomendado para os ecrãs fixos)
+      </span></label>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2>3. Gerar</h2>
+    <button id="gerar" disabled>Gerar ficheiro protegido</button>
+    <button class="sec" id="limpar" type="button">Limpar</button>
+    <div class="estado" id="estado"></div>
+  </div>
+
+  <div class="nota">
+    <b>Como usar.</b>
+    <ol>
+      <li>Gere um ficheiro protegido para cada aplicação — pode usar palavras-passe diferentes.</li>
+      <li>No repositório, substitua o <code>index.html</code> de cada pasta pelo protegido.</li>
+      <li>Nos ecrãs fixos, acerte a palavra-passe uma vez com a opção de memorizar ligada.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+(function(){
+  var $ = function(s){ return document.querySelector(s); };
+  var conteudo = null, nomeOriginal = "";
+
+  function estado(txt, tipo){
+    var e=$("#estado");
+    e.textContent = txt || "";
+    e.className = "estado" + (tipo ? " "+tipo : "");
+  }
+  function verificar(){
+    $("#gerar").disabled = !(conteudo && $("#passe").value.length >= 4);
+  }
+  $("#ficheiro").addEventListener("change", function(){
+    var f = this.files && this.files[0];
+    conteudo = null;
+    if(!f){ verificar(); return; }
+    nomeOriginal = f.name;
+    var r = new FileReader();
+    r.onload = function(){
+      conteudo = String(r.result || "");
+      var m = conteudo.match(/<title>([^<]*)<\/title>/i);
+      if(m && !$("#titulo").value) $("#titulo").value = m[1].trim();
+      estado("Ficheiro lido: " + Math.round(conteudo.length/1024) + " KB", "bom");
+      verificar();
+    };
+    r.onerror = function(){ estado("Não consegui ler o ficheiro", "erro"); };
+    r.readAsText(f);
+  });
+  $("#passe").addEventListener("input", verificar);
+
+  function hex(buf){
+    return Array.prototype.map.call(new Uint8Array(buf), function(b){
+      return ("0"+b.toString(16)).slice(-2);
+    }).join("");
+  }
+  function base64(buf){
+    var bin="", a=new Uint8Array(buf), passo=0x8000;
+    for(var i=0;i<a.length;i+=passo) bin += String.fromCharCode.apply(null, a.subarray(i, i+passo));
+    return btoa(bin);
+  }
+
+  $("#limpar").addEventListener("click", function(){
+    $("#ficheiro").value=""; $("#passe").value=""; $("#passe2").value=""; $("#titulo").value="";
+    conteudo=null; estado(""); verificar();
+  });
+
+  $("#gerar").addEventListener("click", function(){
+    var p1=$("#passe").value, p2=$("#passe2").value;
+    if(p1!==p2){ estado("As palavras-passe não coincidem", "erro"); return; }
+    if(p1.length < 6 && !confirm("A palavra-passe é curta. Continuar mesmo assim?")) return;
+    if(!conteudo){ estado("Escolha primeiro o ficheiro", "erro"); return; }
+
+    estado("A cifrar…");
+    var sal = crypto.getRandomValues(new Uint8Array(16));
+    var iv  = crypto.getRandomValues(new Uint8Array(12));
+    var enc = new TextEncoder();
+
+    crypto.subtle.importKey("raw", enc.encode(p1), "PBKDF2", false, ["deriveKey"])
+      .then(function(base){
+        return crypto.subtle.deriveKey(
+          {name:"PBKDF2", salt:sal, iterations:250000, hash:"SHA-256"},
+          base, {name:"AES-GCM", length:256}, false, ["encrypt"]);
+      })
+      .then(function(k){
+        return crypto.subtle.encrypt({name:"AES-GCM", iv:iv}, k, enc.encode(conteudo));
+      })
+      .then(function(cif){
+        var titulo = ($("#titulo").value || "Aplicação").replace(/[<>&"]/g, "");
+        var pagina = modelo(titulo, hex(sal), hex(iv), base64(cif), $("#lembrar").checked);
+        var blob = new Blob([pagina], {type:"text/html;charset=utf-8"});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url; a.download = "index.html";
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+        estado("Pronto. Descarregado como index.html — coloque-o na pasta certa do repositório.", "bom");
+      })
+      .catch(function(err){ estado("Falhou: " + (err && err.message || err), "erro"); });
+  });
+
+  function modelo(titulo, sal, iv, dados, lembrar){
+    return '<!DOCTYPE html>\n' +
+'<html lang="pt-PT">\n' +
+'<head>\n' +
+'<meta charset="utf-8">\n' +
+'<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
+'<title>' + titulo + '</title>\n' +
+'<style>\n' +
+'  *{box-sizing:border-box}\n' +
+'  body{margin:0;min-height:100dvh;display:grid;place-items:center;background:#F3F8F4;color:#10301D;\n' +
+'    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px}\n' +
+'  form{background:#fff;border:1px solid #CFE0D6;border-top:4px solid #1E8F42;border-radius:16px;\n' +
+'    padding:30px 26px;width:min(100%,400px);box-shadow:0 10px 30px rgba(16,48,29,.08);text-align:center}\n' +
+'  h1{font-size:20px;margin:0 0 4px}\n' +
+'  p{margin:0 0 20px;color:#4C6B57;font-size:14px}\n' +
+'  input{width:100%;padding:13px;border:1px solid #CFE0D6;border-radius:11px;font:inherit;text-align:center;margin-bottom:12px}\n' +
+'  button{width:100%;padding:14px;border:0;border-radius:12px;background:#1E8F42;color:#fff;font:inherit;font-weight:600;font-size:16px;cursor:pointer}\n' +
+'  .erro{color:#B8402A;font-size:13.5px;font-weight:600;min-height:20px;margin-top:12px}\n' +
+'  .lembrar{display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:#4C6B57;margin-bottom:6px}\n' +
+'</style>\n' +
+'</head>\n' +
+'<body>\n' +
+'<form id="f" autocomplete="off">\n' +
+'  <h1>' + titulo + '</h1>\n' +
+'  <p>Escreva a palavra-passe para abrir.</p>\n' +
+'  <input id="p" type="password" autocomplete="current-password" autofocus placeholder="Palavra-passe">\n' +
+(lembrar ?
+'  <div class="lembrar"><input id="lem" type="checkbox" checked style="width:auto;margin:0"><label for="lem">Lembrar neste dispositivo</label></div>\n' : '') +
+'  <button type="submit">Abrir</button>\n' +
+'  <div class="erro" id="e"></div>\n' +
+'</form>\n' +
+'<script>\n' +
+'(function(){\n' +
+'  var SAL="' + sal + '", IV="' + iv + '", D="' + dados + '", CHAVE="abrir:' + sal.slice(0,8) + '";\n' +
+'  function deHex(t){var a=new Uint8Array(t.length/2);for(var i=0;i<a.length;i++)a[i]=parseInt(t.substr(i*2,2),16);return a;}\n' +
+'  function deB64(t){var b=atob(t),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}\n' +
+'  function abrir(passe, guardar){\n' +
+'    var enc=new TextEncoder();\n' +
+'    return crypto.subtle.importKey("raw",enc.encode(passe),"PBKDF2",false,["deriveKey"])\n' +
+'      .then(function(b){return crypto.subtle.deriveKey({name:"PBKDF2",salt:deHex(SAL),iterations:250000,hash:"SHA-256"},b,{name:"AES-GCM",length:256},false,["decrypt"]);})\n' +
+'      .then(function(k){return crypto.subtle.decrypt({name:"AES-GCM",iv:deHex(IV)},k,deB64(D));})\n' +
+'      .then(function(claro){\n' +
+'        if(guardar){ try{ localStorage.setItem(CHAVE, passe); }catch(e){} }\n' +
+'        var html=new TextDecoder().decode(claro);\n' +
+'        document.open(); document.write(html); document.close();\n' +
+'      });\n' +
+'  }\n' +
+'  var guardada=null; try{ guardada=localStorage.getItem(CHAVE); }catch(e){}\n' +
+'  if(guardada){ abrir(guardada,false).catch(function(){ try{localStorage.removeItem(CHAVE);}catch(e){} }); }\n' +
+'  document.getElementById("f").addEventListener("submit",function(ev){\n' +
+'    ev.preventDefault();\n' +
+'    var lem=document.getElementById("lem");\n' +
+'    document.getElementById("e").textContent="A abrir…";\n' +
+'    abrir(document.getElementById("p").value, !!(lem&&lem.checked))\n' +
+'      .catch(function(){ document.getElementById("e").textContent="Palavra-passe errada."; document.getElementById("p").select(); });\n' +
+'  });\n' +
+'})();\n' +
+'<\/script>\n' +
+'</body>\n' +
+'</html>\n';
+  }
+})();
+</script>
+</body>
+</html>

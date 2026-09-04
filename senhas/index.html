@@ -789,11 +789,11 @@
     $("#btnRepetir").disabled = n<=0;
     $("#btnSeguinte").disabled = temLimite() && n>=max();
     var prefixo = "";
-    var modo=partilha();
-    if(modo==="claude"){
+    var modoPart=partilha();
+    if(modoPart==="claude"){
       prefixo = estadoNuvem==="ligado" ? "partilhado · "
               : estadoNuvem==="a ligar" ? "a ligar… · " : "sem ligação · ";
-    } else if(modo==="sala"){
+    } else if(modoPart==="sala"){
       prefixo = SALA.estado==="ligada" ? "sala · " : SALA.estado+" · ";
     }
     var mostrarContador = LS.ler("contador","nao")==="sim";
@@ -803,7 +803,7 @@
       e2.textContent = prefixo + n + (temLimite() ? (" / "+max()) : "");
     } else {
       // sem contador, mantém-se só o aviso de ligação quando há problema
-      var maLigacao = (modo==="claude" && estadoNuvem!=="ligado") || (modo==="sala" && SALA.estado!=="ligada");
+      var maLigacao = (modoPart==="claude" && estadoNuvem!=="ligado") || (modoPart==="sala" && SALA.estado!=="ligada");
       var alerta = maLigacao ? prefixo.replace(/ · $/,"") : "";
       e2.hidden = !alerta;
       e2.textContent = alerta;
