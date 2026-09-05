@@ -1188,6 +1188,24 @@
             <option value="2">2 — cliente e cozinha</option>
           </select>
         </label>
+        <label class="campo"><span>Forma de pagamento</span>
+          <select id="aMostrarPagamento">
+            <option value="nao">Não imprimir</option>
+            <option value="sim">Imprimir no talão</option>
+          </select>
+        </label>
+        <label class="campo"><span>Recebido e troco</span>
+          <select id="aMostrarTroco">
+            <option value="nao">Não imprimir</option>
+            <option value="sim">Imprimir no talão</option>
+          </select>
+        </label>
+        <label class="campo"><span>Número de artigos</span>
+          <select id="aMostrarArtigos">
+            <option value="nao">Não imprimir</option>
+            <option value="sim">Imprimir no talão</option>
+          </select>
+        </label>
         <label class="campo"><span>Largura do papel</span>
           <select id="aPapel">
             <option value="80">80 mm</option>
@@ -3938,6 +3956,9 @@
     $("#aVias").value = String(LS.ler("vias","2"));
     $("#aPapel").value = String(LS.ler("papel","80"));
     $("#aLogo").value = LS.ler("logo","sim");
+    $("#aMostrarTroco").value = LS.ler("mostrarTroco","nao");
+    $("#aMostrarPagamento").value = LS.ler("mostrarPagamento","nao");
+    $("#aMostrarArtigos").value = LS.ler("mostrarArtigos","nao");
     $("#aLogoTam").value = LS.ler("logoTam","medio");
     $("#aCabecalho").value = LS.ler("cabecalho","ARCTM");
     $("#aSubcabecalho").value = LS.ler("subcabecalho","Associação Recreativa e Cultural de Travanca do Mondego");
@@ -4059,17 +4080,21 @@
       h += '</table>';
       h += '<div class="risca"></div>';
       h += '<div class="total"><span>TOTAL</span><b>'+money(venda.total).replace(/\u00A0/g," ")+'</b></div>';
-      h += '<div class="pag">'+(etiquetas[venda.metodo]||venda.metodo);
-      if(venda.metodo==="misto"){
-        h += ' · cartão '+money(venda.emCartao).replace(/\u00A0/g," ")+
-             ' · dinheiro '+money(venda.emDinheiro).replace(/\u00A0/g," ");
+      if(LS.ler("mostrarPagamento","nao")==="sim"){
+        h += '<div class="pag">'+(etiquetas[venda.metodo]||venda.metodo);
+        if(venda.metodo==="misto"){
+          h += ' · cartão '+money(venda.emCartao).replace(/\u00A0/g," ")+
+               ' · dinheiro '+money(venda.emDinheiro).replace(/\u00A0/g," ");
+        }
+        if(venda.troco>0 && LS.ler("mostrarTroco","nao")==="sim"){
+          h += '<br>Recebido '+money(venda.recebido).replace(/\u00A0/g," ")+
+               ' · troco '+money(venda.troco).replace(/\u00A0/g," ");
+        }
+        h += '</div>';
       }
-      if(venda.troco>0){
-        h += '<br>Recebido '+money(venda.recebido).replace(/\u00A0/g," ")+
-             ' · troco '+money(venda.troco).replace(/\u00A0/g," ");
+      if(LS.ler("mostrarArtigos","nao")==="sim"){
+        h += '<div class="artigos">'+artigos+(artigos===1?" artigo":" artigos")+'</div>';
       }
-      h += '</div>';
-      h += '<div class="artigos">'+artigos+(artigos===1?" artigo":" artigos")+'</div>';
       if(rod) h += '<div class="rodape">'+esc(rod)+'</div>';
       h += '<div class="fim">.</div></section>';
       return h;
@@ -4084,10 +4109,9 @@
       'body{width:'+larg+'mm;font-family:"Helvetica Neue",Arial,sans-serif;-webkit-print-color-adjust:exact}' +
       '.via{width:'+util+'mm;margin:0 4mm;padding:4mm 0 2mm;page-break-after:always;break-after:page;text-align:center}' +
       '.via:last-child{page-break-after:auto;break-after:auto}' +
-      '.topo{display:flex;align-items:center;gap:2.5mm;text-align:left}' +
-      '.topo.so-texto{justify-content:center;text-align:center}' +
+      '.topo{display:flex;align-items:center;justify-content:center;gap:2.5mm;text-align:center}' +
       '.logo{flex:none;image-rendering:pixelated}' +
-      '.ident{min-width:0}' +
+      '.ident{min-width:0;text-align:center}' +
       '.casa{font-size:'+(larg===58?"12pt":"14pt")+';font-weight:800;line-height:1.05;letter-spacing:.06em}' +
       '.subcasa{font-size:'+(larg===58?"6.5pt":"7pt")+';line-height:1.25;margin-top:.6mm}' +
       '.evento{font-size:'+(larg===58?"8.5pt":"9pt")+';font-weight:700;margin-top:2mm;text-align:center}' +
@@ -4603,7 +4627,7 @@
     LS.esc("paleta",this.value); LS.esc(chaveManuais(), {}); LS.esc("acentoManual","nao");
     aplicarTema(); desenharAcentos(); desenharManuais(); desenharProntos();
   });
-  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaNome","salaServidor","imprimir","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam"];
+  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaNome","salaServidor","imprimir","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos"];
   $("#aCopiarDefs").addEventListener("click", function(){
     var pacote = {app:"registadora-definicoes", versao:1};
     CHAVES_DEFS.forEach(function(k){
@@ -4870,7 +4894,8 @@
     });
   });
   [["#aImprimir","imprimir"],["#aVias","vias"],["#aPapel","papel"],
-   ["#aLogo","logo"],["#aLogoTam","logoTam"]].forEach(function(par){
+   ["#aLogo","logo"],["#aLogoTam","logoTam"],["#aMostrarTroco","mostrarTroco"],
+   ["#aMostrarPagamento","mostrarPagamento"],["#aMostrarArtigos","mostrarArtigos"]].forEach(function(par){
     $(par[0]).addEventListener("change", function(){ LS.esc(par[1], this.value); });
   });
   [["#aCabecalho","cabecalho"],["#aSubcabecalho","subcabecalho"],["#aRodapeTalao","rodapeTalao"]].forEach(function(par){
