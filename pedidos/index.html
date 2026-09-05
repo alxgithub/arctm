@@ -884,7 +884,7 @@
   }
   function soMostrar(){ return LS.ler("modo","controlo")==="mostrar"; }
   function modoComando(){ return LS.ler("modo","controlo")==="comando"; }
-  function criarAqui(){ return LS.ler("criarAqui","sim")==="sim"; }
+  function criarAqui(){ return LS.ler("criarAqui","nao")==="sim"; }
   function aplicarAspeto(){
     var r=document.documentElement;
     r.setAttribute("data-criar", criarAqui() ? "sim" : "nao");
@@ -1373,7 +1373,7 @@
     var vol=parseInt(LS.ler("volume",70),10);
     $("#dVolume").value=vol; $("#dVolumeNum").value=vol; $("#lblVolume").textContent=vol+"%";
     $("#dToqueCartao").value = LS.ler("toqueCartao","chamar");
-    $("#dCriarAqui").value = LS.ler("criarAqui","sim");
+    $("#dCriarAqui").value = LS.ler("criarAqui","nao");
     $("#dModo").value = LS.ler("modo","controlo");
     $("#dPartilha").value = partilha();
     $("#dSalaNome").value = nomeSala();

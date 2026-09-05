@@ -421,6 +421,7 @@
     background:color-mix(in srgb, var(--petrol) 10%, var(--card));color:var(--ink);
     font-variant-numeric:tabular-nums;
   }
+  .com-pedido input:disabled{opacity:.45}
   .com-pedido input.mau{
     border-color:var(--coral);background:color-mix(in srgb, var(--coral) 14%, var(--card));
   }
@@ -1140,6 +1141,43 @@
       </label>
       <div class="fila">
         <button class="btn ghost" id="aTestarSala" type="button">Testar ligação</button>
+      </div>
+
+      <h3>Talão impresso</h3>
+      <div class="par">
+        <label class="campo"><span>Imprimir ao criar pedido</span>
+          <select id="aImprimir">
+            <option value="nao">Não imprimir</option>
+            <option value="sim">Imprimir automaticamente</option>
+          </select>
+        </label>
+        <label class="campo"><span>Vias</span>
+          <select id="aVias">
+            <option value="1">1 — só o cliente</option>
+            <option value="2">2 — cliente e cozinha</option>
+          </select>
+        </label>
+        <label class="campo"><span>Largura do papel</span>
+          <select id="aPapel">
+            <option value="80">80 mm</option>
+            <option value="58">58 mm</option>
+          </select>
+        </label>
+      </div>
+      <label class="campo"><span>Cabeçalho do talão</span>
+        <input id="aCabecalho" type="text" autocomplete="off" placeholder="ARCTM — Festa da Freguesia">
+      </label>
+      <label class="campo"><span>Rodapé do talão (opcional)</span>
+        <input id="aRodapeTalao" type="text" autocomplete="off" placeholder="Obrigado pela visita">
+      </label>
+      <div class="fila">
+        <button class="btn ghost" id="aVerTalao" type="button">Ver exemplo</button>
+        <button class="btn ghost" id="aImprimirTeste" type="button">Imprimir teste</button>
+      </div>
+      <div class="aviso" style="margin-top:12px">
+        Cada via sai como uma página, e a impressora corta ao fim de cada uma. Para não aparecer a caixa
+        de impressão em cada venda, abra o Chrome com a opção de impressão direta — explico como quando
+        a impressora estiver montada.
       </div>
       <div class="aviso" id="estadoSalaPos" style="margin-top:12px">Ainda não ligou.</div>
     </section>
@@ -3008,13 +3046,24 @@
       $("#payRot").textContent="Falta"; el.textContent=money(devido-recebido); el.className="falta";
     }
     desenharRapidas();
-    var b=$("#payConfirmar");
+    var b=$("#payConfirmar"), bp=$("#payComPedido"), cx=$("#payPedidoNum");
     var faltaValor = modoPag!=="cartao" && devido>0 && (!recebido || recebido<devido);
+    var mistoIncompleto = modoPag==="misto" && (valorCartao<=0 || valorCartao>=t);
+    var bloqueado = faltaValor || mistoIncompleto;
+
     b.textContent = modoPag==="cartao" ? "Registar venda"
       : (!recebido ? "Indique o valor recebido"
       : recebido<devido ? ("Faltam "+money(devido-recebido))
       : "Registar venda");
-    b.disabled = faltaValor || (modoPag==="misto" && (valorCartao<=0 || valorCartao>=t));
+    b.disabled = bloqueado;
+
+    // o botão com pedido segue o mesmo estado do outro
+    if(bp){
+      bp.textContent = bloqueado ? (b.textContent==="Registar venda" ? "Registar e criar pedido" : b.textContent)
+                                 : "Registar e criar pedido";
+      bp.disabled = bloqueado;
+      if(cx) cx.disabled = bloqueado;
+    }
   }
   function desenharRapidas(){
     var c=$("#payRapidas"); c.innerHTML="";
@@ -3099,6 +3148,9 @@
     if(comPedido){
       var np = criarPedido();
       if(np){ venda.pedido = np; }
+    }
+    if(comPedido && LS.ler("imprimir","nao")==="sim"){
+      setTimeout(function(){ abrirTalao(venda, true); }, 60);
     }
     guardarVenda(venda);
     estado.ultimaVenda = venda;      // fica à vista para conferir o que foi pedido
@@ -3771,7 +3823,12 @@
     if(!(window.crypto && window.crypto.subtle)){
       desligarPedidos();
       PEDIDOS.estado="precisa de https — abra a aplicação por um endereço https, não por file:// nem http://";
-      pintarEstadoSala(); return;
+      $("#aImprimir").value = LS.ler("imprimir","nao");
+    $("#aVias").value = String(LS.ler("vias","2"));
+    $("#aPapel").value = String(LS.ler("papel","80"));
+    $("#aCabecalho").value = LS.ler("cabecalho","");
+    $("#aRodapeTalao").value = LS.ler("rodapeTalao","");
+    pintarEstadoSala(); return;
     }
     if(!salaNome() || !salaPasse()){ desligarPedidos(); PEDIDOS.estado="falta nome ou palavra-passe"; pintarEstadoSala(); return; }
     PEDIDOS.estado="a ligar"; pintarEstadoSala();
@@ -3831,6 +3888,116 @@
             : PEDIDOS.estado;
     el.textContent = txt;
     atualizarNumeroPedido();
+  }
+
+
+  /* ------------- talão para impressora térmica ------------- */
+  function larguraPapel(){ return LS.ler("papel","80")==="58" ? 58 : 80; }
+
+  function talaoHtml(venda, vias, paraImprimir){
+    var ev = evAtual();
+    var larg = larguraPapel();
+    var util = larg - 8;                       // margens de 4 mm de cada lado
+    var cab = LS.ler("cabecalho","") || (ev ? ev.nome : "Venda");
+    var rod = LS.ler("rodapeTalao","");
+    var linhas = venda.linhas || [];
+    var artigos = linhas.reduce(function(a,l){ return a+l.qtd; }, 0);
+    var etiquetas = {dinheiro:"Dinheiro", cartao:"Cartão", misto:"Misto"};
+
+    function via(qual){
+      var titulo = vias>1 ? (qual===1 ? "CLIENTE" : "COZINHA") : "";
+      var h = '<section class="via">';
+      h += '<div class="casa">'+esc(cab)+'</div>';
+      if(titulo) h += '<div class="qual">'+titulo+'</div>';
+      if(venda.pedido){
+        h += '<div class="rot">PEDIDO</div><div class="numero">'+venda.pedido+'</div>';
+      }
+      h += '<div class="meta">'+new Date(venda.ts).toLocaleString("pt-PT",
+             {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})+'</div>';
+      h += '<div class="risca"></div>';
+      h += '<table class="itens">';
+      linhas.forEach(function(l){
+        h += '<tr><td class="q">'+l.qtd+'×</td><td class="n">'+esc(l.nome)+'</td>'+
+             '<td class="v">'+money(l.preco*l.qtd).replace(/\u00A0/g," ")+'</td></tr>';
+      });
+      h += '</table>';
+      h += '<div class="risca"></div>';
+      h += '<div class="total"><span>TOTAL</span><b>'+money(venda.total).replace(/\u00A0/g," ")+'</b></div>';
+      h += '<div class="pag">'+(etiquetas[venda.metodo]||venda.metodo);
+      if(venda.metodo==="misto"){
+        h += ' · cartão '+money(venda.emCartao).replace(/\u00A0/g," ")+
+             ' · dinheiro '+money(venda.emDinheiro).replace(/\u00A0/g," ");
+      }
+      if(venda.troco>0){
+        h += '<br>Recebido '+money(venda.recebido).replace(/\u00A0/g," ")+
+             ' · troco '+money(venda.troco).replace(/\u00A0/g," ");
+      }
+      h += '</div>';
+      h += '<div class="artigos">'+artigos+(artigos===1?" artigo":" artigos")+'</div>';
+      if(rod) h += '<div class="rodape">'+esc(rod)+'</div>';
+      h += '<div class="fim">.</div></section>';
+      return h;
+    }
+
+    var corpo = "";
+    for(var i=1;i<=vias;i++) corpo += via(i);
+
+    var estilo =
+      '@page{size:'+larg+'mm auto;margin:0}' +
+      'html,body{margin:0;padding:0;background:#fff;color:#000}' +
+      'body{width:'+larg+'mm;font-family:"Helvetica Neue",Arial,sans-serif;-webkit-print-color-adjust:exact}' +
+      '.via{width:'+util+'mm;margin:0 4mm;padding:4mm 0 2mm;page-break-after:always;break-after:page;text-align:center}' +
+      '.via:last-child{page-break-after:auto;break-after:auto}' +
+      '.casa{font-size:'+(larg===58?"11pt":"12pt")+';font-weight:700;line-height:1.2}' +
+      '.qual{font-size:9pt;font-weight:700;letter-spacing:.18em;margin-top:1mm}' +
+      '.rot{font-size:9pt;letter-spacing:.3em;margin-top:3mm}' +
+      '.numero{font-size:'+(larg===58?"44pt":"54pt")+';font-weight:800;line-height:1;margin:0 0 1mm;font-variant-numeric:tabular-nums}' +
+      '.meta{font-size:8.5pt;margin-top:1mm}' +
+      '.risca{border-top:1px dashed #000;margin:3mm 0 2mm}' +
+      'table.itens{width:100%;border-collapse:collapse;font-size:'+(larg===58?"9pt":"10pt")+';text-align:left}' +
+      'table.itens td{padding:.6mm 0;vertical-align:top}' +
+      'td.q{width:8mm;font-weight:700}' +
+      'td.n{word-break:break-word}' +
+      'td.v{width:'+(larg===58?"16mm":"20mm")+';text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}' +
+      '.total{display:flex;justify-content:space-between;font-size:'+(larg===58?"12pt":"14pt")+';font-weight:800;margin-top:1mm}' +
+      '.pag{font-size:8.5pt;margin-top:2mm;line-height:1.4}' +
+      '.artigos{font-size:8.5pt;margin-top:1mm}' +
+      '.rodape{font-size:9pt;margin-top:3mm}' +
+      '.fim{color:#fff;height:6mm}' +
+      '@media screen{body{background:#eef1ef;padding:14px 0}' +
+      '.via{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.15);margin:0 auto 16px;padding:5mm 4mm}}';
+
+    return '<!DOCTYPE html><html lang="pt-PT"><head><meta charset="utf-8">' +
+      '<title>Talão '+(venda.pedido?("pedido "+venda.pedido):"")+'</title>' +
+      '<style>'+estilo+'</style></head><body>'+corpo+
+      (paraImprimir ? '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},120);});<\/script>' : '') +
+      '</body></html>';
+  }
+
+  function abrirTalao(venda, imprimir){
+    var vias = parseInt(LS.ler("vias","2"),10)===1 ? 1 : 2;
+    var html = talaoHtml(venda, vias, !!imprimir);
+    try{
+      var blob = new Blob([html], {type:"text/html;charset=utf-8"});
+      var url = URL.createObjectURL(blob);
+      var w = window.open(url, "_blank", "width=420,height=760");
+      if(w){ setTimeout(function(){ URL.revokeObjectURL(url); }, 60000); return true; }
+      URL.revokeObjectURL(url);
+    }catch(e){}
+    toast("A janela do talão foi bloqueada pelo browser");
+    return false;
+  }
+
+  function vendaExemplo(){
+    return {
+      id:"exemplo", ts:Date.now(), pedido:47, total:14.50, metodo:"dinheiro",
+      emDinheiro:14.50, emCartao:0, recebido:20, troco:5.50,
+      linhas:[
+        {nome:"Menu bifana", preco:5.50, qtd:1, icone:"bifana"},
+        {nome:"Imperial", preco:1.50, qtd:2, icone:"imperial"},
+        {nome:"Frango no churrasco", preco:8.00, qtd:0.75, icone:"frango"}
+      ]
+    };
   }
 
   /* ------------- pega para redimensionar a venda ------------- */
@@ -4281,7 +4448,7 @@
     LS.esc("paleta",this.value); LS.esc(chaveManuais(), {}); LS.esc("acentoManual","nao");
     aplicarTema(); desenharAcentos(); desenharManuais(); desenharProntos();
   });
-  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","talaoLinhas","manterTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","pedidoPorOmissao","salaNome","salaServidor"];
+  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","talaoLinhas","manterTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaNome","salaServidor","imprimir","vias","papel","cabecalho","rodapeTalao"];
   $("#aCopiarDefs").addEventListener("click", function(){
     var pacote = {app:"registadora-definicoes", versao:1};
     CHAVES_DEFS.forEach(function(k){
@@ -4547,6 +4714,14 @@
       if(pedidosLigados()) ligarPedidos();
     });
   });
+  [["#aImprimir","imprimir"],["#aVias","vias"],["#aPapel","papel"]].forEach(function(par){
+    $(par[0]).addEventListener("change", function(){ LS.esc(par[1], this.value); });
+  });
+  [["#aCabecalho","cabecalho"],["#aRodapeTalao","rodapeTalao"]].forEach(function(par){
+    $(par[0]).addEventListener("input", function(){ LS.esc(par[1], this.value); });
+  });
+  $("#aVerTalao").addEventListener("click", function(){ abrirTalao(vendaExemplo(), false); });
+  $("#aImprimirTeste").addEventListener("click", function(){ abrirTalao(vendaExemplo(), true); });
   $("#aTestarSala").addEventListener("click", function(){
     if(!pedidosLigados()){ toast("Ligue primeiro a criação de pedidos"); return; }
     ligarPedidos();
