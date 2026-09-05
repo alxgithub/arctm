@@ -79,16 +79,23 @@
   .icon-btn svg{width:calc(20px * var(--ctl));height:calc(20px * var(--ctl));stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
   main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 14px 0;overflow:hidden}
-  #areaGrelha{flex:1;min-height:0;overflow:hidden;padding:3px 3px 0}
+  #areaGrelha{flex:1;min-height:0;overflow:hidden;padding:4px 4px 2px}
   .barra-grelha{
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-    padding:10px 2px 12px;flex-wrap:wrap;flex:none;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 4px 14px;flex-wrap:wrap;flex:none;
   }
   .acoes-grelha{display:flex;gap:7px;flex:1;min-width:0}
   .acoes-grelha button{
-    display:flex;align-items:center;gap:6px;border:1px dashed var(--line);background:transparent;
-    color:var(--ink-2);border-radius:10px;padding:calc(8px * var(--ctl)) calc(12px * var(--ctl));font-size:0.875rem;font-weight:600;white-space:nowrap;
+    display:flex;align-items:center;gap:7px;
+    border:1px solid color-mix(in srgb, var(--petrol) 40%, var(--line));
+    background:color-mix(in srgb, var(--petrol) 10%, var(--card));
+    color:var(--petrol);border-radius:11px;
+    padding:calc(9px * var(--ctl)) calc(14px * var(--ctl));
+    font-size:0.9375rem;font-weight:700;white-space:nowrap;
+    box-shadow:0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent);
   }
+  .acoes-grelha button:hover{background:color-mix(in srgb, var(--petrol) 16%, var(--card))}
+  .acoes-grelha button:active{transform:translateY(1px)}
   .acoes-grelha button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
   .paginas{display:flex;align-items:center;justify-content:center;gap:6px}
   /* os separadores ocupam a altura toda, para a navegação assentar no fundo */
@@ -120,11 +127,17 @@
   .paginas button svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
   .paginas .conta{font-size:0.875rem;font-weight:700;color:var(--acc2, var(--ink-2));min-width:64px;text-align:center}
   .procura{
-    position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;
-    background:var(--paper);border:1px solid var(--line);border-radius:12px;
-    padding:0 10px;margin-bottom:10px;
+    position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:9px;
+    background:var(--card);
+    border:1px solid color-mix(in srgb, var(--petrol) 28%, var(--line));
+    border-radius:999px;padding:0 14px;margin:0 2px 12px;
+    box-shadow:inset 0 1px 3px color-mix(in srgb, var(--ink) 7%, transparent);
   }
-  .procura svg{width:19px;height:19px;stroke:var(--ink-2);fill:none;stroke-width:1.8;stroke-linecap:round;flex:none}
+  .procura:focus-within{
+    border-color:var(--petrol);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--petrol) 18%, transparent);
+  }
+  .procura svg{width:19px;height:19px;stroke:var(--petrol);fill:none;stroke-width:1.9;stroke-linecap:round;flex:none}
   .procura input{
     flex:1;min-width:0;border:0;background:transparent;padding:12px 0;font-size:1.0rem;
     -webkit-appearance:none;appearance:none;
@@ -199,6 +212,7 @@
     height:min(calc(var(--talao-linhas, 3) * 52px * var(--ctl)), 62dvh);
     overflow-y:auto;padding:2px 12px;scrollbar-width:thin;
   }
+  .cabeca-paga .mini + .mini{margin-left:6px}
   .cabeca-paga{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:2px;
@@ -2441,9 +2455,10 @@
     var cols = (fixas>0) ? Math.max(1, fixas) : Math.max(1, Math.floor(100 / m.wp));
     var rows = Math.max(1, Math.floor(100 / m.hp));
 
-    // os botões repartem o espaço todo, sem sobras
-    var larguraBotao = Math.max(40, (lw - (cols-1)*gap) / cols);
-    var alturaBotao  = Math.max(44, (lh - (rows-1)*gap) / rows);
+    // reserva para contornos e sombras, senão a última fila fica cortada
+    var folga = 6;
+    var larguraBotao = Math.max(40, (lw - (cols-1)*gap - folga) / cols);
+    var alturaBotao  = Math.max(44, (lh - (rows-1)*gap - folga) / rows);
 
     var r = document.documentElement.style;
     r.setProperty("--cols", cols);
@@ -2607,8 +2622,12 @@
       cab.innerHTML =
         '<div><b>'+(v.pedido ? ("Pedido "+v.pedido+" · ") : "Última venda · ")+horas(v.ts)+'</b>'+
         '<span>'+money(v.total)+' · '+nomeMetodo(v)+(v.troco>0?(" · troco "+money(v.troco)):"")+'</span></div>'+
-        '<button class="mini" type="button">Fechar</button>';
-      cab.querySelector("button").addEventListener("click", function(){
+        '<button class="mini" type="button" title="Imprimir outra vez">Imprimir</button>'+
+        '<button class="mini" type="button" title="Tirar da vista">Fechar</button>';
+      cab.querySelectorAll("button")[0].addEventListener("click", function(){
+        abrirTalao(v, true);
+      });
+      cab.querySelectorAll("button")[1].addEventListener("click", function(){
         estado.ultimaVenda=null; desenharCarrinho();
       });
       c.appendChild(cab);
@@ -3400,8 +3419,11 @@
             return l.qtd+"× "+l.nome+" ("+money(l.preco)+")";
           }).join(", "))+'</span></div>'+
         '<div style="font-weight:600">'+money(v.total)+'</div>'+
+        '<button class="mini" type="button" title="Imprimir o talão outra vez">Imprimir</button>'+
         '<button class="mini perigo" type="button">Anular</button>';
-      li.querySelector("button").addEventListener("click", function(){
+      var bts = li.querySelectorAll("button");
+      bts[0].addEventListener("click", function(){ abrirTalao(v, true); });
+      bts[1].addEventListener("click", function(){
         confirmar("Anular venda?", "Venda de "+money(v.total)+" às "+horas(v.ts)+". Deixa de contar no relatório.", "Anular").then(function(ok){
           if(!ok) return;
           apagarVenda(v.id); desenharHoje(); toast("Venda anulada");
@@ -4230,7 +4252,21 @@
     return '<!DOCTYPE html><html lang="pt-PT"><head><meta charset="utf-8">' +
       '<title>Talão '+(venda.pedido?("pedido "+venda.pedido):"")+'</title>' +
       '<style>'+estilo+'</style></head><body>'+corpo+
-      (paraImprimir ? '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},120);});<\/script>' : '') +
+      (paraImprimir ?
+        '<script>' +
+        'window.addEventListener("load",function(){' +
+        '  var fechado=false;' +
+        '  function fechar(){ if(fechado) return; fechado=true; setTimeout(function(){ try{ window.close(); }catch(e){} }, 400); }' +
+        '  window.addEventListener("afterprint", fechar);' +          // fecha quando o browser termina
+        '  if(window.matchMedia){' +
+        '    var mm=window.matchMedia("print");' +
+        '    var ouvir=function(e){ if(!e.matches) fechar(); };' +
+        '    if(mm.addEventListener) mm.addEventListener("change", ouvir); else if(mm.addListener) mm.addListener(ouvir);' +
+        '  }' +
+        '  setTimeout(function(){ window.print(); }, 150);' +
+        '  setTimeout(fechar, 20000);' +                              // rede de segurança
+        '});' +
+        '<\/script>' : '') +
       '</body></html>';
   }
 
@@ -4240,7 +4276,7 @@
     try{
       var blob = new Blob([html], {type:"text/html;charset=utf-8"});
       var url = URL.createObjectURL(blob);
-      var w = window.open(url, "_blank", "width=420,height=760");
+      var w = window.open(url, "talao_arctm", "width=420,height=760");
       if(w){ setTimeout(function(){ URL.revokeObjectURL(url); }, 60000); return true; }
       URL.revokeObjectURL(url);
     }catch(e){}
