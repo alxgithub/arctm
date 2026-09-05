@@ -96,11 +96,11 @@
     flex:1;min-height:0;overflow:hidden;display:grid;
     grid-template-rows:auto minmax(0,1fr) auto auto;
     justify-items:center;align-content:stretch;
-    gap:.6vmin;padding:.8vmin 1vmin;cursor:pointer;position:relative;
+    gap:1vmin;padding:1.6vmin 3vmin;cursor:pointer;position:relative;
   }
   .visor > *{min-width:0;max-width:100%}
   .zona{
-    width:100%;min-height:0;overflow:hidden;display:grid;place-items:center;
+    width:100%;min-height:0;overflow:hidden;display:grid;place-items:center;padding:0 1vmin;
   }
   .rotulo{
     flex:none;white-space:nowrap;margin-top:calc(2.4vmin * var(--esc-texto, 1));
@@ -138,7 +138,7 @@
 
   /* ---------- barra de controlo ---------- */
   .barra{
-    display:flex;align-items:center;gap:8px;padding:10px 12px calc(env(safe-area-inset-bottom) + 10px);
+    display:flex;align-items:center;gap:9px;padding:11px 14px calc(env(safe-area-inset-bottom) + 12px);
     border-top:2px solid color-mix(in srgb, var(--acc2, var(--acento)) 45%, var(--linha));
     background:var(--painel);flex-wrap:wrap;
     transition:opacity .25s ease, transform .25s ease;
@@ -704,8 +704,8 @@
     d.style.lineHeight = p.alt;                  // a caixa vale a altura real do algarismo
     d.style.setProperty("--larg-dig", p.larg+"em");
 
-    var alturaLivre = zona.clientHeight - 2;
-    var larguraLivre = zona.clientWidth - 4;
+    var alturaLivre = (zona.clientHeight - 6) * 0.97;
+    var larguraLivre = (zona.clientWidth - 12) * 0.97;
     if(alturaLivre < 30 || larguraLivre < 30) return;
 
     var n = Math.max(1, nDigitos);
@@ -1463,7 +1463,7 @@
   var CHAVES_DEFS = ["limite","max","casas","modo","fantasma","tamanho","escalaNum","fonte",
                      "rotulo","mensagem","rodape","rodapeVisivel","mostrarTotal",
                      "tema","cor","escTexto","barra","som","volume","repeticoes",
-                     "botaoTras","toqueChama","corManual","contador","escalaNum","partilha","salaNome","salaServidor","salaUtilizador"];
+                     "botaoTras","toqueChama","corManual","contador","escalaNum","partilha","salaServidor"];
   $("#dCopiarDefs").addEventListener("click", function(){
     var pacote = {app:"visor-senhas", versao:1};
     CHAVES_DEFS.forEach(function(k){

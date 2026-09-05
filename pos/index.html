@@ -78,8 +78,8 @@
   .icon-btn{border:1px solid var(--line);background:transparent;border-radius:11px;width:calc(40px * var(--ctl));height:calc(40px * var(--ctl));display:grid;place-items:center;flex:none}
   .icon-btn svg{width:calc(20px * var(--ctl));height:calc(20px * var(--ctl));stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
-  main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 12px 0;overflow:hidden}
-  #areaGrelha{flex:1;min-height:0;overflow:hidden;padding:2px 2px 0}
+  main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 14px 0;overflow:hidden}
+  #areaGrelha{flex:1;min-height:0;overflow:hidden;padding:3px 3px 0}
   .barra-grelha{
     display:flex;align-items:center;justify-content:space-between;gap:8px;
     padding:10px 2px 12px;flex-wrap:wrap;flex:none;
@@ -169,6 +169,7 @@
     border-top:2px solid color-mix(in srgb, var(--acc2, var(--petrol)) 45%, var(--line));
     background:var(--card);position:relative;
   }
+  .talao .linhas{padding-right:2px}
   .pega-talao{
     height:16px;display:grid;place-items:center;cursor:row-resize;touch-action:none;
     background:transparent;
@@ -3924,7 +3925,7 @@
   /* ------------- ligação à sala dos pedidos ------------- */
   var PEDIDOS = {cli:null, estado:"desligada", topico:"", id:Math.random().toString(36).slice(2,10),
                  lista:[], atual:null, contador:null};
-  function pedidosLigados(){ return LS.ler("pedidosLigar","nao")==="sim"; }
+  function pedidosLigados(){ return LS.ler("pedidosLigar","sim")==="sim"; }
   function salaNome(){ return String(LS.ler("salaNome","")).trim(); }
   function salaPasse(){ return String(LS.ler("salaPasse","")); }
   function salaServidor(){ return String(LS.ler("salaServidor","wss://broker.emqx.io:8084/mqtt")).trim(); }
@@ -4702,7 +4703,7 @@
     LS.esc("paleta",this.value); LS.esc(chaveManuais(), {}); LS.esc("acentoManual","nao");
     aplicarTema(); desenharAcentos(); desenharManuais(); desenharProntos();
   });
-  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaNome","salaServidor","imprimir","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
+  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","imprimir","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
   $("#aCopiarDefs").addEventListener("click", function(){
     var pacote = {app:"registadora-definicoes", versao:1};
     CHAVES_DEFS.forEach(function(k){
@@ -4948,7 +4949,7 @@
   $("#hRelatorio").addEventListener("click", function(){ fechar("#sheetHoje"); abrirRelatorio(evAtual()); });
   $("#btnAjustes").addEventListener("click", function(){
     $("#aModo").value=estado.modo; notaModo(); desenharAcentos(); desenharProntos(); desenharManuais(); sincronizarCursores(); desenharPrevia(); desenharListaProdutos();
-    $("#aPedidos").value = LS.ler("pedidosLigar","nao");
+    $("#aPedidos").value = LS.ler("pedidosLigar","sim");
 
     $("#aSalaNome").value = salaNome();
     $("#aSalaPasse").value = salaPasse();

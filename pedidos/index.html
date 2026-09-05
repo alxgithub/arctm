@@ -94,13 +94,13 @@
   /* ---------- chamada em curso ---------- */
   .chamada{
     min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;
-    justify-items:center;gap:.6vmin;padding:1.4vmin 1vmin .6vmin;position:relative;overflow:hidden;
+    justify-items:center;gap:1vmin;padding:2vmin 3vmin 1.2vmin;position:relative;overflow:hidden;
   }
   .rotulo{
     font-size:calc(clamp(13px, 3vmin, 40px) * var(--esc, 1));letter-spacing:.3em;text-transform:uppercase;
     font-weight:700;color:color-mix(in srgb, var(--acc2) 70%, var(--texto-2));padding-left:.3em;
   }
-  .zona{width:100%;min-height:0;overflow:hidden;display:grid;place-items:center;position:relative}
+  .zona{width:100%;min-height:0;overflow:hidden;display:grid;place-items:center;position:relative;padding:0 1vmin}
   .numero{
     font-family:var(--fonte, "Azeret Mono"),ui-monospace,monospace;
     font-weight:var(--peso, 800);font-variant-numeric:tabular-nums;
@@ -119,15 +119,15 @@
     display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center;
     min-height:1.4em;line-height:1.3;
   }
-  .zona{contain:strict}
+  .zona{contain:size layout}
 
   /* ---------- em preparação ---------- */
   .fila{
     min-height:0;border-top:2px solid color-mix(in srgb, var(--acc2) 45%, var(--linha));
     background:color-mix(in srgb, var(--texto) 3%, var(--painel));
-    display:flex;flex-direction:column;padding:2px 12px 4px;gap:8px;position:relative;
+    display:flex;flex-direction:column;padding:2px 14px 8px;gap:9px;position:relative;
   }
-  .pega{height:16px;display:grid;place-items:center;cursor:row-resize;touch-action:none;margin:0 -12px}
+  .pega{height:16px;display:grid;place-items:center;cursor:row-resize;touch-action:none;margin:0 -14px}
   .pega i{display:block;width:52px;height:4px;border-radius:2px;background:var(--linha)}
   .pega:hover i,.pega:focus-visible i{background:var(--acento)}
   :root[data-arrastar] *{user-select:none}
@@ -156,16 +156,19 @@
   .cartoes{
     flex:1;min-height:0;overflow-y:auto;display:grid;gap:9px;align-content:start;
     grid-template-columns:repeat(auto-fill,minmax(calc(96px * var(--cartao,1)),1fr));
-    padding-bottom:6px;scrollbar-width:thin;
+    padding:2px 2px 8px;scrollbar-width:thin;overscroll-behavior:contain;
   }
   .pedido{
     border:2px solid var(--linha);border-radius:14px;background:var(--painel);
     padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;
   }
+  .pedido{min-width:0}
   .pedido .n{
     font-family:var(--fonte, "Azeret Mono"),ui-monospace,monospace;font-weight:var(--peso,800);
-    font-size:calc(30px * var(--cartao,1));line-height:1;font-variant-numeric:tabular-nums;
+    font-size:min(calc(30px * var(--cartao,1)), 13cqw);line-height:1.05;font-variant-numeric:tabular-nums;
+    max-width:100%;overflow:hidden;text-overflow:clip;
   }
+  .cartoes{container-type:inline-size}
   .pedido .tempo{font-size:12px;color:var(--texto-2);font-weight:600}
   .pedido.chamado{
     border-color:var(--acento);
@@ -255,7 +258,7 @@
 
   /* ---------- barra ---------- */
   .barra{
-    display:flex;align-items:center;gap:8px;padding:10px 12px calc(env(safe-area-inset-bottom) + 10px);
+    display:flex;align-items:center;gap:9px;padding:11px 14px calc(env(safe-area-inset-bottom) + 12px);
     border-top:1px solid var(--linha);background:var(--painel);flex-wrap:wrap;
   }
   .btn{
@@ -562,6 +565,10 @@
           </select>
         </label>
         <div class="aviso-cx">
+          O endereço também define o papel deste ecrã: acrescente <b>?modo=controlo</b>,
+          <b>?modo=comando</b> ou <b>?modo=mostrar</b> ao fim do link e guarde-o nos favoritos de cada aparelho.
+        </div>
+        <div class="aviso-cx">
           <b>Controlo</b> é o posto principal, com o número grande em cima.
           <b>Comando</b> encolhe o número a uma faixa e dá o ecrã todo aos cartões, com botões maiores —
           é o modo para andar com o telemóvel na mão.
@@ -728,7 +735,7 @@
   }
   var APP_SALA = "pedidos";
   /* ---------- sala protegida: nome + palavra-passe, conteúdo cifrado ---------- */
-  function nomeSala(){ return String(LS.ler("salaNome","123")).trim(); }
+  function nomeSala(){ return String(LS.ler("salaNome","")).trim(); }
   function passeSala(){ return String(LS.ler("salaPasse","")); }
   function servidorSala(){ return String(LS.ler("salaServidor","wss://broker.emqx.io:8084/mqtt")).trim(); }
 
@@ -890,8 +897,18 @@
     for(var i=0;i<FONTES.length;i++) if(FONTES[i].f===f) return FONTES[i].p;
     return 800;
   }
-  function soMostrar(){ return LS.ler("modo","controlo")==="mostrar"; }
-  function modoComando(){ return LS.ler("modo","controlo")==="comando"; }
+  // o endereço manda: ?modo=controlo, ?modo=comando ou ?modo=mostrar
+  (function(){
+    try{
+      var q = new URLSearchParams(location.search);
+      var m = q.get("modo");
+      if(m && ["controlo","comando","mostrar"].indexOf(m)>=0) LS.esc("modo", m);
+      var sala = q.get("sala");
+      if(sala) LS.esc("salaNome", sala);
+    }catch(e){}
+  })();
+  function soMostrar(){ return LS.ler("modo","mostrar")==="mostrar"; }
+  function modoComando(){ return LS.ler("modo","mostrar")==="comando"; }
   function criarAqui(){ return LS.ler("criarAqui","nao")==="sim"; }
   function tecladoSistema(){ return LS.ler("tecladoSistema","sim")==="sim"; }
   function ajustarTeclados(){
@@ -911,7 +928,7 @@
     var r=document.documentElement;
     r.setAttribute("data-criar", criarAqui() ? "sim" : "nao");
     r.setAttribute("data-tema", LS.ler("tema","arctm-azul"));
-    r.setAttribute("data-modo", LS.ler("modo","controlo"));
+    r.setAttribute("data-modo", LS.ler("modo","mostrar"));
     r.style.setProperty("--acento", LS.ler("cor", "#2A8FC4"));
     r.style.setProperty("--esc", LS.ler("esc","1"));
     r.style.setProperty("--topo", LS.ler("topo",61));
@@ -949,7 +966,7 @@
     if(el.classList.contains("vazio")){ el.style.fontSize=""; el.style.lineHeight=""; return; }
     var p=medirGlifo();
     el.style.lineHeight=p.alt;
-    var ah=(zona.clientHeight-4)*0.97, aw=(zona.clientWidth-8)*0.98;
+    var ah=(zona.clientHeight-6)*0.95, aw=(zona.clientWidth-12)*0.96;
     if(ah<24||aw<24) return;
     var n=Math.max(1, String(el.textContent||"").length);
     var tam=Math.max(28, Math.min(ah/p.alt, aw/(n*p.larg+0.04)));
@@ -958,9 +975,9 @@
     var voltas=0;
     function transborda(){
       var r=el.getBoundingClientRect(), z=zona.getBoundingClientRect();
-      return r.width > z.width-4 || r.height > z.height-4;
+      return r.width > z.width-8 || r.height > z.height-8;
     }
-    while(voltas++<40 && transborda()){
+    while(voltas++<50 && transborda()){
       tam*=0.95; if(tam<28) break;
       el.style.fontSize=Math.floor(tam)+"px";
     }
@@ -1405,7 +1422,7 @@
     $("#dToqueCartao").value = LS.ler("toqueCartao","chamar");
     $("#dCriarAqui").value = LS.ler("criarAqui","nao");
     $("#dTecladoSistema").value = LS.ler("tecladoSistema","sim");
-    $("#dModo").value = LS.ler("modo","controlo");
+    $("#dModo").value = LS.ler("modo","mostrar");
     $("#dPartilha").value = partilha();
     $("#dSalaNome").value = nomeSala();
     $("#dSalaPasse").value = passeSala();
@@ -1555,7 +1572,7 @@
   });
 
   /* ---------- copiar e colar definições ---------- */
-  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","outrosProntos","tempoCartoes","criarAqui","tecladoSistema","partilha","salaNome","salaServidor","salaUtilizador","som","volume","toqueCartao","modo"];
+  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","outrosProntos","tempoCartoes","criarAqui","tecladoSistema","partilha","salaServidor","som","volume","toqueCartao","modo"];
   $("#dCopiarDefs").addEventListener("click", function(){
     var texto=JSON.stringify(pacoteDefs()), ta=$("#dTextoDefs");
     ta.hidden=false; ta.value=texto;

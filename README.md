@@ -27,6 +27,20 @@ https://<utilizador>.github.io/<repositório>/senhas/   visor de senhas
 https://<utilizador>.github.io/<repositório>/pedidos/  visor de pedidos
 ```
 
+## Papel de cada ecrã
+
+O visor de pedidos abre em modo **Só mostrar**, para ecrãs de sala. Para os outros
+papéis, acrescente ao endereço:
+
+```
+/pedidos/                   informação (por omissão)
+/pedidos/?modo=controlo     posto que chama e entrega
+/pedidos/?modo=comando      telemóvel ou tablet na mão
+```
+
+Guarde nos favoritos de cada aparelho o endereço com o seu papel. A escolha fica
+memorizada nesse dispositivo, por isso basta abrir com o parâmetro uma vez.
+
 ## Sincronizar vários ecrãs
 
 Nos visores, em **Definições → Uso → Partilhar entre dispositivos**, escolha
