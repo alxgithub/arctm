@@ -237,6 +237,7 @@
   }
   :root[data-modo="mostrar"] .pega.visivel{opacity:1}
   :root[data-modo="mostrar"] .barra{gap:10px;justify-content:flex-end;background:transparent;border-top:0}
+  :root[data-modo="mostrar"] .estado{display:none}
   .altura-barra{display:flex;align-items:center;gap:10px;flex:1;min-width:220px}
   .altura-barra span{font-size:13px;color:var(--texto-2);font-weight:600;white-space:nowrap}
   .altura-barra input[type=range]{flex:1;min-width:0;padding:0}
@@ -250,7 +251,7 @@
   :root[data-modo="mostrar"] #btnNovo,
   :root[data-modo="mostrar"] #btnRepetir,
   :root[data-modo="mostrar"] #btnManual,
-  :root[data-modo="mostrar"] #btnEcra{display:none}
+
 
   /* ---------- barra ---------- */
   .barra{
@@ -574,6 +575,12 @@
               <option value="nao">Não — os números vêm da registadora</option>
             </select>
           </label>
+          <label class="campo"><span>Teclado ao escrever números</span>
+            <select id="dTecladoSistema">
+              <option value="sim">Abrir o teclado do dispositivo</option>
+              <option value="nao">Não abrir — só teclado físico</option>
+            </select>
+          </label>
           <label class="campo"><span>Tocar num cartão</span>
             <select id="dToqueCartao">
               <option value="chamar">Chama esse pedido</option>
@@ -885,6 +892,20 @@
   function soMostrar(){ return LS.ler("modo","controlo")==="mostrar"; }
   function modoComando(){ return LS.ler("modo","controlo")==="comando"; }
   function criarAqui(){ return LS.ler("criarAqui","nao")==="sim"; }
+  function tecladoSistema(){ return LS.ler("tecladoSistema","sim")==="sim"; }
+  function ajustarTeclados(){
+    ["#proximoNum","#campoManual"].forEach(function(sel){
+      var el=$(sel);
+      if(!el) return;
+      if(tecladoSistema()){
+        el.removeAttribute("readonly");
+        el.setAttribute("inputmode","numeric");
+      } else {
+        el.setAttribute("readonly","");     // impede o teclado no ecrã
+        el.setAttribute("inputmode","none");
+      }
+    });
+  }
   function aplicarAspeto(){
     var r=document.documentElement;
     r.setAttribute("data-criar", criarAqui() ? "sim" : "nao");
@@ -1374,6 +1395,7 @@
     $("#dVolume").value=vol; $("#dVolumeNum").value=vol; $("#lblVolume").textContent=vol+"%";
     $("#dToqueCartao").value = LS.ler("toqueCartao","chamar");
     $("#dCriarAqui").value = LS.ler("criarAqui","nao");
+    $("#dTecladoSistema").value = LS.ler("tecladoSistema","sim");
     $("#dModo").value = LS.ler("modo","controlo");
     $("#dPartilha").value = partilha();
     $("#dSalaNome").value = nomeSala();
@@ -1399,7 +1421,7 @@
       LS.esc(chave, v);
       $(idRange).value=v; $(idNum).value=v;
       if(aoMudar) aoMudar(v);
-      aplicarAspeto();
+      aplicarAspeto(); ajustarTeclados();
   desenhar(); mostrarBarra();
     }
     $(idRange).addEventListener("input", function(){ aplicar(parseInt(this.value,10)); });
@@ -1471,6 +1493,9 @@
     apitar();
   });
   $("#dToqueCartao").addEventListener("change", function(){ LS.esc("toqueCartao",this.value); });
+  $("#dTecladoSistema").addEventListener("change", function(){
+    LS.esc("tecladoSistema", this.value); ajustarTeclados();
+  });
   $("#dCriarAqui").addEventListener("change", function(){ LS.esc("criarAqui",this.value); aplicarAspeto(); desenhar(); });
   $("#dModo").addEventListener("change", function(){
     LS.esc("modo", this.value);
@@ -1521,7 +1546,7 @@
   });
 
   /* ---------- copiar e colar definições ---------- */
-  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","outrosProntos","tempoCartoes","criarAqui","partilha","salaNome","salaServidor","salaUtilizador","som","volume","toqueCartao","modo"];
+  var CHAVES=["inicio","max","demora","topo","cartao","tema","esc","cor","corManual","fonte","rotulo","tituloFila","tituloProntos","colProntos","modoColunas","contagens","estadoBarra","outrosProntos","tempoCartoes","criarAqui","tecladoSistema","partilha","salaNome","salaServidor","salaUtilizador","som","volume","toqueCartao","modo"];
   $("#dCopiarDefs").addEventListener("click", function(){
     var texto=JSON.stringify(pacoteDefs()), ta=$("#dTextoDefs");
     ta.hidden=false; ta.value=texto;
