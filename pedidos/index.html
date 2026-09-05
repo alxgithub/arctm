@@ -713,6 +713,7 @@
   ];
 
   // estado: lista de pedidos e número em chamada
+  var chamadaTs = LS.ler("chamadaTs", 0) || 0;   // instante da última chamada, para o eco chegar às repetições
   var pedidos = LS.ler("lista", []) || [];   // {n, estado:"espera"|"chamado", ts}
   var atual = LS.ler("atual", null);
   var contador = LS.ler("contador", null);
@@ -830,7 +831,7 @@
   }
   function publicarSala(){
     if(partilha()!=="sala" || !SALA.cli || !SALA.cli.connected || !SALA.topico) return;
-    cifrar({lista:pedidos, atual:atual, contador:contador, ts:Date.now(), de:SALA.id}).then(function(txt){
+    cifrar({lista:pedidos, atual:atual, contador:contador, chamadaTs:chamadaTs, ts:Date.now(), de:SALA.id}).then(function(txt){
       try{ SALA.cli.publish(SALA.topico, txt, {qos:0, retain:true}); }catch(e){}
     }).catch(function(){});
   }
@@ -996,10 +997,10 @@
 
   /* ---------- dados ---------- */
   function guardar(){
-    LS.esc("lista", pedidos); LS.esc("atual", atual); LS.esc("contador", contador);
+    LS.esc("lista", pedidos); LS.esc("atual", atual); LS.esc("contador", contador); LS.esc("chamadaTs", chamadaTs);
     publicarSala();
     if(partilha()==="claude" && db){
-      db.doc("pedidos/estado").set({lista:pedidos, atual:atual, contador:contador, ts:Date.now()})
+      db.doc("pedidos/estado").set({lista:pedidos, atual:atual, contador:contador, chamadaTs:chamadaTs, ts:Date.now()})
         .then(function(){ ultimaEnviada=Date.now(); ultimoErro=null; })
         .catch(function(err){
           ultimoErro=String(err && err.message || err);
@@ -1057,6 +1058,7 @@
     });
     if(!achou) return;
     atual = n;
+    chamadaTs = Date.now();
     guardar(); desenhar(true); apitar();
   }
   function chamarMaisAntigo(){
@@ -1071,6 +1073,8 @@
   }
   function repetir(){
     if(atual===null || atual===undefined){ toast("Ainda não chamou nenhum"); return; }
+    chamadaTs = Date.now();
+    guardar();              // a repetição também viaja para os outros ecrãs
     desenhar(true); apitar();
   }
   function entregar(n){
@@ -1216,16 +1220,19 @@
   function aplicarRemoto(d, comSom){
     if(!d || !Array.isArray(d.lista)) return false;
     var novoAtual = (d.atual===undefined ? null : d.atual);
-    var mudou = JSON.stringify(d.lista)!==JSON.stringify(pedidos) || novoAtual!==atual;
+    var novaChamada = (typeof d.chamadaTs==="number") ? d.chamadaTs : 0;
+    var chamou = novaChamada > chamadaTs;                 // nova chamada, ainda que do mesmo número
+    var mudou = JSON.stringify(d.lista)!==JSON.stringify(pedidos) || novoAtual!==atual || chamou;
     if(!mudou) return false;
-    var subiu = novoAtual!==null && novoAtual!==atual;
     pedidos = copia(d.lista);
     atual = novoAtual;
     if(typeof d.contador==="number") contador = d.contador;
-    LS.esc("lista",pedidos); LS.esc("atual",atual); LS.esc("contador",contador);
+    if(novaChamada) chamadaTs = novaChamada;
+    LS.esc("lista",pedidos); LS.esc("atual",atual); LS.esc("contador",contador); LS.esc("chamadaTs",chamadaTs);
     ultimaRecebida = Date.now();
-    desenhar(subiu);
-    if(subiu && comSom) apitar();
+    var anunciar = chamou && atual!==null && atual!==undefined;
+    desenhar(anunciar);
+    if(anunciar && comSom) apitar();
     return true;
   }
   function sondar(){
@@ -1275,6 +1282,7 @@
         if(snap && snap.exists && Array.isArray(d.lista)){
           pedidos=copia(d.lista); atual=(d.atual===undefined?null:d.atual);
           contador=(typeof d.contador==="number")?d.contador:contador;
+          if(typeof d.chamadaTs==="number") chamadaTs=d.chamadaTs;
           LS.esc("lista",pedidos); LS.esc("atual",atual); LS.esc("contador",contador);
         } else {
           return db.doc("pedidos/estado").set({lista:pedidos, atual:atual, contador:contador, ts:Date.now()});
