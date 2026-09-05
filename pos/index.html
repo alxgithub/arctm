@@ -343,14 +343,18 @@
   #sheetAjustes .abas.separadores{flex:none}
   #sheetAjustes h2,#sheetAjustes > .painel > .sub{flex:none}
   .sheet h2{margin:0 0 2px;font-size:1.1875rem;font-weight:700;padding-right:44px}
-  .sheet h3{margin:20px 0 8px;font-size:0.9375rem;font-weight:700}
+  .sheet h3{
+    margin:26px 0 12px;font-size:0.9375rem;font-weight:700;
+    padding-bottom:7px;border-bottom:1px solid var(--line);
+  }
+  .sheet .aba > h3:first-child{margin-top:6px}
   .sheet .sub{margin:0 0 14px;color:var(--ink-2);font-size:0.875rem;line-height:1.5}
   .fechar{position:absolute;top:16px;right:12px;z-index:2}
-  .campo{display:block;margin-bottom:12px}
+  .campo{display:block;margin-bottom:16px}
   .campo span{display:block;font-size:0.8125rem;color:var(--ink-2);margin-bottom:5px;font-weight:500}
   .campo input,.campo select{width:100%;padding:calc(12px * var(--ctl));border-radius:11px;border:1px solid var(--line);background:var(--card)}
-  .par{display:flex;gap:10px}
-  .par .campo{flex:1}
+  .par{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+  .par .campo{flex:1 1 200px;min-width:0}
   .fila{display:flex;gap:9px}
   .fila .btn{flex:1}
 
@@ -413,7 +417,7 @@
   .cabeca-lista + .lista{margin-top:0}
   .cabeca-lista .conta{font-size:0.8125rem;color:var(--ink-2);font-weight:600}
   .previa-talao{
-    border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:12px;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:4px 0 16px;
     background:color-mix(in srgb, var(--ink) 4%, var(--card));
   }
   .previa-talao iframe{display:block;width:100%;height:min(52dvh,460px);border:0;background:#fff}
@@ -972,6 +976,7 @@
       <button type="button" data-aba="grelha">Grelha</button>
       <button type="button" data-aba="ecra">Ecrã</button>
       <button type="button" data-aba="pedidos">Pedidos</button>
+      <button type="button" data-aba="talao">Talão</button>
       <button type="button" data-aba="produtos">Produtos</button>
       <button type="button" data-aba="dados">Dados</button>
     </div>
@@ -1180,7 +1185,13 @@
         <button class="btn ghost" id="aTestarSala" type="button">Testar ligação</button>
       </div>
 
-      <h3>Talão impresso</h3>
+      <div class="aviso" id="estadoSalaPos" style="margin-top:12px">Ainda não ligou.</div>
+    </section>
+
+    <section class="aba" data-aba="talao" hidden>
+      <p class="sub">O que sai na impressora térmica quando cria um pedido. A pré-visualização em baixo acompanha cada alteração.</p>
+
+      <h3 style="margin-top:0">Quando e como imprimir</h3>
       <div class="par">
         <label class="campo"><span>Imprimir ao criar pedido</span>
           <select id="aImprimir">
@@ -1194,50 +1205,6 @@
             <option value="2">2 — cliente e cozinha</option>
           </select>
         </label>
-        <label class="campo"><span>Forma de pagamento</span>
-          <select id="aMostrarPagamento">
-            <option value="nao">Não imprimir</option>
-            <option value="sim">Imprimir no talão</option>
-          </select>
-        </label>
-        <label class="campo"><span>Recebido e troco</span>
-          <select id="aMostrarTroco">
-            <option value="nao">Não imprimir</option>
-            <option value="sim">Imprimir no talão</option>
-          </select>
-        </label>
-        <label class="campo"><span>Número de artigos</span>
-          <select id="aMostrarArtigos">
-            <option value="nao">Não imprimir</option>
-            <option value="sim">Imprimir no talão</option>
-          </select>
-        </label>
-        <label class="campo"><span>Data e hora</span>
-          <select id="aMostrarData">
-            <option value="sim">Data e hora</option>
-            <option value="hora">Só a hora</option>
-            <option value="nao">Não imprimir</option>
-          </select>
-        </label>
-        <label class="campo"><span>Preços dos artigos</span>
-          <select id="aMostrarPrecos">
-            <option value="sim">Mostrar valor de cada linha</option>
-            <option value="unitario">Valor unitário e da linha</option>
-            <option value="nao">Só os nomes</option>
-          </select>
-        </label>
-        <label class="campo"><span>Total</span>
-          <select id="aMostrarTotal">
-            <option value="sim">Imprimir o total</option>
-            <option value="nao">Não imprimir</option>
-          </select>
-        </label>
-        <label class="campo"><span>Nome do evento</span>
-          <select id="aMostrarEvento">
-            <option value="sim">Imprimir</option>
-            <option value="nao">Não imprimir</option>
-          </select>
-        </label>
         <label class="campo"><span>Largura do papel</span>
           <select id="aPapel">
             <option value="80">80 mm</option>
@@ -1245,6 +1212,8 @@
           </select>
         </label>
       </div>
+
+      <h3>Identificação</h3>
       <div class="par">
         <label class="campo"><span>Emblema no talão</span>
           <select id="aLogo">
@@ -1268,9 +1237,60 @@
           <input id="aSubcabecalho" type="text" autocomplete="off" placeholder="Associação Recreativa e Cultural…">
         </label>
       </div>
-      <label class="campo"><span>Rodapé do talão (opcional)</span>
-        <input id="aRodapeTalao" type="text" autocomplete="off" placeholder="Obrigado pela visita">
-      </label>
+      <div class="par">
+        <label class="campo"><span>Nome do evento</span>
+          <select id="aMostrarEvento">
+            <option value="sim">Imprimir</option>
+            <option value="nao">Não imprimir</option>
+          </select>
+        </label>
+        <label class="campo"><span>Rodapé (opcional)</span>
+          <input id="aRodapeTalao" type="text" autocomplete="off" placeholder="Obrigado pela visita">
+        </label>
+      </div>
+
+      <h3>O que aparece</h3>
+      <div class="par">
+        <label class="campo"><span>Data e hora</span>
+          <select id="aMostrarData">
+            <option value="sim">Data e hora</option>
+            <option value="hora">Só a hora</option>
+            <option value="nao">Não imprimir</option>
+          </select>
+        </label>
+        <label class="campo"><span>Preços dos artigos</span>
+          <select id="aMostrarPrecos">
+            <option value="sim">Valor de cada linha</option>
+            <option value="unitario">Valor unitário e da linha</option>
+            <option value="nao">Só os nomes</option>
+          </select>
+        </label>
+        <label class="campo"><span>Total</span>
+          <select id="aMostrarTotal">
+            <option value="sim">Imprimir o total</option>
+            <option value="nao">Não imprimir</option>
+          </select>
+        </label>
+      </div>
+      <div class="par">
+        <label class="campo"><span>Forma de pagamento</span>
+          <select id="aMostrarPagamento">
+            <option value="nao">Não imprimir</option>
+            <option value="sim">Imprimir no talão</option>
+          </select>
+        </label>
+        <label class="campo"><span>Recebido e troco</span>
+          <select id="aMostrarTroco">
+            <option value="nao">Não imprimir</option>
+            <option value="sim">Imprimir no talão</option>
+          </select>
+        </label>
+        <label class="campo"><span>Número de artigos</span>
+          <select id="aMostrarArtigos">
+            <option value="nao">Não imprimir</option>
+            <option value="sim">Imprimir no talão</option>
+          </select>
+        </label>
       <h3>Pré-visualização</h3>
       <div class="previa-talao" id="previaTalao"><iframe id="quadroTalao" title="Talão de exemplo"></iframe></div>
       <div class="fila">
@@ -1283,7 +1303,6 @@
         de impressão em cada venda, abra o Chrome com a opção de impressão direta — explico como quando
         a impressora estiver montada.
       </div>
-      <div class="aviso" id="estadoSalaPos" style="margin-top:12px">Ainda não ligou.</div>
     </section>
 
     <section class="aba" data-aba="produtos" hidden>
