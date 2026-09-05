@@ -1221,7 +1221,8 @@
     if(!d || !Array.isArray(d.lista)) return false;
     var novoAtual = (d.atual===undefined ? null : d.atual);
     var novaChamada = (typeof d.chamadaTs==="number") ? d.chamadaTs : 0;
-    var chamou = novaChamada > chamadaTs;                 // nova chamada, ainda que do mesmo número
+    // basta ser diferente da última conhecida: relógios trocados entre aparelhos não atrapalham
+    var chamou = !!novaChamada && novaChamada !== chamadaTs;
     var mudou = JSON.stringify(d.lista)!==JSON.stringify(pedidos) || novoAtual!==atual || chamou;
     if(!mudou) return false;
     pedidos = copia(d.lista);
