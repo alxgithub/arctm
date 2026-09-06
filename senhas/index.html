@@ -704,8 +704,8 @@
     d.style.lineHeight = p.alt;                  // a caixa vale a altura real do algarismo
     d.style.setProperty("--larg-dig", p.larg+"em");
 
-    var alturaLivre = (zona.clientHeight - 6) * 0.97;
-    var larguraLivre = (zona.clientWidth - 12) * 0.97;
+    var alturaLivre = (zona.clientHeight - 8) * 0.94;   // folga para o traço não ser cortado
+    var larguraLivre = (zona.clientWidth - 14) * 0.96;
     if(alturaLivre < 30 || larguraLivre < 30) return;
 
     var n = Math.max(1, nDigitos);

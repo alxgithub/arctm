@@ -952,9 +952,12 @@
     try{
       var cv=document.createElement("canvas"), ctx=cv.getContext("2d");
       ctx.font=pesoNum()+' 200px "'+f+'", ui-monospace, monospace';
-      var m=ctx.measureText("8");
-      if(m.actualBoundingBoxAscent && m.width){
-        p={alt:(m.actualBoundingBoxAscent+(m.actualBoundingBoxDescent||0))/200, larg:m.width/200};
+      var m=ctx.measureText("0123456789");
+      var m8=ctx.measureText("8");
+      if(m8.actualBoundingBoxAscent && m8.width){
+        var asc = Math.max(m8.actualBoundingBoxAscent, m.actualBoundingBoxAscent||0);
+        var desc = Math.max(m8.actualBoundingBoxDescent||0, m.actualBoundingBoxDescent||0);
+        p={alt:(asc+desc)/200, larg:m8.width/200};
       }
     }catch(e){}
     proporcoes[f]=p;
@@ -965,17 +968,18 @@
     if(!el||!zona) return;
     if(el.classList.contains("vazio")){ el.style.fontSize=""; el.style.lineHeight=""; return; }
     var p=medirGlifo();
-    el.style.lineHeight=p.alt;
-    var ah=(zona.clientHeight-6)*0.95, aw=(zona.clientWidth-12)*0.96;
+    // a caixa é um pouco mais alta do que a tinta: assim o traço nunca fica cortado
+    var caixa = p.alt * 1.14;
+    el.style.lineHeight = caixa;
+    var ah=(zona.clientHeight-8), aw=(zona.clientWidth-14);
     if(ah<24||aw<24) return;
     var n=Math.max(1, String(el.textContent||"").length);
-    var tam=Math.max(28, Math.min(ah/p.alt, aw/(n*p.larg+0.04)));
+    var tam=Math.max(28, Math.min(ah/caixa, aw/(n*p.larg+0.06)));
     el.style.fontSize=Math.floor(tam)+"px";
-    // confirmação com as medidas reais do que ficou desenhado
     var voltas=0;
     function transborda(){
       var r=el.getBoundingClientRect(), z=zona.getBoundingClientRect();
-      return r.width > z.width-8 || r.height > z.height-8;
+      return r.width > z.width-10 || r.height > z.height-10;
     }
     while(voltas++<50 && transborda()){
       tam*=0.95; if(tam<28) break;

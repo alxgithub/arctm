@@ -906,8 +906,12 @@
 <div class="sheet" id="sheetHoje" role="dialog" aria-modal="true">
   <div class="painel">
     <button class="icon-btn fechar" type="button" data-fechar aria-label="Fechar"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
-    <h2>Vendas de hoje</h2>
+    <h2>Vendas</h2>
     <p class="sub" id="hData"></p>
+    <label class="campo" id="campoDiaVendas" hidden style="margin-bottom:12px">
+      <span>Dia</span>
+      <select id="hDia"></select>
+    </label>
 
     <div class="abas separadores" id="hAbas">
       <button type="button" data-haba="resumo">Resumo</button>
@@ -3368,10 +3372,49 @@
   document.querySelectorAll("#hAbas button").forEach(function(b){
     b.addEventListener("click", function(){ mostrarAbaHoje(b.dataset.haba); });
   });
+  var diaVendas = null;   // null = o dia em curso
+  function vendasDoDia(dia){
+    var e=evAtual(); if(!e) return {};
+    if(!dia || dia===estado.dia) return estado.vendasDia;
+    var todas = vendasLocais(e.id) || {};
+    return todas[dia] || {};
+  }
+  function caixaDoDia(dia){
+    var e=evAtual(); if(!e) return {};
+    if(!dia || dia===estado.dia) return estado.caixaDia;
+    var todas = LS.ler("caixa:"+e.id, {}) || {};
+    return todas[dia] || {};
+  }
   function listaHoje(){
-    return Object.keys(estado.vendasDia).map(function(k){ return estado.vendasDia[k]; })
+    var fonte = vendasDoDia(diaVendas);
+    return Object.keys(fonte).map(function(k){ return fonte[k]; })
       .filter(function(v){ return v && typeof v.total==="number"; })
       .sort(function(a,b){ return b.ts-a.ts; });
+  }
+  function desenharDiasVendas(){
+    var sel=$("#hDia"), campo=$("#campoDiaVendas");
+    if(!sel||!campo) return;
+    var e=evAtual();
+    if(!e){ campo.hidden=true; return; }
+    var todas = vendasLocais(e.id) || {};
+    var dias = Object.keys(todas).filter(function(d){
+      return todas[d] && Object.keys(todas[d]).length;
+    });
+    if(dias.indexOf(estado.dia)<0) dias.push(estado.dia);
+    dias.sort().reverse();
+    campo.hidden = dias.length < 2;
+    if(campo.hidden){ diaVendas=null; return; }
+    sel.innerHTML="";
+    dias.forEach(function(d){
+      var p=d.split("-"), dt=new Date(+p[0],+p[1]-1,+p[2]);
+      var qtd = Object.keys(todas[d]||{}).length;
+      var op=document.createElement("option");
+      op.value=d;
+      op.textContent = dt.toLocaleDateString("pt-PT",{weekday:"short",day:"2-digit",month:"2-digit"}) +
+        (d===hoje() ? " · hoje" : "") + (qtd ? (" — "+qtd+(qtd===1?" venda":" vendas")) : "");
+      sel.appendChild(op);
+    });
+    sel.value = diaVendas || estado.dia;
   }
   function ordemCaixa(){ return LS.ler("ordemCaixa","recentes"); }
   function listaCaixa(){
@@ -3386,10 +3429,12 @@
     return {entrada:entrada, saida:saida};
   }
   function desenharHoje(){
+    desenharDiasVendas();
     var vs=listaHoje();
     var total=vs.reduce(function(s,v){ return s+v.total; },0);
     var dinheiro=vs.reduce(function(s,v){ return s+parteDinheiro(v); },0);
-    var c=somaCaixa(listaCaixa());
+    var movs = Object.keys(caixaDoDia(diaVendas)).map(function(k){ return caixaDoDia(diaVendas)[k]; });
+    var c=somaCaixa(movs);
     $("#contaVendas").textContent = vs.length + (vs.length===1?" venda":" vendas");
     $("#totalHoje").textContent = money(total);
     $("#hTotal").textContent=money(total);
@@ -3397,7 +3442,11 @@
     $("#hDinheiro").textContent=money(dinheiro);
     $("#hRetirado").textContent=money(c.saida);
     $("#hCaixa").textContent=money(c.entrada+dinheiro-c.saida);
-    $("#hData").textContent=new Date().toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"});
+    var diaMostrado = diaVendas || estado.dia;
+    var partes = diaMostrado.split("-");
+    var dObj = new Date(+partes[0], +partes[1]-1, +partes[2]);
+    $("#hData").textContent = dObj.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"}) +
+      (diaMostrado===hoje() ? "" : " — dia anterior");
     var ul=$("#hLista"); ul.innerHTML="";
     var nav=$("#pagHoje"); if(nav) nav.hidden=true;
     var cont=$("#hConta2"); if(cont) cont.textContent = vs.length ? (vs.length+(vs.length===1?" venda":" vendas")) : "";
@@ -4977,8 +5026,12 @@
   $("#fRecebido").addEventListener("click", function(){ definirCampo("recebido"); });
   ["#btnHoje","#btnHojeIcone"].forEach(function(sel){
     $(sel).addEventListener("click", function(){
-      pagHoje=0; desenharHoje(); mostrarAbaHoje("resumo"); abrir("#sheetHoje");
+      diaVendas=null; pagHoje=0; desenharHoje(); mostrarAbaHoje("resumo"); abrir("#sheetHoje");
     });
+  });
+  $("#hDia").addEventListener("change", function(){
+    diaVendas = (this.value===estado.dia) ? null : this.value;
+    pagHoje=0; desenharHoje();
   });
   $("#aIndicador").addEventListener("change", function(){
     LS.esc("indicadorVendas", this.value); pintarChip(); desenharHoje();
