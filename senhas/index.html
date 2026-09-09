@@ -704,7 +704,7 @@
     d.style.lineHeight = p.alt;                  // a caixa vale a altura real do algarismo
     d.style.setProperty("--larg-dig", p.larg+"em");
 
-    var alturaLivre = (zona.clientHeight - 8) * 0.94;   // folga para o traço não ser cortado
+    var alturaLivre = (zona.clientHeight - 8) * 0.97;   // folga para o traço não ser cortado
     var larguraLivre = (zona.clientWidth - 14) * 0.96;
     if(alturaLivre < 30 || larguraLivre < 30) return;
 
@@ -913,6 +913,18 @@
   function passeSala(){ return String(LS.ler("salaPasse","")); }
   function servidorSala(){ return String(LS.ler("salaServidor","wss://broker.emqx.io:8084/mqtt")).trim(); }
 
+
+  // Sem https não existe crypto.subtle. Em rede local isso é aceitável: as mensagens
+  // não saem do router. Nesse caso o canal nasce de uma soma simples e o conteúdo vai em claro.
+  function haCifra(){ return !!(window.crypto && window.crypto.subtle); }
+  function somaSimples(txt){
+    var h = 0x811c9dc5;
+    for(var i=0;i<txt.length;i++){
+      h ^= txt.charCodeAt(i);
+      h = (h + ((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24))) >>> 0;
+    }
+    return ("00000000"+h.toString(16)).slice(-8);
+  }
   var chaveSala = null, chaveDe = "";
   function bytes(txt){ return new TextEncoder().encode(txt); }
   function hex(buf){
@@ -922,6 +934,9 @@
   }
   // o próprio caminho da sala nasce do nome e da palavra-passe: não se adivinha
   function caminhoSala(){
+    if(!haCifra()){
+      return Promise.resolve("arctm/l" + somaSimples("senhas|"+nomeSala()+"|"+passeSala()+"|senhas"));
+    }
     return crypto.subtle.digest("SHA-256", bytes("arctm|"+nomeSala()+"|"+passeSala()+"|"+APP_SALA))
       .then(function(h){ return "arctm/" + hex(h).slice(0,32); });
   }
@@ -937,6 +952,7 @@
       .then(function(k){ chaveSala=k; chaveDe=marca; return k; });
   }
   function cifrar(obj){
+    if(!haCifra()) return Promise.resolve(JSON.stringify({v:0, d:obj}));
     var iv = crypto.getRandomValues(new Uint8Array(12));
     return chave().then(function(k){
       return crypto.subtle.encrypt({name:"AES-GCM", iv:iv}, k, bytes(JSON.stringify(obj)));
@@ -950,6 +966,13 @@
     return a;
   }
   function decifrar(texto){
+    if(!haCifra()){
+      try{
+        var simples = JSON.parse(texto);
+        if(simples && simples.v===0) return Promise.resolve(simples.d);
+      }catch(e){}
+      return Promise.reject(new Error("formato"));
+    }
     var pacote;
     try{ pacote=JSON.parse(texto); }catch(e){ return Promise.reject(new Error("formato")); }
     if(!pacote || !pacote.iv || !pacote.d) return Promise.reject(new Error("formato"));
@@ -977,10 +1000,6 @@
   }
   function ligarSala(){
     if(partilha()!=="sala"){ desligarSala(); return; }
-    if(!(window.crypto && window.crypto.subtle)){
-      desligarSala();
-      SALA.estado="precisa de https"; desenhar(false); return;
-    }
     if(!nomeSala() || !passeSala()){
       desligarSala(); SALA.estado="falta nome ou palavra-passe"; desenhar(false); return;
     }
@@ -994,7 +1013,7 @@
       var cli = mqtt.connect(servidorSala(), opcoes);
       SALA.cli=cli;
       cli.on("connect", function(){
-        SALA.estado="ligada";
+        SALA.estado = haCifra() ? "ligada" : "ligada (sem cifra)";
         cli.subscribe(SALA.topico, {qos:0});
         publicarSala(); desenhar(false);
       });

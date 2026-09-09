@@ -1223,6 +1223,22 @@
             <option value="2">2 — cliente e cozinha</option>
           </select>
         </label>
+        <label class="campo"><span>Como imprimir</span>
+          <select id="aMetodoImpressao">
+            <option value="browser">Pela janela do browser</option>
+            <option value="servidor">Pelo servidor de impressão — sem janelas</option>
+          </select>
+        </label>
+        <label class="campo" id="campoServidorImp" hidden><span>Endereço do serviço</span>
+          <input id="aServidorImp" type="text" autocomplete="off" spellcheck="false" placeholder="http://192.168.1.50:8080">
+        </label>
+        <label class="campo" id="campoAvanco" hidden><span>Papel antes do corte — <b id="lblAvanco">10 linhas</b></span>
+          <div class="linha-cursor">
+            <input id="aAvanco" type="range" min="0" max="20" step="1">
+            <input id="aAvancoNum" type="number" min="0" max="20" step="1" inputmode="numeric">
+            <span class="pc">linhas</span>
+          </div>
+        </label>
         <label class="campo"><span>Largura do papel</span>
           <select id="aPapel">
             <option value="80">80 mm</option>
@@ -4020,6 +4036,18 @@
   function salaPasse(){ return String(LS.ler("salaPasse","")); }
   function salaServidor(){ return String(LS.ler("salaServidor","wss://broker.emqx.io:8084/mqtt")).trim(); }
 
+
+  // Sem https não existe crypto.subtle. Em rede local isso é aceitável: as mensagens
+  // não saem do router. Nesse caso o canal nasce de uma soma simples e o conteúdo vai em claro.
+  function haCifra(){ return !!(window.crypto && window.crypto.subtle); }
+  function somaSimples(txt){
+    var h = 0x811c9dc5;
+    for(var i=0;i<txt.length;i++){
+      h ^= txt.charCodeAt(i);
+      h = (h + ((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24))) >>> 0;
+    }
+    return ("00000000"+h.toString(16)).slice(-8);
+  }
   var chaveSala=null, chaveDe="";
   function _bytes(t){ return new TextEncoder().encode(t); }
   function _hex(b){
@@ -4031,6 +4059,9 @@
     return a;
   }
   function caminhoSala(){
+    if(!haCifra()){
+      return Promise.resolve("arctm/l" + somaSimples("pedidos|"+salaNome()+"|"+salaPasse()+"|pedidos"));
+    }
     return crypto.subtle.digest("SHA-256", _bytes("arctm|"+salaNome()+"|"+salaPasse()+"|pedidos"))
       .then(function(h){ return "arctm/"+_hex(h).slice(0,32); });
   }
@@ -4045,12 +4076,20 @@
       }).then(function(k){ chaveSala=k; chaveDe=marca; return k; });
   }
   function cifrarSala(obj){
+    if(!haCifra()) return Promise.resolve(JSON.stringify({v:0, d:obj}));
     var iv=crypto.getRandomValues(new Uint8Array(12));
     return chaveDaSala().then(function(k){
       return crypto.subtle.encrypt({name:"AES-GCM", iv:iv}, k, _bytes(JSON.stringify(obj)));
     }).then(function(c){ return JSON.stringify({v:1, iv:_hex(iv), d:_hex(c)}); });
   }
   function decifrarSala(txt){
+    if(!haCifra()){
+      try{
+        var simples = JSON.parse(txt);
+        if(simples && simples.v===0) return Promise.resolve(simples.d);
+      }catch(e){}
+      return Promise.reject(new Error("formato"));
+    }
     var pac;
     try{ pac=JSON.parse(txt); }catch(e){ return Promise.reject(new Error("formato")); }
     if(!pac || !pac.iv || !pac.d) return Promise.reject(new Error("formato"));
@@ -4074,27 +4113,6 @@
   }
   function ligarPedidos(){
     if(!pedidosLigados()){ desligarPedidos(); pintarEstadoSala(); return; }
-    if(!(window.crypto && window.crypto.subtle)){
-      desligarPedidos();
-      PEDIDOS.estado="precisa de https — abra a aplicação por um endereço https, não por file:// nem http://";
-      $("#aImprimir").value = LS.ler("imprimir","nao");
-    $("#aVias").value = String(LS.ler("vias","2"));
-    $("#aPapel").value = String(LS.ler("papel","80"));
-    $("#aLogo").value = LS.ler("logo","sim");
-    $("#aMostrarTroco").value = LS.ler("mostrarTroco","nao");
-    $("#aMostrarPagamento").value = LS.ler("mostrarPagamento","nao");
-    $("#aMostrarArtigos").value = LS.ler("mostrarArtigos","nao");
-    $("#aMostrarData").value = LS.ler("mostrarData","sim");
-    $("#aMostrarPrecos").value = LS.ler("mostrarPrecos","sim");
-    $("#aMostrarTotal").value = LS.ler("mostrarTotal","sim");
-    $("#aMostrarEvento").value = LS.ler("mostrarEvento","sim");
-    setTimeout(actualizarPrevia, 60);
-    $("#aLogoTam").value = LS.ler("logoTam","medio");
-    $("#aCabecalho").value = LS.ler("cabecalho","ARCTM");
-    $("#aSubcabecalho").value = LS.ler("subcabecalho","Associação Recreativa e Cultural de Travanca do Mondego");
-    $("#aRodapeTalao").value = LS.ler("rodapeTalao","");
-    pintarEstadoSala(); return;
-    }
     if(!salaNome() || !salaPasse()){ desligarPedidos(); PEDIDOS.estado="falta nome ou palavra-passe"; pintarEstadoSala(); return; }
     PEDIDOS.estado="a ligar"; pintarEstadoSala();
     Promise.all([carregarMqtt(), caminhoSala()]).then(function(r){
@@ -4102,7 +4120,7 @@
       desligarPedidos();
       var cli=mqtt.connect(salaServidor(), {clientId:"pos-"+PEDIDOS.id, reconnectPeriod:4000, connectTimeout:8000, clean:true});
       PEDIDOS.cli=cli;
-      cli.on("connect", function(){ PEDIDOS.estado="ligada"; cli.subscribe(PEDIDOS.topico,{qos:0}); pintarEstadoSala(); });
+      cli.on("connect", function(){ PEDIDOS.estado = haCifra() ? "ligada" : "ligada (sem cifra)"; cli.subscribe(PEDIDOS.topico,{qos:0}); pintarEstadoSala(); });
       cli.on("reconnect", function(){ PEDIDOS.estado="a ligar"; pintarEstadoSala(); });
       cli.on("close", function(){ if(PEDIDOS.estado==="ligada"){ PEDIDOS.estado="sem ligação"; pintarEstadoSala(); } });
       cli.on("error", function(){ PEDIDOS.estado="sem ligação"; pintarEstadoSala(); });
@@ -4148,7 +4166,9 @@
     var el=$("#estadoSalaPos");
     if(!el) return;
     var txt = !pedidosLigados() ? "Desligado. Ligue acima para a registadora criar pedidos."
-            : PEDIDOS.estado==="ligada" ? ("Ligado à sala “"+salaNome()+"”. Próximo pedido: "+proximoPedido()+".")
+            : PEDIDOS.estado.indexOf("ligada")===0
+        ? ("Ligado à sala “"+salaNome()+"”. Próximo pedido: "+proximoPedido()+"."+
+           (haCifra() ? "" : " Sem cifra — só use assim em rede fechada."))
             : PEDIDOS.estado==="a ligar" ? "A ligar…"
             : PEDIDOS.estado;
     el.textContent = txt;
@@ -4319,7 +4339,73 @@
       '</body></html>';
   }
 
+  function dadosTalao(venda){
+    var ev = evAtual();
+    var etiquetas = {dinheiro:"Dinheiro", cartao:"Cartão", misto:"Misto"};
+    var quandoOp = LS.ler("mostrarData","sim");
+    var quando = "";
+    if(quandoOp!=="nao"){
+      quando = new Date(venda.ts).toLocaleString("pt-PT", quandoOp==="hora"
+        ? {hour:"2-digit",minute:"2-digit"}
+        : {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+    }
+    var comoPrecos = LS.ler("mostrarPrecos","sim");
+    var linhas = (venda.linhas||[]).map(function(l){
+      var o = {qtd:l.qtd, nome:l.nome};
+      if(comoPrecos!=="nao") o.valor = money(l.preco*l.qtd).replace(/\u00A0/g," ");
+      if(comoPrecos==="unitario" && l.qtd>1) o.unitario = money(l.preco).replace(/\u00A0/g," ")+" cada";
+      return o;
+    });
+    var pagamento = "";
+    if(LS.ler("mostrarPagamento","nao")==="sim"){
+      pagamento = etiquetas[venda.metodo] || venda.metodo;
+      if(venda.troco>0 && LS.ler("mostrarTroco","nao")==="sim"){
+        pagamento += " · recebido "+money(venda.recebido).replace(/\u00A0/g," ")+
+                     " · troco "+money(venda.troco).replace(/\u00A0/g," ");
+      }
+    }
+    var nArtigos = (venda.linhas||[]).reduce(function(a,l){ return a+l.qtd; },0);
+    var tamLogo = {pequeno:0.32, medio:0.42, grande:0.55}[LS.ler("logoTam","medio")] || 0.42;
+    return {
+      papel: parseInt(LS.ler("papel","80"),10)||80,
+      avanco: parseInt(LS.ler("avancoCorte",10),10),
+      logo: LS.ler("logo","sim")==="sim",
+      logoEscala: tamLogo,
+      cabecalho: LS.ler("cabecalho","ARCTM"),
+      subcabecalho: LS.ler("subcabecalho","Associação Recreativa e Cultural de Travanca do Mondego"),
+      evento: (ev && LS.ler("mostrarEvento","sim")==="sim") ? ev.nome : "",
+      pedido: venda.pedido || "",
+      data: quando,
+      linhas: linhas,
+      total: LS.ler("mostrarTotal","sim")==="sim" ? money(venda.total).replace(/\u00A0/g," ") : "",
+      pagamento: pagamento,
+      artigos: LS.ler("mostrarArtigos","nao")==="sim" ? (nArtigos+(nArtigos===1?" artigo":" artigos")) : "",
+      rodape: LS.ler("rodapeTalao","")
+    };
+  }
+  function servidorImpressao(){
+    return String(LS.ler("servidorImp","")).trim().replace(/\/+$/,"");
+  }
+  function imprimirNoServidor(venda){
+    var base = servidorImpressao();
+    if(!base){ toast("Falta o endereço do serviço de impressão"); return Promise.resolve(false); }
+    var vias = parseInt(LS.ler("vias","2"),10)===1 ? 1 : 2;
+    return fetch(base+"/imprimir", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({vias:vias, talao:dadosTalao(venda)})
+    }).then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d && d.ok){ toast("Talão enviado para a impressora"); return true; }
+        toast("A impressora não respondeu"+((d&&d.erro)?(": "+d.erro):""));
+        return false;
+      })
+      .catch(function(e){ toast("Sem ligação ao serviço de impressão"); return false; });
+  }
   function abrirTalao(venda, imprimir){
+    if(imprimir && LS.ler("metodoImpressao","browser")==="servidor"){
+      return imprimirNoServidor(venda);
+    }
     var vias = parseInt(LS.ler("vias","2"),10)===1 ? 1 : 2;
     var html = talaoHtml(venda, vias, !!imprimir);
     try{
@@ -4807,7 +4893,7 @@
     LS.esc("paleta",this.value); LS.esc(chaveManuais(), {}); LS.esc("acentoManual","nao");
     aplicarTema(); desenharAcentos(); desenharManuais(); desenharProntos();
   });
-  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","imprimir","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
+  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","imprimir","metodoImpressao","servidorImp","avancoCorte","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
   $("#aCopiarDefs").addEventListener("click", function(){
     var pacote = {app:"registadora-definicoes", versao:1};
     CHAVES_DEFS.forEach(function(k){
@@ -5057,6 +5143,28 @@
   $("#hRelatorio").addEventListener("click", function(){ fechar("#sheetHoje"); abrirRelatorio(evAtual()); });
   $("#btnAjustes").addEventListener("click", function(){
     $("#aModo").value=estado.modo; notaModo(); desenharAcentos(); desenharProntos(); desenharManuais(); sincronizarCursores(); desenharPrevia(); desenharListaProdutos();
+    $("#aMetodoImpressao").value = LS.ler("metodoImpressao","browser");
+    $("#aServidorImp").value = LS.ler("servidorImp","");
+    var porServidor = LS.ler("metodoImpressao","browser")==="servidor";
+    $("#campoServidorImp").hidden = !porServidor;
+    $("#campoAvanco").hidden = !porServidor;
+    mostrarAvanco(parseInt(LS.ler("avancoCorte",10),10)||10);
+    $("#aImprimir").value = LS.ler("imprimir","nao");
+    $("#aVias").value = String(LS.ler("vias","2"));
+    $("#aPapel").value = String(LS.ler("papel","80"));
+    $("#aLogo").value = LS.ler("logo","sim");
+    $("#aLogoTam").value = LS.ler("logoTam","medio");
+    $("#aCabecalho").value = LS.ler("cabecalho","ARCTM");
+    $("#aSubcabecalho").value = LS.ler("subcabecalho","Associação Recreativa e Cultural de Travanca do Mondego");
+    $("#aRodapeTalao").value = LS.ler("rodapeTalao","");
+    $("#aMostrarTroco").value = LS.ler("mostrarTroco","nao");
+    $("#aMostrarPagamento").value = LS.ler("mostrarPagamento","nao");
+    $("#aMostrarArtigos").value = LS.ler("mostrarArtigos","nao");
+    $("#aMostrarData").value = LS.ler("mostrarData","sim");
+    $("#aMostrarPrecos").value = LS.ler("mostrarPrecos","sim");
+    $("#aMostrarTotal").value = LS.ler("mostrarTotal","sim");
+    $("#aMostrarEvento").value = LS.ler("mostrarEvento","sim");
+    setTimeout(actualizarPrevia, 60);
     $("#aPedidos").value = LS.ler("pedidosLigar","sim");
 
     $("#aSalaNome").value = salaNome();
@@ -5076,6 +5184,25 @@
       LS.esc(par[1], this.value.trim()); chaveSala=null;
       if(pedidosLigados()) ligarPedidos();
     });
+  });
+  $("#aMetodoImpressao").addEventListener("change", function(){
+    LS.esc("metodoImpressao", this.value);
+    $("#campoServidorImp").hidden = this.value!=="servidor";
+    $("#campoAvanco").hidden = this.value!=="servidor";
+  });
+  $("#aServidorImp").addEventListener("change", function(){
+    LS.esc("servidorImp", this.value.trim());
+  });
+  function mostrarAvanco(v){
+    LS.esc("avancoCorte", v);
+    $("#aAvanco").value=v; $("#aAvancoNum").value=v;
+    $("#lblAvanco").textContent = v+(v===1?" linha":" linhas");
+  }
+  $("#aAvanco").addEventListener("input", function(){ mostrarAvanco(parseInt(this.value,10)); });
+  $("#aAvancoNum").addEventListener("change", function(){
+    var v=parseInt(this.value,10);
+    if(isNaN(v)) v=parseInt(LS.ler("avancoCorte",10),10);
+    mostrarAvanco(Math.max(0, Math.min(20, v)));
   });
   [["#aImprimir","imprimir"],["#aVias","vias"],["#aPapel","papel"],
    ["#aLogo","logo"],["#aLogoTam","logoTam"],["#aMostrarTroco","mostrarTroco"],
@@ -5109,7 +5236,7 @@
     ligarPedidos();
     setTimeout(function(){
       pintarEstadoSala();
-      toast(PEDIDOS.estado==="ligada" ? "Ligado à sala" : "A ligar…");
+      toast(PEDIDOS.estado.indexOf("ligada")===0 ? "Ligado à sala" : "A ligar…");
     }, 1500);
   });
   $("#aExemplos").addEventListener("click", function(){
