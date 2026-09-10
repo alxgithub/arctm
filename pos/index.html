@@ -76,6 +76,11 @@
   .chip.nuvem b{color:var(--petrol)}
   .chip.nuvem{color:var(--petrol);border-color:var(--petrol)}
   .icon-btn{border:1px solid var(--line);background:transparent;border-radius:11px;width:calc(40px * var(--ctl));height:calc(40px * var(--ctl));display:grid;place-items:center;flex:none}
+  .icon-btn[aria-pressed="true"]{
+    background:color-mix(in srgb, var(--petrol) 16%, var(--card));
+    border-color:color-mix(in srgb, var(--petrol) 45%, var(--line));
+    color:var(--petrol);
+  }
   .icon-btn svg{width:calc(20px * var(--ctl));height:calc(20px * var(--ctl));stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
   main{flex:1;min-height:0;display:flex;flex-direction:column;padding:12px 14px 0;overflow:hidden}
@@ -677,6 +682,9 @@
     </button>
     <button id="btnRelatorioTopo" class="icon-btn" type="button" aria-label="Relatório do evento" title="Relatório do evento">
       <svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6.5 20V11M11.5 20V5M16.5 20v-6"/></svg>
+    </button>
+    <button id="btnEcra" class="icon-btn" type="button" aria-label="Ecrã inteiro" title="Ecrã inteiro">
+      <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
     </button>
     <button id="btnAjustes" class="icon-btn" type="button" aria-label="Definições">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>
@@ -4525,6 +4533,7 @@
     btnEvento: "Trocar de evento, criar ou ver relatórios",
     btnHoje: "Vendas de hoje",
     btnHojeIcone: "Vendas de hoje",
+    btnEcra: "Ecrã inteiro",
     btnCaixaTopo: "Movimentos de caixa: pôr, retirar e conferir",
     btnRelatorioTopo: "Relatório do evento em uso",
     btnAjustes: "Definições",
@@ -5141,6 +5150,21 @@
   $("#kTirarBtn").addEventListener("click", function(){ registarMovimento("saida"); });
   $("#kFundoBtn").addEventListener("click", function(){ registarMovimento("entrada"); });
   $("#hRelatorio").addEventListener("click", function(){ fechar("#sheetHoje"); abrirRelatorio(evAtual()); });
+  function alternarEcraInteiro(){
+    if(document.fullscreenElement){
+      document.exitFullscreen();
+    } else if(document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen().catch(function(){
+        toast("O ecrã inteiro não é permitido aqui");
+      });
+    } else toast("Este browser não permite ecrã inteiro");
+  }
+  $("#btnEcra").addEventListener("click", alternarEcraInteiro);
+  document.addEventListener("fullscreenchange", function(){
+    var b=$("#btnEcra");
+    if(b) b.setAttribute("aria-pressed", String(!!document.fullscreenElement));
+    setTimeout(function(){ aplicarMedidas(); desenharGrelha(); atualizarScrollTalao(); }, 120);
+  });
   $("#btnAjustes").addEventListener("click", function(){
     $("#aModo").value=estado.modo; notaModo(); desenharAcentos(); desenharProntos(); desenharManuais(); sincronizarCursores(); desenharPrevia(); desenharListaProdutos();
     $("#aMetodoImpressao").value = LS.ler("metodoImpressao","browser");
