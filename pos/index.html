@@ -1371,6 +1371,21 @@
       <div class="fila" style="margin-top:9px">
         <button class="btn ghost" id="aBiblioteca" type="button">Biblioteca</button>
         <button class="btn ghost" id="aExemplos" type="button">Produtos de exemplo</button>
+        <button class="btn ghost" id="aImportarLista" type="button">Importar lista de preços</button>
+      </div>
+      <label class="campo" style="margin-top:14px"><span>Ordem dos botões na grelha</span>
+        <select id="aOrdemGrelha">
+          <option value="manual">À mão — a ordem que eu definir</option>
+          <option value="categoria">Por categoria, e dentro dela a minha ordem</option>
+          <option value="categoriaNome">Por categoria, e dentro dela por nome</option>
+          <option value="nome">Por nome</option>
+          <option value="preco">Do mais barato ao mais caro</option>
+          <option value="precoDesc">Do mais caro ao mais barato</option>
+          <option value="vendidos">Mais vendidos hoje primeiro</option>
+        </select>
+      </label>
+      <p class="sub" id="notaOrdem" style="margin:-8px 0 6px"></p>
+      <div class="fila" hidden>
         <button class="btn ghost" id="aCatalogoFesta" type="button">Lista de preços da festa</button>
       </div>
 
@@ -1469,6 +1484,29 @@
           <button type="button" id="pkFim" aria-label="Fim"><svg viewBox="0 0 24 24"><path d="m6 5 8 7-8 7M18 5v14"/></svg></button>
         </div>
       </section>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetLista" role="dialog" aria-modal="true">
+  <div class="painel">
+    <button class="icon-btn fechar" type="button" data-fechar aria-label="Fechar"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg></button>
+    <h2>Importar lista de preços</h2>
+    <p class="sub">Cole a lista tal como a tem. Uma linha por produto; a categoria pode vir à frente ou como título de bloco.</p>
+    <div class="aviso" style="margin-bottom:12px">
+      Aceita <b>Categoria | Nome | 1,20 €</b>, <b>Nome 1,20</b> ou blocos com o nome da categoria numa linha só.
+      O símbolo e a cor são atribuídos pelo nome do produto, e podem ser mudados depois.
+    </div>
+    <label class="campo"><span>Lista</span>
+      <textarea id="txtLista" rows="9" spellcheck="false"
+        style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-family:ui-monospace,monospace;font-size:0.82rem"
+        placeholder="Bebidas&#10;Fino 1,20&#10;Vinho (copo) 0,60&#10;&#10;Comida | Bifana | 3,00 €"></textarea>
+    </label>
+    <div class="aviso" id="previaLista" hidden></div>
+    <div class="fila">
+      <button class="btn ghost" type="button" data-fechar>Cancelar</button>
+      <button class="btn ghost" id="listaVer" type="button">Ver o que vai entrar</button>
+      <button class="btn" id="listaJuntar" type="button">Juntar ao evento</button>
     </div>
   </div>
 </div>
@@ -1815,7 +1853,48 @@
     return null;
   }
   function produtos(){ var e=evAtual(); return e ? (e.produtos||[]) : []; }
-  function produtosVisiveis(){ return produtos().filter(function(p){ return !p.oculto; }); }
+  function produtosVisiveis(){ return ordenarProdutos(produtos().filter(function(p){ return !p.oculto; })); }
+
+  // ordem dos botões na grelha: à mão, por nome, ou agrupados por categoria
+  function ordemGrelha(){ return LS.ler("ordemGrelha","manual"); }
+  function indiceCategoria(ev, id){
+    var lista = categoriasDe(ev);
+    for(var i=0;i<lista.length;i++) if(lista[i].id===id) return i;
+    return 999;
+  }
+  function ordenarProdutos(lista){
+    var modo = ordemGrelha();
+    if(modo==="manual") return lista;          // a ordem que definiu com as setas
+    var ev = evAtual();
+    var copia2 = lista.slice();
+    var porNome = function(a,b){ return normalizar(a.nome).localeCompare(normalizar(b.nome)); };
+
+    if(modo==="nome") copia2.sort(porNome);
+    else if(modo==="preco") copia2.sort(function(a,b){ return (a.preco||0)-(b.preco||0) || porNome(a,b); });
+    else if(modo==="precoDesc") copia2.sort(function(a,b){ return (b.preco||0)-(a.preco||0) || porNome(a,b); });
+    else if(modo==="categoriaNome" || modo==="categoria"){
+      copia2.sort(function(a,b){
+        var d = indiceCategoria(ev, a.categoria) - indiceCategoria(ev, b.categoria);
+        if(d) return d;
+        return modo==="categoriaNome" ? porNome(a,b) : 0;   // dentro da categoria: nome ou ordem própria
+      });
+    }
+    else if(modo==="vendidos"){
+      var contagem = {};
+      Object.keys(estado.vendasDia||{}).forEach(function(k){
+        var v = estado.vendasDia[k];
+        (v && v.linhas || []).forEach(function(l){
+          var chave = normalizar(l.nome);
+          contagem[chave] = (contagem[chave]||0) + (l.qtd||0);
+        });
+      });
+      copia2.sort(function(a,b){
+        var d = (contagem[normalizar(b.nome)]||0) - (contagem[normalizar(a.nome)]||0);
+        return d || porNome(a,b);
+      });
+    }
+    return copia2;
+  }
 
   var LS = {
     ler:function(k,d){ try{ var v=localStorage.getItem("reg2:"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
@@ -2621,7 +2700,7 @@
   }
   var filtro = "";
   function correspondem(){
-    var ps = produtos();
+    var ps = produtosVisiveis();      // já vem ordenado e sem os escondidos
     if(!filtro) return ps;
     var q = normalizar(filtro);
     var comeca = [], contem = [];
@@ -4735,6 +4814,199 @@
     };
   }
 
+
+  // nomes que costumam aparecer nas listas, e a categoria a que correspondem
+  var SINONIMOS_CAT = [
+    ["alcool",  ["bebidas com alcool","alcoolicas","cerveja","vinhos","bar"]],
+    ["bebidas", ["bebidas","bebida","refrigerantes","sem alcool","liquidos"]],
+    ["cafes",   ["cafes","cafetaria","quentes","bar de cafe"]],
+    ["menus",   ["menus","menu","comida menu","refeicoes","pratos do dia"]],
+    ["pratos",  ["pratos","petiscos","comida","cozinha","entradas","tachos"]],
+    ["sandes",  ["sandes","pao","sanduiches","bifanas"]],
+    ["doces",   ["doces","sobremesas","pastelaria","gelados"]],
+    ["outros",  ["outros","diversos","extras"]]
+  ];
+  function categoriaParaNome(ev, nome){
+    // aproveita uma categoria existente com o mesmo nome; senão cria uma nova
+    var alvo = normalizar(nome);
+    var lista = categoriasDe(ev);
+    for(var i=0;i<lista.length;i++){
+      if(normalizar(lista[i].nome)===alvo || lista[i].id===alvo) return lista[i].id;
+    }
+    for(var k=0;k<SINONIMOS_CAT.length;k++){
+      var sin = SINONIMOS_CAT[k][1];
+      for(var j=0;j<sin.length;j++){
+        if(alvo===normalizar(sin[j]) || alvo.indexOf(normalizar(sin[j]))>=0){
+          var existe = categoria(SINONIMOS_CAT[k][0], ev);
+          if(existe) return existe.id;
+        }
+      }
+    }
+    if(!nome) return "outros";
+    var id = "c" + alvo.replace(/[^a-z0-9]/g, "").slice(0, 14);
+    var CORES_CAT = ["#B5852A","#2A8FC4","#7A4B28","#1E8F42","#B8402A","#C9702E","#A03A6B","#4A5C55"];
+    var atuais = (Array.isArray(ev.categorias) && ev.categorias.length) ? ev.categorias.slice() : copia(CATEGORIAS_BASE);
+    atuais.push({id:id, nome:nome, cor:CORES_CAT[atuais.length % CORES_CAT.length]});
+    ev.categorias = atuais;
+    return id;
+  }
+
+  /* ---------- adivinhar o símbolo pelo nome ---------- */
+  var PISTAS_ICONE = [
+    ["imperial", ["fino","imperial","caneca","cerveja de pressao"]],
+    ["cerveja",  ["cerveja","mini","super bock","sagres","metro"]],
+    ["vinho",    ["vinho","tinto","branco","sangria","porto","frisante","espumante"]],
+    ["cocktail", ["martini","cocktail","caipirinha","mojito"]],
+    ["gintonico",["gin","tonico"]],
+    ["shot",     ["shot","aguardente","licor","whisky","vodka"]],
+    ["sumo",     ["sumo","sidra","ice tea","limonada"]],
+    ["lata",     ["refrigerante","coca","fanta","seven","lata","frize"]],
+    ["agua",     ["agua"]],
+    ["cafe",     ["cafe","expresso","bica","descafeinado"]],
+    ["galao",    ["galao","meia de leite","leite"]],
+    ["cha",      ["cha","infusao"]],
+    ["garrafao", ["garrafao","barril","jarro","sangria jarro"]],
+    ["bifana",   ["bifana","prego","febras"]],
+    ["sandes",   ["sandes","francesinha","panado"]],
+    ["tosta",    ["tosta","misto"]],
+    ["hamburguer",["hamburguer","burger"]],
+    ["cachorro", ["cachorro","hot dog"]],
+    ["frango",   ["frango","churrasco","coxa"]],
+    ["peixe",    ["peixe","sardinha","bacalhau","polvo","marisco","feijoada de marisco"]],
+    ["caracois", ["caracois","caracol","amei"]],
+    ["batatas",  ["batata","fritas"]],
+    ["petiscos", ["moelas","pica pau","pica-pau","tremoco","azeitona","petisco","ovo"]],
+    ["espetada", ["espetada","bitoque","costeleta","entremeada","leitao","pernil","picanha","ovos rotos","carne"]],
+    ["sopa",     ["sopa","caldo","canja","arroz","dose","prato","menu"]],
+    ["salada",   ["salada","vegetariano"]],
+    ["rissol",   ["rissol","croquete","pastel de bacalhau","salgado"]],
+    ["nata",     ["nata","pastel de nata"]],
+    ["bolo",     ["bolo","tarte","sobremesa","doce"]],
+    ["gelado",   ["gelado","sorvete"]],
+    ["farturas", ["fartura","churros"]],
+    ["crepe",    ["crepe","panqueca"]],
+    ["pipocas",  ["pipoca"]],
+    ["algodao",  ["algodao"]],
+    ["chupa",    ["chupa","rebucado","gomas"]],
+    ["gelo",     ["gelo"]],
+    ["senha",    ["senha","bilhete","entrada"]],
+    ["musica",   ["musica","concerto","baile"]],
+    ["saco",     ["saco","takeaway","embalagem"]],
+    ["rifa",     ["rifa","sorteio","tombola"]]
+  ];
+  function adivinharIcone(nome){
+    var n = normalizar(nome);
+    for(var i=0;i<PISTAS_ICONE.length;i++){
+      var pistas = PISTAS_ICONE[i][1];
+      for(var j=0;j<pistas.length;j++){
+        if(n.indexOf(normalizar(pistas[j])) >= 0) return PISTAS_ICONE[i][0];
+      }
+    }
+    return "senha";
+  }
+
+  /* ---------- importar uma lista de preços ---------- */
+  function lerLista(texto){
+    // aceita "Categoria | Nome | 1,20 €" ou "Nome 1,20" ou "Nome — 1,20 €"
+    var saida = [], catAtual = "";
+    String(texto||"").split(/\r?\n/).forEach(function(linha){
+      linha = linha.trim();
+      if(!linha) return;
+      var partes = linha.split(/\s*[|;\t]\s*/);
+      var cat = "", nome = "", preco = null;
+
+      if(partes.length >= 3){
+        cat = partes[0]; nome = partes[1]; preco = valorDe(partes[2]);
+      } else if(partes.length === 2 && valorDe(partes[1])!==null){
+        nome = partes[0]; preco = valorDe(partes[1]);
+      } else {
+        var m = linha.match(/^(.*?)[\s.…—-]*([\d]+[.,]?[\d]*)\s*€?$/);
+        if(m && m[1].trim()){ nome = m[1]; preco = valorDe(m[2]); }
+        else { catAtual = linha.replace(/[:：]$/, "").trim(); return; }   // linha só com categoria
+      }
+      if(preco===null || !nome) return;
+      nome = nome.replace(/\s*\([^)]*prato[^)]*\)\s*/i, " ").replace(/\s+/g," ").trim();
+      saida.push({cat:(cat||catAtual).trim(), nome:nome, preco:preco});
+    });
+    return saida;
+  }
+  function valorDe(txt){
+    if(txt===undefined || txt===null) return null;
+    var limpo = String(txt).replace(/[^0-9.,]/g, "").replace(",", ".");
+    if(!limpo) return null;
+    var v = parseFloat(limpo);
+    return isNaN(v) ? null : Math.round(v*100)/100;
+  }
+
+  /* ---------- painel de importação ---------- */
+  function abrirImportarLista(){
+    $("#txtLista").value = "";
+    $("#previaLista").hidden = true;
+    fechar("#sheetAjustes");
+    abrir("#sheetLista");
+    setTimeout(function(){ $("#txtLista").focus(); }, 120);
+  }
+  function previaDaLista(){
+    var itens = lerLista($("#txtLista").value);
+    var cx = $("#previaLista");
+    if(!itens.length){
+      cx.hidden = false;
+      cx.textContent = "Não reconheci nenhum produto. Confirme que cada linha tem um nome e um preço.";
+      return [];
+    }
+    var porCat = {};
+    itens.forEach(function(i){ var c = i.cat || "sem categoria"; porCat[c] = (porCat[c]||0)+1; });
+    cx.hidden = false;
+    cx.innerHTML = "<b>"+itens.length+(itens.length===1?" produto":" produtos")+"</b><br>" +
+      Object.keys(porCat).map(function(c){ return esc(c)+": "+porCat[c]; }).join(" · ") + "<br>" +
+      itens.slice(0,4).map(function(i){ return esc(i.nome)+" — "+money(i.preco); }).join("<br>") +
+      (itens.length>4 ? "<br>…" : "");
+    return itens;
+  }
+  $("#aImportarLista").addEventListener("click", abrirImportarLista);
+  function notaDaOrdem(){
+    var n = $("#notaOrdem");
+    if(!n) return;
+    var modo = ordemGrelha();
+    n.textContent =
+      modo==="manual" ? "Use as setas na lista de produtos para mudar a ordem." :
+      modo==="vendidos" ? "Refaz-se ao longo do dia, conforme o que for saindo." :
+      modo.indexOf("categoria")===0 ? "A ordem das categorias define os blocos; mude-a em Aspeto." :
+      "As setas continuam a guardar a sua ordem, para quando voltar a “À mão”.";
+  }
+  $("#aOrdemGrelha").addEventListener("change", function(){
+    LS.esc("ordemGrelha", this.value);
+    notaDaOrdem(); pagina=0; pintarTudo(); desenharListaProdutos();
+    toast("Ordem alterada");
+  });
+  $("#listaVer").addEventListener("click", previaDaLista);
+  $("#listaJuntar").addEventListener("click", function(){
+    var e = evAtual();
+    if(!e){ toast("Crie primeiro um evento"); return; }
+    var itens = previaDaLista();
+    if(!itens.length) return;
+    var jaTem = {};
+    (e.produtos||[]).forEach(function(p){ jaTem[normalizar(p.nome)] = true; });
+    var novos = itens.filter(function(i){ return !jaTem[normalizar(i.nome)]; });
+    if(!novos.length){ toast("Esses produtos já estão no evento"); return; }
+    confirmar("Juntar "+novos.length+" produtos?",
+      "Entram no fim da grelha de “"+e.nome+"”, com símbolo e cor atribuídos pelo nome. "+
+      (itens.length-novos.length ? ((itens.length-novos.length)+" já existiam e ficam de fora. ") : "")+
+      "Pode mudar tudo depois.", "Juntar "+novos.length)
+      .then(function(ok){
+        if(!ok) return;
+        novos.forEach(function(i){
+          var cat = i.cat ? categoriaParaNome(e, i.cat) : "outros";
+          e.produtos = (e.produtos||[]).concat([{
+            id:uid(), nome:i.nome, preco:i.preco,
+            icone:adivinharIcone(i.nome), categoria:cat
+          }]);
+        });
+        guardarEvento(e); fechar("#sheetLista"); pagina=0; pintarTudo();
+        toast(novos.length+" produtos juntos");
+      });
+  });
+
   /* ------------- pega para redimensionar a venda ------------- */
   (function(){
     var pega=$("#pegaTalao"); if(!pega) return;
@@ -5196,7 +5468,7 @@
     LS.esc("paleta",this.value); LS.esc(chaveManuais(), {}); LS.esc("acentoManual","nao");
     aplicarTema(); desenharAcentos(); desenharManuais(); desenharProntos();
   });
-  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","imprimir","metodoImpressao","servidorImp","avancoCorte","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
+  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","imprimir","metodoImpressao","servidorImp","avancoCorte","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
   $("#aCopiarDefs").addEventListener("click", function(){
     var pacote = {app:"registadora-definicoes", versao:1};
     CHAVES_DEFS.forEach(function(k){
@@ -5483,6 +5755,7 @@
     $("#aMostrarTotal").value = LS.ler("mostrarTotal","sim");
     $("#aMostrarEvento").value = LS.ler("mostrarEvento","sim");
     setTimeout(actualizarPrevia, 60);
+    $("#aOrdemGrelha").value = ordemGrelha(); notaDaOrdem();
     $("#aPedidos").value = LS.ler("pedidosLigar","sim");
 
     $("#aSalaNome").value = salaNome();
