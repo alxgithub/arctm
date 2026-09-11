@@ -1385,7 +1385,7 @@
         </select>
       </label>
       <p class="sub" id="notaOrdem" style="margin:-8px 0 6px"></p>
-      <div class="fila" hidden>
+      <div class="fila">
         <button class="btn ghost" id="aCatalogoFesta" type="button">Lista de preços da festa</button>
       </div>
 
@@ -3179,7 +3179,19 @@
     var e=evAtual();
     if(!e){ ul.innerHTML='<li><div class="txt"><span>Crie primeiro um evento.</span></div></li>'; return; }
     var lista = categoriasDe(e);
-    lista.forEach(function(cat){
+    function mover(id, passo){
+      var ev2 = evAtual();
+      var atuais = (Array.isArray(ev2.categorias) && ev2.categorias.length)
+        ? ev2.categorias.slice() : copia(CATEGORIAS_BASE);
+      var i = -1;
+      atuais.forEach(function(x, k){ if(x.id===id) i = k; });
+      var j = i + passo;
+      if(i < 0 || j < 0 || j >= atuais.length) return;
+      var guardado = atuais[i]; atuais[i] = atuais[j]; atuais[j] = guardado;
+      ev2.categorias = atuais;
+      guardarEvento(ev2); desenharCategorias(); pagina=0; pintarTudo();
+    }
+    lista.forEach(function(cat, indice){
       var usados = produtos().filter(function(p){ return p.categoria===cat.id; }).length;
       var li=document.createElement("li");
       li.innerHTML =
@@ -3187,6 +3199,8 @@
         '<div class="txt"><b>'+esc(cat.nome)+'</b><span>'+(usados?(usados+(usados===1?" produto":" produtos")):"sem produtos")+'</span></div>'+
         '<input type="color" value="'+cat.cor+'" aria-label="Cor de '+esc(cat.nome)+'" '+
               'style="width:42px;height:34px;padding:2px;border:1px solid var(--line);border-radius:9px;background:var(--card)">'+
+        '<button class="mini" type="button" aria-label="Subir" title="Subir"'+(indice===0?' disabled':'')+'>↑</button>'+
+        '<button class="mini" type="button" aria-label="Descer" title="Descer"'+(indice===lista.length-1?' disabled':'')+'>↓</button>'+
         '<button class="mini perigo" type="button">Apagar</button>';
       li.querySelector("input").addEventListener("change", function(){
         var ev2=evAtual();
@@ -3194,7 +3208,10 @@
         ev2.categorias.forEach(function(x){ if(x.id===cat.id) x.cor = this.value; }, this);
         guardarEvento(ev2); desenharCategorias(); pagina=0; pintarTudo();
       });
-      li.querySelector("button").addEventListener("click", function(){
+      var botoes = li.querySelectorAll("button");
+      botoes[0].addEventListener("click", function(){ mover(cat.id, -1); });
+      botoes[1].addEventListener("click", function(){ mover(cat.id, 1); });
+      botoes[2].addEventListener("click", function(){
         if(usados){ toast("“"+cat.nome+"” tem "+usados+(usados===1?" produto":" produtos")+" — mude-os primeiro"); return; }
         var ev2=evAtual();
         ev2.categorias = categoriasDe(ev2).filter(function(x){ return x.id!==cat.id; });
