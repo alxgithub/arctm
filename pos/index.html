@@ -784,11 +784,13 @@
       <label class="campo"><span>Acaba</span><input id="eFim" type="date"></label>
     </div>
     <div class="campo"><span>Formas de pagamento aceites</span>
-      <div class="abas" id="ePagamentos">
-        <button type="button" data-p="dinheiro">Dinheiro</button>
-        <button type="button" data-p="cartao">Cartão</button>
-        <button type="button" data-p="misto">Misto</button>
+      <div class="abas" id="ePagamentos"></div>
+      <div class="fila" style="margin-top:9px">
+        <input id="eNovoPag" type="text" autocomplete="off" placeholder="Outra forma — ex.: MB Way"
+               style="flex:1;min-width:0;padding:11px;border:1px solid var(--line);border-radius:11px;background:var(--card)">
+        <button class="btn ghost" id="eJuntarPag" type="button">Juntar</button>
       </div>
+      <p class="sub" style="margin:8px 0 0">Toque para ligar ou desligar. Uma forma já usada em vendas não pode ser apagada.</p>
     </div>
     <label class="campo" id="campoCopiar"><span>Copiar produtos de</span>
       <select id="eCopiar"><option value="">Começar sem produtos</option></select>
@@ -830,6 +832,7 @@
     <p class="sub">Fica como botão na grelha deste evento.</p>
     <label class="campo"><span>Nome</span><input id="pNome" type="text" autocomplete="off" placeholder="Imperial"></label>
     <label class="campo"><span>Preço (€)</span><input id="pPreco" type="text" inputmode="decimal" placeholder="1,20"></label>
+    <label class="campo"><span>Categoria</span><select id="pCategoria"></select></label>
     <div class="campo"><span>Imagem (opcional)</span>
       <div class="imagem-linha">
         <div class="imagem-prev" id="pPrev"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="8.5" cy="10" r="1.5"></circle><path d="m4 17 5-4 4 3 3-2 4 3"></path></svg></div>
@@ -1368,6 +1371,16 @@
       <div class="fila" style="margin-top:9px">
         <button class="btn ghost" id="aBiblioteca" type="button">Biblioteca</button>
         <button class="btn ghost" id="aExemplos" type="button">Produtos de exemplo</button>
+        <button class="btn ghost" id="aCatalogoFesta" type="button">Lista de preços da festa</button>
+      </div>
+
+      <h3>Categorias</h3>
+      <p class="sub">Dão cor aos produtos que não tenham cor própria, e ajudam a encontrar tudo mais depressa.</p>
+      <ul class="lista" id="aCategorias"></ul>
+      <div class="fila" style="margin-top:10px">
+        <input id="aNovaCategoria" type="text" autocomplete="off" placeholder="Nova categoria — ex.: Garrafeira"
+               style="flex:1;min-width:0;padding:11px;border:1px solid var(--line);border-radius:11px;background:var(--card)">
+        <button class="btn ghost" id="aJuntarCategoria" type="button">Juntar</button>
       </div>
       <button class="btn ghost largo" id="aGuardarBib" type="button" style="margin-top:9px">Guardar estes produtos na biblioteca</button>
     </section>
@@ -1802,6 +1815,7 @@
     return null;
   }
   function produtos(){ var e=evAtual(); return e ? (e.produtos||[]) : []; }
+  function produtosVisiveis(){ return produtos().filter(function(p){ return !p.oculto; }); }
 
   var LS = {
     ler:function(k,d){ try{ var v=localStorage.getItem("reg2:"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
@@ -2080,6 +2094,66 @@
   }
 
   /* ------------- evento de demonstração ------------- */
+  // categorias sugeridas: dão cor e arrumação aos produtos
+  var CATEGORIAS_BASE = [
+    {id:"alcool",   nome:"Bebidas com álcool", cor:"#B5852A"},
+    {id:"bebidas",  nome:"Bebidas sem álcool", cor:"#2A8FC4"},
+    {id:"cafes",    nome:"Cafés e quentes",    cor:"#7A4B28"},
+    {id:"menus",    nome:"Menus",              cor:"#1E8F42"},
+    {id:"pratos",   nome:"Pratos e petiscos",  cor:"#B8402A"},
+    {id:"sandes",   nome:"Sandes e pão",       cor:"#C9702E"},
+    {id:"doces",    nome:"Doces",              cor:"#A03A6B"},
+    {id:"outros",   nome:"Outros",             cor:"#4A5C55"}
+  ];
+  function categoriasDe(ev){
+    if(ev && Array.isArray(ev.categorias) && ev.categorias.length) return ev.categorias;
+    return CATEGORIAS_BASE;
+  }
+  function categoria(id, ev){
+    var lista = categoriasDe(ev || evAtual());
+    for(var i=0;i<lista.length;i++) if(lista[i].id===id) return lista[i];
+    return null;
+  }
+  function corDoProduto(p, ev){
+    if(p && p.cor) return p.cor;
+    var c = p && p.categoria ? categoria(p.categoria, ev) : null;
+    return c ? c.cor : "var(--ink-2)";
+  }
+
+  // lista de preços da festa, com categoria e símbolo
+  var CATALOGO_FESTA = [
+    ["Fino",                  1.20, "imperial", "alcool"],
+    ["Metro",                12.00, "jarro",    "alcool"],
+    ["Mini s/ álcool",        1.20, "cerveja",  "bebidas"],
+    ["Cerveja s/ álcool",     1.60, "cerveja",  "bebidas"],
+    ["Refrigerante (copo)",   1.00, "sumo",     "bebidas"],
+    ["Água 0,33 L",           0.80, "agua",     "bebidas"],
+    ["Água c/ gás",           1.20, "agua",     "bebidas"],
+    ["Vinho (copo)",          0.60, "vinho",    "alcool"],
+    ["Café",                  0.80, "cafe",     "cafes"],
+    ["Sidra mini 0,20 L",     1.60, "cerveja",  "alcool"],
+    ["Sidra 0,33 L",          2.20, "garrafao", "alcool"],
+    ["Martini",               1.00, "cocktail", "alcool"],
+    ["Martini c/ cerveja",    1.50, "cocktail", "alcool"],
+    ["Frisante (garrafa)",    4.50, "garrafao", "alcool"],
+    ["Frisante (copo)",       1.00, "copo",     "alcool"],
+    ["Frize limão",           1.20, "lata",     "bebidas"],
+
+    ["Menu leitão",          15.00, "espetada", "menus"],
+    ["Menu bitoque",          9.00, "espetada", "menus"],
+    ["Menu ovos rotos",      12.00, "batatas",  "menus"],
+    ["Menu pernil c/ arroz de feijão", 12.00, "espetada", "menus"],
+    ["Menu feijoada de marisco",       13.00, "caracois", "menus"],
+    ["Menu junta",           12.00, "senha",    "menus"],
+
+    ["Taça de caldo verde",   2.00, "sopa",     "pratos"],
+    ["Moelas",                3.00, "petiscos", "pratos"],
+    ["Pica-pau",              4.50, "petiscos", "pratos"],
+    ["Bifana",                3.00, "bifana",   "sandes"],
+    ["Sandes de leitão",      6.00, "sandes",   "sandes"],
+    ["Sobremesa",             1.50, "nata",     "doces"]
+  ];
+
   var CATALOGO_DEMO = [
     ["Imperial", 1.50, "imperial", "#B5852A"],
     ["Caneca", 2.50, "copo", "#B5852A"],
@@ -2232,6 +2306,38 @@
     });
   }
 
+  function juntarCatalogoFesta(){
+    var e=evAtual();
+    if(!e){ toast("Crie primeiro um evento"); return; }
+    e.produtos = e.produtos || [];
+    var jaTem = {};
+    e.produtos.forEach(function(p){ jaTem[normalizar(p.nome)] = true; });
+    var novos = CATALOGO_FESTA.filter(function(c){ return !jaTem[normalizar(c[0])]; })
+      .map(function(c){
+        return {id:uid(), nome:c[0], preco:c[1], icone:c[2], categoria:c[3], cor:""};
+      });
+    if(!novos.length){ toast("Já tem toda a lista de preços"); return; }
+    var porCategoria = {};
+    novos.forEach(function(p){ porCategoria[p.categoria] = (porCategoria[p.categoria]||0)+1; });
+    var resumoCat = Object.keys(porCategoria).map(function(id){
+      var c = categoria(id, e);
+      return (c?c.nome:id).toLowerCase()+" ("+porCategoria[id]+")";
+    }).join(", ");
+    var jaTinha = e.produtos.length;
+    confirmar(
+      "Juntar "+novos.length+" produtos da lista de preços?",
+      "A grelha passa de "+jaTinha+" para "+(jaTinha+novos.length)+" produtos: "+resumoCat+". "+
+      "Cada um leva a cor da sua categoria, e pode mudar preços, símbolos e cores depois.",
+      "Juntar "+novos.length
+    ).then(function(ok){
+      if(!ok) return;
+      if(!Array.isArray(e.categorias) || !e.categorias.length) e.categorias = copia(CATEGORIAS_BASE);
+      e.produtos = e.produtos.concat(novos);
+      guardarEvento(e); pagina=0; pintarTudo();
+      toast(novos.length+" produtos juntos");
+    });
+  }
+
   function criarDemo(){
     var hj = hoje();
     var d0 = new Date(); d0.setDate(d0.getDate()-1);
@@ -2299,43 +2405,116 @@
   }
 
   var NOMES_PAG = {dinheiro:"Dinheiro", cartao:"Cartão", misto:"Misto"};
+  // formas de pagamento: as três de origem mais as que o utilizador criar
+  var PAG_BASE = [
+    {id:"dinheiro", nome:"Dinheiro", tipo:"dinheiro", fixo:true},
+    {id:"cartao",   nome:"Cartão",   tipo:"cartao",   fixo:true},
+    {id:"misto",    nome:"Misto",    tipo:"misto",    fixo:true}
+  ];
+  function metodosDe(ev){
+    var extra = (ev && Array.isArray(ev.metodosExtra)) ? ev.metodosExtra : [];
+    return PAG_BASE.concat(extra.map(function(m){
+      return {id:m.id, nome:m.nome, tipo:m.tipo||"cartao", fixo:false};
+    }));
+  }
+  function metodoPorId(id, ev){
+    var lista = metodosDe(ev || evAtual());
+    for(var i=0;i<lista.length;i++) if(lista[i].id===id) return lista[i];
+    return {id:id, nome:id, tipo:"dinheiro"};
+  }
+  function nomeDoMetodo(id, ev){
+    return NOMES_PAG[id] || metodoPorId(id, ev).nome || id;
+  }
   function pagamentosDe(ev){
-    var d = {dinheiro:true, cartao:true, misto:true};
+    var d = {};
+    metodosDe(ev).forEach(function(m){ d[m.id] = true; });
     if(!ev || !ev.pagamentos) return d;
-    return {
-      dinheiro: ev.pagamentos.dinheiro !== false,
-      cartao: ev.pagamentos.cartao !== false,
-      misto: ev.pagamentos.misto !== false
-    };
+    metodosDe(ev).forEach(function(m){ d[m.id] = ev.pagamentos[m.id] !== false; });
+    return d;
   }
   function metodosPermitidos(){
-    var p = pagamentosDe(evAtual()), out = [];
-    if(p.dinheiro) out.push("dinheiro");
-    if(p.cartao) out.push("cartao");
-    if(p.misto && p.dinheiro && p.cartao) out.push("misto");
+    var ev = evAtual(), p = pagamentosDe(ev), out = [];
+    metodosDe(ev).forEach(function(m){
+      if(!p[m.id]) return;
+      if(m.id==="misto" && !(p.dinheiro && p.cartao)) return;
+      out.push(m.id);
+    });
     if(!out.length) out.push("dinheiro");
     return out;
   }
 
   var pagEscolhidos = {dinheiro:true, cartao:true, misto:true};
+  var metodosEditando = [];        // formas próprias do evento a ser editado
   function desenharPagamentosEditor(){
-    document.querySelectorAll("#ePagamentos button").forEach(function(b){
-      var k = b.dataset.p;
-      var possivel = k!=="misto" || (pagEscolhidos.dinheiro && pagEscolhidos.cartao);
+    var c = $("#ePagamentos"); if(!c) return;
+    c.innerHTML = "";
+    var evRef = {metodosExtra: metodosEditando};
+    metodosDe(evRef).forEach(function(m){
+      var b=document.createElement("button"); b.type="button"; b.dataset.p=m.id;
+      var possivel = m.id!=="misto" || (pagEscolhidos.dinheiro && pagEscolhidos.cartao);
       if(!possivel) pagEscolhidos.misto = false;
-      b.setAttribute("aria-pressed", String(!!pagEscolhidos[k] && possivel));
+      b.textContent = m.nome;
+      b.setAttribute("aria-pressed", String(!!pagEscolhidos[m.id] && possivel));
       b.disabled = !possivel;
       b.style.opacity = possivel ? "1" : ".4";
+      b.addEventListener("click", function(){
+        pagEscolhidos[m.id] = !pagEscolhidos[m.id];
+        desenharPagamentosEditor();
+      });
+      if(!m.fixo){
+        var x=document.createElement("button"); x.type="button"; x.className="mini perigo";
+        x.textContent="×"; x.title="Apagar “"+m.nome+"”";
+        x.style.marginLeft="-4px";
+        x.addEventListener("click", function(){ apagarMetodo(m); });
+        c.appendChild(b); c.appendChild(x);
+        return;
+      }
+      c.appendChild(b);
     });
   }
-  document.querySelectorAll("#ePagamentos button").forEach(function(b){
-    b.addEventListener("click", function(){
-      var k=b.dataset.p;
-      var ligados = ["dinheiro","cartao"].filter(function(x){ return pagEscolhidos[x]; });
-      if(k!=="misto" && pagEscolhidos[k] && ligados.length===1){ toast("Tem de aceitar pelo menos uma forma"); return; }
-      pagEscolhidos[k] = !pagEscolhidos[k];
-      desenharPagamentosEditor();
+  function pagamentosParaGravar(){
+    var out = {};
+    metodosDe({metodosExtra: metodosEditando}).forEach(function(m){
+      out[m.id] = !!pagEscolhidos[m.id];
     });
+    return out;
+  }
+  function vezesUsadoMetodo(id){
+    var e = evEditando && evEditando.id ? evEditando : evAtual();
+    if(!e) return 0;
+    var todas = vendasLocais(e.id) || {}, n = 0;
+    Object.keys(todas).forEach(function(dia){
+      Object.keys(todas[dia]||{}).forEach(function(vid){
+        var v = todas[dia][vid];
+        if(v && !v.anulada && v.metodo===id) n++;
+      });
+    });
+    return n;
+  }
+  function apagarMetodo(m){
+    var usos = vezesUsadoMetodo(m.id);
+    if(usos){
+      toast("“"+m.nome+"” já foi usado em "+usos+(usos===1?" venda":" vendas")+" — desligue em vez de apagar");
+      return;
+    }
+    metodosEditando = metodosEditando.filter(function(x){ return x.id!==m.id; });
+    delete pagEscolhidos[m.id];
+    desenharPagamentosEditor();
+  }
+  $("#eJuntarPag").addEventListener("click", function(){
+    var nome = $("#eNovoPag").value.trim();
+    if(!nome){ $("#eNovoPag").focus(); return; }
+    var id = "m" + normalizar(nome).replace(/[^a-z0-9]/g, "").slice(0, 14);
+    if(!id || id==="m"){ toast("Nome inválido"); return; }
+    var evRef = {metodosExtra: metodosEditando};
+    if(metodosDe(evRef).some(function(x){ return x.id===id; })){ toast("Já existe essa forma"); return; }
+    metodosEditando.push({id:id, nome:nome, tipo:"cartao"});
+    pagEscolhidos[id] = true;
+    $("#eNovoPag").value = "";
+    desenharPagamentosEditor();
+  });
+  $("#eNovoPag").addEventListener("keydown", function(e){
+    if(e.key==="Enter"){ e.preventDefault(); $("#eJuntarPag").click(); }
   });
 
   var evEditando=null;
@@ -2346,11 +2525,15 @@
     $("#eNome").value = ev?ev.nome:"";
     $("#eInicio").value = ev?ev.inicio:hoje();
     $("#eFim").value = ev?(ev.fim||ev.inicio):hoje();
+    metodosEditando = (ev && Array.isArray(ev.metodosExtra)) ? copia(ev.metodosExtra) : [];
     pagEscolhidos = pagamentosDe(ev);
     desenharPagamentosEditor();
     $("#eApagarZona").hidden = !ev;
     $("#campoCopiar").hidden = !!ev || !estado.eventos.length;
-    var sel=$("#eCopiar"); sel.innerHTML='<option value="">Começar sem produtos</option>';
+    var sel=$("#eCopiar");
+    sel.innerHTML = '<option value="">Começar sem produtos</option>'+
+                    '<option value="__festa">Lista de preços da festa ('+CATALOGO_FESTA.length+' produtos)</option>'+
+                    '<option value="__exemplos">Catálogo de exemplo ('+CATALOGO_DEMO.length+' produtos)</option>';
     estado.eventos.forEach(function(o){
       if(!(o.produtos||[]).length) return;
       var op=document.createElement("option"); op.value=o.id;
@@ -2368,18 +2551,30 @@
     if(fim<ini){ var t=fim; fim=ini; ini=t; }
     if(evEditando){
       evEditando.nome=nome; evEditando.inicio=ini; evEditando.fim=fim;
-      evEditando.pagamentos={dinheiro:!!pagEscolhidos.dinheiro, cartao:!!pagEscolhidos.cartao, misto:!!pagEscolhidos.misto};
+      evEditando.metodosExtra = copia(metodosEditando);
+      evEditando.pagamentos = pagamentosParaGravar();
       guardarEvento(evEditando);
     } else {
       var ev={id:uid(),nome:nome,inicio:ini,fim:fim,produtos:[],criado:Date.now(),
-              pagamentos:{dinheiro:!!pagEscolhidos.dinheiro, cartao:!!pagEscolhidos.cartao, misto:!!pagEscolhidos.misto}};
+              metodosExtra: copia(metodosEditando),
+              pagamentos: pagamentosParaGravar()};
       var origem=$("#eCopiar").value;
+      if(origem==="__festa" || origem==="__exemplos"){
+        var fonte = origem==="__festa" ? CATALOGO_FESTA : CATALOGO_DEMO;
+        ev.categorias = copia(CATEGORIAS_BASE);
+        ev.produtos = fonte.map(function(c){
+          return origem==="__festa"
+            ? {id:uid(), nome:c[0], preco:c[1], icone:c[2], categoria:c[3], cor:""}
+            : {id:uid(), nome:c[0], preco:c[1], icone:c[2], cor:c[3], categoria:""};
+        });
+        origem = "";
+      }
       if(origem){
         var o=estado.eventos.filter(function(x){ return x.id===origem; })[0];
         if(o){
           var imgsO=imagensLocais(o.id), imgsN={};
           ev.produtos=(o.produtos||[]).map(function(p){
-            var np={id:uid(),nome:p.nome,preco:p.preco,cor:p.cor,icone:p.icone};
+            var np={id:uid(),nome:p.nome,preco:p.preco,cor:p.cor,icone:p.icone,categoria:p.categoria||""};
             if(imgsO[p.id]) imgsN[np.id]=imgsO[p.id];
             return np;
           });
@@ -2518,7 +2713,7 @@
     $("#barraGrelha").hidden = !e;
     if(!e){ g.hidden=true; semEv.hidden=false; semPr.hidden=true; $("#procura").hidden=true; nav.hidden=true; return; }
     semEv.hidden=true;
-    var todos=produtos();
+    var todos=produtosVisiveis();
     if(!todos.length){ g.hidden=true; semPr.hidden=false; $("#procura").hidden=true; nav.hidden=true; return; }
     semPr.hidden=true;
     $("#procura").hidden = todos.length < 6;
@@ -2542,7 +2737,7 @@
       estado.carrinho.forEach(function(l){ if(l.pid===p.id) qtd=l.qtd; });
       var b=document.createElement("button");
       b.type="button"; b.className="prod";
-      b.style.setProperty("--c", p.cor||"#0E6B5C");
+      b.style.setProperty("--c", corDoProduto(p));
       b.setAttribute("aria-label", p.nome+", "+money(p.preco));
       b.title = "Juntar "+p.nome+" — "+money(p.preco);
       var visual = estado.imagens[p.id]
@@ -2577,7 +2772,7 @@
     estado.ultimaVenda=null;
     var achou=false;
     estado.carrinho.forEach(function(l){ if(l.pid===p.id){ l.qtd++; achou=true; } });
-    if(!achou) estado.carrinho.push({pid:p.id,nome:p.nome,preco:p.preco,qtd:1,icone:p.icone,cor:p.cor});
+    if(!achou) estado.carrinho.push({pid:p.id,nome:p.nome,preco:p.preco,qtd:1,icone:p.icone,cor:corDoProduto(p)});
     desenharCarrinho(); desenharGrelha();
     if(!achou){
       var el=$("#linhas");
@@ -2747,6 +2942,16 @@
     });
   });
 
+  function desenharCategoriasSelect(escolhida){
+    var sel=$("#pCategoria"); if(!sel) return;
+    sel.innerHTML='<option value="">Sem categoria</option>';
+    categoriasDe(evAtual()).forEach(function(c){
+      var o=document.createElement("option");
+      o.value=c.id; o.textContent=c.nome;
+      sel.appendChild(o);
+    });
+    sel.value = escolhida || "";
+  }
   function desenharCores(){
     var c=$("#pCores"); c.innerHTML="";
     PALETA.forEach(function(cor){
@@ -2795,6 +3000,7 @@
     $("#tProduto").textContent = p?"Editar produto":"Novo produto";
     $("#pNome").value = p?p.nome:"";
     $("#pPreco").value = p?String(p.preco).replace(".",","):"";
+    desenharCategoriasSelect(p ? (p.categoria||"") : "");
     corEscolhida = p?(p.cor||PALETA[0]):PALETA[produtos().length % PALETA.length];
     iconeEscolhido = p?(p.icone||""):"";
     imagemEscolhida = p ? (estado.imagens[p.id]||null) : null;
@@ -2813,21 +3019,51 @@
     preco=Math.round(preco*100)/100;
     if(editando){
       editando.nome=nome; editando.preco=preco; editando.cor=corEscolhida; editando.icone=iconeEscolhido;
+      editando.categoria = $("#pCategoria").value || "";
       definirImagem(editando.id, imagemEscolhida);
       estado.carrinho.forEach(function(l){ if(l.pid===editando.id){ l.nome=nome; l.preco=preco; l.cor=corEscolhida; l.icone=iconeEscolhido; } });
     } else {
       e.produtos=e.produtos||[];
-      var novo={id:uid(),nome:nome,preco:preco,cor:corEscolhida,icone:iconeEscolhido};
+      var novo={id:uid(),nome:nome,preco:preco,cor:corEscolhida,icone:iconeEscolhido,
+                categoria:$("#pCategoria").value||""};
       e.produtos.push(novo);
       if(imagemEscolhida) definirImagem(novo.id, imagemEscolhida);
     }
     if(estado.modo==="nuvem" && pesoImagens() > 200000) toast("Cuidado: muitas imagens podem não caber na nuvem");
     guardarEvento(e); fechar("#sheetProduto"); pintarTudo();
   }
+  function vezesVendido(pid, nome){
+    var e=evAtual(); if(!e) return 0;
+    var todas = vendasLocais(e.id) || {};
+    var n = 0;
+    Object.keys(todas).forEach(function(dia){
+      Object.keys(todas[dia]||{}).forEach(function(id){
+        var v = todas[dia][id];
+        if(!v || v.anulada) return;
+        (v.linhas||[]).forEach(function(l){
+          if((pid && l.pid===pid) || (!l.pid && l.nome===nome)) n += l.qtd || 1;
+        });
+      });
+    });
+    return n;
+  }
   function apagarProdutoAtual(){
     var e=evAtual(); if(!e||!editando) return;
     var alvo=editando;
-    confirmar("Apagar “"+alvo.nome+"”?", "O botão desaparece da grelha. As vendas já registadas mantêm-se no relatório.", "Apagar produto").then(function(ok){
+    var vendido = vezesVendido(alvo.id, alvo.nome);
+    if(vendido){
+      confirmar("“"+alvo.nome+"” já foi vendido",
+        "Há "+vendido+(vendido===1?" unidade vendida":" unidades vendidas")+" neste evento. Apagar o produto deixaria os relatórios sem referência. "+
+        "Pode escondê-lo da grelha, mantendo o histórico intacto.",
+        "Esconder da grelha").then(function(ok){
+          if(!ok) return;
+          alvo.oculto = true;
+          guardarEvento(e); fechar("#sheetProduto"); pagina=0; pintarTudo();
+          toast("Produto escondido da grelha");
+        });
+      return;
+    }
+    confirmar("Apagar “"+alvo.nome+"”?", "O botão desaparece da grelha. Nunca foi vendido neste evento, por isso não afeta relatórios.", "Apagar produto").then(function(ok){
       if(!ok) return;
       e.produtos=(e.produtos||[]).filter(function(p){ return p.id!==alvo.id; });
       definirImagem(alvo.id, null);
@@ -2858,6 +3094,36 @@
     return Math.max(6, colunas * filas);
   }
 
+  function desenharCategorias(){
+    var ul=$("#aCategorias"); if(!ul) return;
+    ul.innerHTML="";
+    var e=evAtual();
+    if(!e){ ul.innerHTML='<li><div class="txt"><span>Crie primeiro um evento.</span></div></li>'; return; }
+    var lista = categoriasDe(e);
+    lista.forEach(function(cat){
+      var usados = produtos().filter(function(p){ return p.categoria===cat.id; }).length;
+      var li=document.createElement("li");
+      li.innerHTML =
+        '<span class="mic" style="background:'+cat.cor+';border-radius:8px;width:26px;height:26px"></span>'+
+        '<div class="txt"><b>'+esc(cat.nome)+'</b><span>'+(usados?(usados+(usados===1?" produto":" produtos")):"sem produtos")+'</span></div>'+
+        '<input type="color" value="'+cat.cor+'" aria-label="Cor de '+esc(cat.nome)+'" '+
+              'style="width:42px;height:34px;padding:2px;border:1px solid var(--line);border-radius:9px;background:var(--card)">'+
+        '<button class="mini perigo" type="button">Apagar</button>';
+      li.querySelector("input").addEventListener("change", function(){
+        var ev2=evAtual();
+        if(!Array.isArray(ev2.categorias) || !ev2.categorias.length) ev2.categorias = copia(CATEGORIAS_BASE);
+        ev2.categorias.forEach(function(x){ if(x.id===cat.id) x.cor = this.value; }, this);
+        guardarEvento(ev2); desenharCategorias(); pagina=0; pintarTudo();
+      });
+      li.querySelector("button").addEventListener("click", function(){
+        if(usados){ toast("“"+cat.nome+"” tem "+usados+(usados===1?" produto":" produtos")+" — mude-os primeiro"); return; }
+        var ev2=evAtual();
+        ev2.categorias = categoriasDe(ev2).filter(function(x){ return x.id!==cat.id; });
+        guardarEvento(ev2); desenharCategorias(); toast("Categoria apagada");
+      });
+      ul.appendChild(li);
+    });
+  }
   function desenharListaProdutos(){
     var ul=$("#aLista"), gr=$("#aGrelhaProd");
     var nav=$("#pagProdutos"); if(nav) nav.hidden=true;
@@ -2888,7 +3154,7 @@
       if(grelha){
         var card=document.createElement("div");
         card.className="cartao-prod";
-        card.style.setProperty("--c", p.cor||"#0E6B5C");
+        card.style.setProperty("--c", corDoProduto(p));
         var visual = estado.imagens[p.id]
           ? '<img src="'+estado.imagens[p.id]+'" alt="">'
           : svgIcone(p.icone);
@@ -2912,7 +3178,7 @@
         var li=document.createElement("li");
         li.innerHTML =
           '<i class="ordem">'+(i+1)+'</i>'+
-          '<span class="mic" style="color:'+(p.cor||"var(--ink-2)")+';background:color-mix(in srgb, '+(p.cor||"#888")+' 14%, transparent)">'+miniVisual(p.id,p.icone,p.cor,26)+'</span>'+
+          '<span class="mic" style="color:'+corDoProduto(p)+';background:color-mix(in srgb, '+corDoProduto(p)+' 14%, transparent)">'+miniVisual(p.id,p.icone,corDoProduto(p),26)+'</span>'+
           '<div class="txt"><b>'+esc(p.nome)+'</b><span>'+money(p.preco)+'</span></div>'+
           '<button class="mini" type="button" aria-label="Subir">↑</button>'+
           '<button class="mini" type="button" aria-label="Descer">↓</button>'+
@@ -3010,7 +3276,7 @@
         ? '<img src="'+origemAtual.imgs[p.id]+'" alt="" style="width:24px;height:24px;object-fit:cover;border-radius:7px;display:block">'
         : svgIcone(p.icone,24);
       li.innerHTML =
-        '<span class="mic" style="color:'+(p.cor||"var(--ink-2)")+'">'+visual+'</span>'+
+        '<span class="mic" style="color:'+corDoProduto(p)+'">'+visual+'</span>'+
         '<div class="txt"><b>'+esc(p.nome)+'</b><span>'+money(p.preco)+'</span></div>'+
         '<button class="mini" type="button" aria-pressed="true">Incluir</button>'+
         (origemAtual.tipo==="bib" ? '<button class="mini perigo" type="button" aria-label="Remover da biblioteca">×</button>' : '');
@@ -3048,7 +3314,7 @@
     if(!escolhidos.length){ toast("Nada selecionado"); return; }
     e.produtos = e.produtos || [];
     escolhidos.forEach(function(p){
-      var np = {id:uid(), nome:p.nome, preco:p.preco, cor:p.cor, icone:p.icone};
+      var np = {id:uid(), nome:p.nome, preco:p.preco, cor:p.cor, icone:p.icone, categoria:p.categoria||""};
       if(origemAtual.imgs[p.id]) estado.imagens[np.id] = origemAtual.imgs[p.id];
       e.produtos.push(np);
     });
@@ -3067,7 +3333,7 @@
     var novos = 0;
     escolhidos.forEach(function(p){
       if(existentes[normalizar(p.nome)]) return;
-      var np={id:uid(), nome:p.nome, preco:p.preco, cor:p.cor, icone:p.icone};
+      var np={id:uid(), nome:p.nome, preco:p.preco, cor:p.cor, icone:p.icone, categoria:p.categoria||""};
       if(origemAtual.imgs[p.id]) imgs[np.id]=origemAtual.imgs[p.id];
       lista.push(np); existentes[normalizar(p.nome)]=true; novos++;
     });
@@ -3161,7 +3427,7 @@
     c.hidden = permitidos.length < 2;
     permitidos.forEach(function(m){
       var b=document.createElement("button"); b.type="button"; b.dataset.modo=m;
-      b.textContent=NOMES_PAG[m];
+      b.textContent=nomeDoMetodo(m);
       b.addEventListener("click", function(){ definirModo(m); });
       c.appendChild(b);
     });
@@ -3228,7 +3494,7 @@
   }
   function devidoEmDinheiro(){
     var t=totalCarrinho();
-    if(modoPag==="cartao") return 0;
+    if(tipoDoModo()==="cartao") return 0;
     if(modoPag==="misto") return Math.max(0, Math.round((t - valorCartao)*100)/100);
     return t;
   }
@@ -3242,7 +3508,7 @@
     $("#fRecebido").classList.toggle("ativo", modoPag==="misto" && campoPag==="recebido");
 
     var el=$("#payTroco");
-    if(modoPag==="cartao"){
+    if(tipoDoModo()==="cartao"){
       $("#payRot").textContent="Troco"; el.textContent="—"; el.className="";
     } else if(!recebido){
       $("#payRot").textContent="Troco"; el.textContent="—"; el.className="";
@@ -3253,11 +3519,11 @@
     }
     desenharRapidas();
     var b=$("#payConfirmar"), bp=$("#payComPedido"), cx=$("#payPedidoNum");
-    var faltaValor = modoPag!=="cartao" && devido>0 && (!recebido || recebido<devido);
+    var faltaValor = tipoDoModo()!=="cartao" && devido>0 && (!recebido || recebido<devido);
     var mistoIncompleto = modoPag==="misto" && (valorCartao<=0 || valorCartao>=t);
     var bloqueado = faltaValor || mistoIncompleto;
 
-    b.textContent = modoPag==="cartao" ? "Registar venda"
+    b.textContent = tipoDoModo()==="cartao" ? "Registar venda"
       : (!recebido ? "Indique o valor recebido"
       : recebido<devido ? ("Faltam "+money(devido-recebido))
       : "Registar venda");
@@ -3274,7 +3540,7 @@
   function desenharRapidas(){
     var c=$("#payRapidas"); c.innerHTML="";
     var t=totalCarrinho();
-    if(modoPag==="cartao"){ c.style.visibility="hidden"; return; }
+    if(tipoDoModo()==="cartao"){ c.style.visibility="hidden"; return; }
     c.style.visibility="visible";
     if(modoPag==="misto" && campoPag==="cartao"){
       var ops = [["Metade", Math.round(t/2*100)/100],["5 €",5],["10 €",10],["20 €",20]]
@@ -3319,7 +3585,7 @@
     }
     // com dinheiro pelo meio, é preciso saber o que o cliente entregou
     var devidoAgora = devidoEmDinheiro();
-    if(modoPag!=="cartao" && devidoAgora > 0){
+    if(tipoDoModo()!=="cartao" && devidoAgora > 0){
       if(!recebido){
         campoPag="recebido";
         $("#fRecebido").classList.add("aviso-campo");
@@ -3336,9 +3602,9 @@
     aRegistar = true;
     setTimeout(function(){ aRegistar = false; }, 800);
     var devido=devidoEmDinheiro();
-    var emCartao = modoPag==="cartao" ? t : (modoPag==="misto" ? valorCartao : 0);
+    var emCartao = tipoDoModo()==="cartao" ? t : (modoPag==="misto" ? valorCartao : 0);
     var emDinheiro = Math.round((t-emCartao)*100)/100;
-    var rec = modoPag==="cartao" ? 0 : recebido;
+    var rec = tipoDoModo()==="cartao" ? 0 : recebido;
     var venda={
       id:uid(), ts:Date.now(), dia:estado.dia,
       total:Math.round(t*100)/100, metodo:modoPag,
@@ -3368,17 +3634,21 @@
     toast(venda.pedido ? ("Pedido "+venda.pedido+" criado")
         : (venda.troco>0 ? "Troco "+money(venda.troco) : "Venda registada"));
   }
+  function tipoDoModo(id){
+    var m = metodoPorId(id || modoPag);
+    return m.tipo || (id==="dinheiro" ? "dinheiro" : "cartao");
+  }
   function parteDinheiro(v){
     if(typeof v.emDinheiro==="number") return v.emDinheiro;
-    return v.metodo==="cartao" ? 0 : v.total;
+    return tipoDoModo(v.metodo)==="dinheiro" ? v.total : 0;
   }
   function parteCartao(v){
     if(typeof v.emCartao==="number") return v.emCartao;
-    return v.metodo==="cartao" ? v.total : 0;
+    return tipoDoModo(v.metodo)==="dinheiro" ? 0 : v.total;
   }
   function nomeMetodo(v){
     if(v.metodo==="misto") return "misto ("+money(parteCartao(v))+" cartão)";
-    return v.metodo==="cartao" ? "cartão" : "dinheiro";
+    return nomeDoMetodo(v.metodo).toLowerCase();
   }
 
   /* ------------- vendas de hoje ------------- */
@@ -3638,6 +3908,7 @@
     var linhasDia=[], artigos={}, horas=[];
     for(var i=0;i<24;i++) horas.push({n:0,total:0});
     var total=0,n=0,dinheiro=0,cartao=0,retirado=0,entrada=0,itens=0;
+    var porMetodo={};
 
     dias.forEach(function(d){
       var vs=Object.keys(porDia[d]||{}).map(function(k){ return porDia[d][k]; })
@@ -3645,11 +3916,13 @@
       var movs=Object.keys(caixaDia[d]||{}).map(function(k){ return caixaDia[d][k]; })
         .filter(function(m){ return m&&typeof m.valor==="number"; });
       var c=somaCaixa(movs);
-      var dDinheiro=0, dTotal=0;
+      var dDinheiro=0, dTotal=0, dMetodos={};
       vs.forEach(function(v){
         dTotal += v.total; total += v.total; n++;
         var pd=parteDinheiro(v);
         dDinheiro += pd; dinheiro += pd; cartao += parteCartao(v);
+        porMetodo[v.metodo] = (porMetodo[v.metodo]||0) + v.total;
+        dMetodos[v.metodo] = (dMetodos[v.metodo]||0) + v.total;
         var hora = new Date(v.ts).getHours();
         if(horas[hora]){ horas[hora].n++; horas[hora].total += v.total; }
         (v.linhas||[]).forEach(function(l){
@@ -3663,7 +3936,7 @@
         });
       });
       retirado += c.saida; entrada += c.entrada;
-      linhasDia.push({dia:d, n:vs.length, total:dTotal, dinheiro:dDinheiro,
+      linhasDia.push({dia:d, n:vs.length, total:dTotal, dinheiro:dDinheiro, metodos:dMetodos,
                       entrada:c.entrada, saida:c.saida, caixa:c.entrada+dDinheiro-c.saida});
     });
 
@@ -3686,7 +3959,7 @@
     return {dias:linhasDia, artigos:lista, horas:horas, total:total, n:n, itens:itens,
             dinheiro:dinheiro, cartao:cartao, retirado:retirado, entrada:entrada,
             caixa:entrada+dinheiro-retirado, media:n?total/n:0,
-            melhorDia:melhorDia, melhorHora:melhorHora};
+            melhorDia:melhorDia, melhorHora:melhorHora, porMetodo:porMetodo};
   }
 
   function desenharFiltroDias(){
@@ -3760,6 +4033,27 @@
         '<div class="legenda"><span><i style="background:var(--petrol)"></i>Dinheiro '+money(a.dinheiro)+' ('+pd+'%)</span>'+
         '<span><i style="background:var(--gold)"></i>Cartão '+money(a.cartao)+' ('+(100-pd)+'%)</span></div>';
       c.appendChild(wrap);
+      var formas = Object.keys(a.porMetodo||{}).sort(function(x,y){ return a.porMetodo[y]-a.porMetodo[x]; });
+      if(formas.length){
+        var vm=document.createElement("div"); vm.className="visor"; vm.style.marginTop="16px";
+        vm.innerHTML = formas.map(function(m){
+          var parte = a.total ? Math.round(a.porMetodo[m]/a.total*100) : 0;
+          return '<div class="l"><span>'+esc(nomeDoMetodo(m))+' <em>'+parte+'%</em></span><b>'+money(a.porMetodo[m])+'</b></div>';
+        }).join("") + '<div class="l g"><span>Total</span><b>'+money(a.total)+'</b></div>';
+        c.appendChild(vm);
+
+        if(!rDia && a.dias && a.dias.length>1){
+          var h=document.createElement("h3"); h.textContent="Por dia e forma"; c.appendChild(h);
+          var tabela=document.createElement("div"); tabela.className="visor";
+          tabela.innerHTML = a.dias.map(function(d){
+            var detalhe = formas.filter(function(m){ return (d.metodos||{})[m]; })
+              .map(function(m){ return esc(nomeDoMetodo(m))+" "+money(d.metodos[m]); }).join(" · ");
+            return '<div class="l"><span>'+diaSemana(d.dia)+" "+curto(d.dia)+
+                   (detalhe?('<em>'+detalhe+'</em>'):"")+'</span><b>'+money(d.total)+'</b></div>';
+          }).join("");
+          c.appendChild(tabela);
+        }
+      }
       var v2=document.createElement("div"); v2.className="visor"; v2.style.marginTop="16px";
       v2.innerHTML =
         '<div class="l"><span>Em dinheiro</span><b>'+money(a.dinheiro)+'</b></div>'+
@@ -4727,7 +5021,7 @@
     });
     var corpo=$("#corpoAbas"); if(corpo) corpo.scrollTop = 0;
     if(nome==="grelha") desenharPrevia();
-    if(nome==="produtos") setTimeout(desenharListaProdutos, 20);
+    if(nome==="produtos") setTimeout(function(){ desenharListaProdutos(); desenharCategorias(); }, 20);
     if(nome==="pedidos") setTimeout(actualizarPrevia, 20);
   }
   document.querySelectorAll("#aAbas button").forEach(function(b){
@@ -4751,7 +5045,7 @@
     ps.forEach(function(p){
       var b=document.createElement("div");
       b.className="prod";
-      b.style.setProperty("--c", p.cor||"#0E6B5C");
+      b.style.setProperty("--c", corDoProduto(p));
       var visual = (estado.imagens&&estado.imagens[p.id])
         ? '<img src="'+estado.imagens[p.id]+'" alt="">'
         : svgIcone(p.icone);
@@ -5266,6 +5560,24 @@
   $("#aExemplos").addEventListener("click", function(){
     fechar("#sheetAjustes");
     juntarExemplos();
+  });
+  $("#aJuntarCategoria").addEventListener("click", function(){
+    var e=evAtual(); if(!e){ toast("Crie primeiro um evento"); return; }
+    var nome=$("#aNovaCategoria").value.trim();
+    if(!nome){ $("#aNovaCategoria").focus(); return; }
+    var id = "c"+normalizar(nome).replace(/[^a-z0-9]/g,"").slice(0,14);
+    if(categoriasDe(e).some(function(x){ return x.id===id; })){ toast("Já existe essa categoria"); return; }
+    if(!Array.isArray(e.categorias) || !e.categorias.length) e.categorias = copia(CATEGORIAS_BASE);
+    e.categorias.push({id:id, nome:nome, cor:PALETA[e.categorias.length % PALETA.length]});
+    guardarEvento(e); $("#aNovaCategoria").value=""; desenharCategorias();
+    toast("Categoria criada");
+  });
+  $("#aNovaCategoria").addEventListener("keydown", function(e){
+    if(e.key==="Enter"){ e.preventDefault(); $("#aJuntarCategoria").click(); }
+  });
+  $("#aCatalogoFesta").addEventListener("click", function(){
+    fechar("#sheetAjustes");
+    juntarCatalogoFesta();
   });
   function irProdutos(n){
     var total = parseInt($("#pagProdutos").dataset.total||"1",10);
