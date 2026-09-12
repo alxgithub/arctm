@@ -1508,6 +1508,16 @@
       </div>
       <textarea id="aTextoDefs" rows="3" hidden style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--line);background:var(--card);font-family:ui-monospace,monospace;font-size:0.78rem;margin-bottom:14px"></textarea>
 
+      <h3>Versão</h3>
+      <p class="sub" id="versaoApp">—</p>
+
+      <h3>Recomeçar o evento</h3>
+      <p class="sub">Apaga as vendas e os movimentos de caixa do evento em uso, mantendo produtos, categorias, formas de pagamento e definições. Serve para limpar os testes antes do dia a sério.</p>
+      <div class="fila">
+        <button class="btn ghost perigo" id="aLimparVendas" type="button">Limpar as vendas deste evento</button>
+      </div>
+      <div class="aviso" id="resumoLimpar" style="margin-top:12px"></div>
+
       <h3>Repor</h3>
       <p class="sub">A reposição das definições não toca em eventos, produtos nem vendas.</p>
       <button class="btn ghost largo" id="aReporDefs" type="button">Repor definições</button>
@@ -1980,6 +1990,7 @@
     return copia2;
   }
 
+  var VERSAO_APP = "2026-09-12 18:01";   // para saber que ficheiro está a correr
   var LS = {
     ler:function(k,d){ try{ var v=localStorage.getItem("reg2:"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
     esc:function(k,v){ try{ localStorage.setItem("reg2:"+k, JSON.stringify(v)); }catch(e){} },
@@ -5986,6 +5997,65 @@
         toast("Definições aplicadas");
       });
   });
+  function contarDadosEvento(e){
+    var todas = vendasLocais(e.id) || {}, nv=0, total=0, dias={};
+    Object.keys(todas).forEach(function(d){
+      var n = Object.keys(todas[d]||{}).length;
+      if(n){ dias[d]=n; nv+=n; }
+      Object.keys(todas[d]||{}).forEach(function(k){
+        var v=todas[d][k]; if(v && typeof v.total==="number") total+=v.total;
+      });
+    });
+    var cx = LS.ler("caixa:"+e.id, {}) || {}, nm=0;
+    Object.keys(cx).forEach(function(d){ nm += Object.keys(cx[d]||{}).length; });
+    return {vendas:nv, total:total, movimentos:nm, dias:Object.keys(dias).length};
+  }
+  function pintarResumoLimpar(){
+    var cx = $("#resumoLimpar"); if(!cx) return;
+    var e = evAtual();
+    if(!e){ cx.textContent = "Nenhum evento em uso."; return; }
+    var c = contarDadosEvento(e);
+    cx.innerHTML = "<b>"+esc(e.nome)+"</b><br>"+
+      c.vendas+(c.vendas===1?" venda":" vendas")+" em "+c.dias+(c.dias===1?" dia":" dias")+
+      ", num total de "+money(c.total)+
+      (c.movimentos ? ("<br>"+c.movimentos+(c.movimentos===1?" movimento":" movimentos")+" de caixa") : "");
+  }
+  $("#aLimparVendas").addEventListener("click", function(){
+    var e = evAtual();
+    if(!e){ toast("Nenhum evento em uso"); return; }
+    var c = contarDadosEvento(e);
+    if(!c.vendas && !c.movimentos){ toast("Este evento ainda não tem vendas"); return; }
+    confirmar(
+      "Limpar as vendas de “"+e.nome+"”?",
+      "Apaga "+c.vendas+(c.vendas===1?" venda":" vendas")+
+      (c.movimentos ? (" e "+c.movimentos+(c.movimentos===1?" movimento":" movimentos")+" de caixa") : "")+
+      ", no valor de "+money(c.total)+". Os produtos, categorias e definições ficam como estão. "+
+      "Não há forma de voltar atrás — se precisar do histórico, exporte primeiro.",
+      "Continuar"
+    ).then(function(ok){
+      if(!ok) return;
+      return confirmar(
+        "Tem mesmo a certeza?",
+        "Segunda e última confirmação: as "+c.vendas+" vendas de “"+e.nome+"” vão desaparecer deste dispositivo.",
+        "Apagar as vendas"
+      ).then(function(certeza){
+        if(!certeza) return;
+        LS.rm("vendas:"+e.id);
+        LS.rm("caixa:"+e.id);
+        estado.vendasDia = {}; estado.caixaDia = {}; estado.ultimaVenda = null;
+        relCache = null; diaVendas = null; pagHoje = 0; pagCaixa = 0;
+        if(estado.modo==="nuvem" && db){
+          db.collection("vendas/"+e.id+"/dias").get().then(function(snap){
+            (snap.docs||[]).forEach(function(doc){
+              db.doc("vendas/"+e.id+"/dias/"+doc.id).delete().catch(function(){});
+            });
+          }).catch(function(){});
+        }
+        pintarTudo(); pintarResumoLimpar();
+        toast("Vendas apagadas");
+      });
+    });
+  });
   $("#aReporDefs").addEventListener("click", function(){
     confirmar(
       "Repor as definições?",
@@ -6214,6 +6284,8 @@
     setTimeout(function(){ aplicarMedidas(); desenharGrelha(); atualizarScrollTalao(); }, 120);
   });
   $("#btnAjustes").addEventListener("click", function(){
+    pintarResumoLimpar();
+    if($("#versaoApp")) $("#versaoApp").textContent = "Registadora · " + VERSAO_APP + " · " + location.host;
     $("#aServidorDados").value = LS.ler("servidorDados","http://192.168.0.110:8090");
     $("#aPastaCopias").value = LS.ler("pastaCopias","");
     try{ carregarPastasCopias(); }catch(e){}

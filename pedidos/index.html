@@ -668,6 +668,7 @@
           </div>
         </label>
         <textarea id="dTextoDefs" rows="3" hidden style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 4%, var(--painel));font-family:ui-monospace,monospace;font-size:12.5px;margin-bottom:16px"></textarea>
+        <p class="sub" id="versaoApp" style="margin-bottom:14px">—</p>
         <div class="aviso-cx">
           <b>Teclado e comandos.</b> Espaço, Enter, seta direita ou Page Down criam um pedido novo.
           Seta esquerda ou Page Up chamam o mais antigo. R repete a chamada. E entrega o pedido chamado.
@@ -710,6 +711,7 @@
 (function(){
   "use strict";
   var $ = function(s){ return document.querySelector(s); };
+  var VERSAO_APP = "2026-09-12 18:01";   // para saber que ficheiro está a correr
   var LS = {
     ler:function(k,d){ try{ var v=localStorage.getItem("pedidos:"+k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
     esc:function(k,v){ try{ localStorage.setItem("pedidos:"+k, JSON.stringify(v)); }catch(e){} }
@@ -1478,6 +1480,7 @@
     ajustarBotoesFila();
     $("#dPartilha").value = partilha();
     $("#dSalaNome").value = nomeSala();
+    if($("#versaoApp")) $("#versaoApp").textContent = "Visor de pedidos · " + VERSAO_APP + " · " + location.host;
     $("#dSalaPasse").value = passeSala();
     $("#dSalaServidor").value = LS.ler("salaServidor","ws://192.168.0.110:9001");
     $("#dSalaUtilizador").value = LS.ler("salaUtilizador","");

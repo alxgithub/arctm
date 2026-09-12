@@ -541,6 +541,7 @@
         <p class="sub" style="margin:-8px 0 16px">Copie daqui e cole no outro ecrã para ficar tudo igual — letras, cores, tamanhos, som e gestos. O número da senha não é copiado.</p>
         <textarea id="dTextoDefs" rows="3" hidden style="width:100%;padding:11px;border-radius:11px;border:1px solid var(--linha);background:color-mix(in srgb, var(--texto) 4%, var(--painel));font-family:ui-monospace,monospace;font-size:12.5px;margin-bottom:16px"></textarea>
 
+        <p class="sub" id="versaoApp" style="margin-bottom:14px">—</p>
         <div class="aviso">
           <b>Comandos de apresentação e teclado.</b> Chamam a seguinte: barra de espaços, Enter, seta direita,
           seta baixo, Page Down e N. O botão de trás — seta esquerda, seta cima, Page Up, Backspace ou P — faz o que
@@ -586,6 +587,7 @@
 (function(){
   "use strict";
   var $ = function(s){ return document.querySelector(s); };
+  var VERSAO_APP = "2026-09-12 18:01";   // para saber que ficheiro está a correr
   var LS = {
     ler:function(k,d){ try{ var v=localStorage.getItem("senhas:"+k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
     esc:function(k,v){ try{ localStorage.setItem("senhas:"+k, JSON.stringify(v)); }catch(e){} }
@@ -1269,6 +1271,7 @@
     $("#dContador").value = LS.ler("contador","nao");
     $("#dPartilha").value = partilha();
     $("#dSalaNome").value = nomeSala();
+    if($("#versaoApp")) $("#versaoApp").textContent = "Visor de senhas · " + VERSAO_APP + " · " + location.host;
     $("#dSalaPasse").value = passeSala();
     $("#dSalaServidor").value = LS.ler("salaServidor","ws://192.168.0.110:9001");
     $("#dSalaUtilizador").value = LS.ler("salaUtilizador","");
