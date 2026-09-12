@@ -189,15 +189,23 @@
   /* modo comando: número numa faixa, cartões grandes e ao alcance do polegar */
   :root[data-modo="comando"] .ecra{grid-template-rows:auto minmax(0,1fr) auto}
   :root[data-modo="comando"] .chamada{
-    grid-template-rows:auto;grid-template-columns:auto 1fr;align-items:center;
-    padding:8px 14px;gap:12px;border-bottom:2px solid color-mix(in srgb, var(--acc2) 45%, var(--linha));
+    display:flex;align-items:baseline;justify-content:flex-start;
+    padding:10px 14px;gap:14px;overflow:visible;min-height:0;
+    border-bottom-width:3px;border-bottom-style:solid;
+    border-bottom-color:color-mix(in srgb, var(--acc2) 55%, var(--linha));
     background:color-mix(in srgb, var(--acento) 8%, var(--painel));
   }
   :root[data-modo="comando"] .rotulo{
-    margin:0;font-size:13px;letter-spacing:.18em;justify-self:start;
+    margin:0;font-size:13px;letter-spacing:.18em;flex:none;
+    color:color-mix(in srgb, var(--acc2) 75%, var(--texto-2));
   }
-  :root[data-modo="comando"] .zona{justify-self:start;width:auto}
-  :root[data-modo="comando"] .numero{font-size:34px !important;line-height:1 !important}
+  :root[data-modo="comando"] .zona{
+    flex:none;width:auto;padding:0;display:block;
+    contain:none;overflow:visible;min-width:2ch;   /* sem isto a faixa fica sem altura e o número some */
+  }
+  :root[data-modo="comando"] .numero{
+    font-size:clamp(30px, 7vh, 46px) !important;line-height:1.05 !important;
+  }
   :root[data-modo="comando"] .numero.vazio{font-size:15px !important}
   :root[data-modo="comando"] .sub-chamada{display:none}
   :root[data-modo="comando"] .pega{display:none}

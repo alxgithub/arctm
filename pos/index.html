@@ -553,6 +553,15 @@
   .lista li:last-child{border-bottom:0}
   .lista.compacta{border:0;border-radius:0}
   .lista.compacta li{padding:7px 0;background:transparent}
+  .lista .nome-cat{
+    width:100%;font:inherit;font-weight:700;color:var(--ink);
+    background:transparent;border:1px solid transparent;border-radius:8px;
+    padding:3px 6px;margin:-3px -6px 1px;
+  }
+  .lista .nome-cat:hover{border-color:var(--line)}
+  .lista .nome-cat:focus{
+    background:var(--card);border-color:var(--petrol);outline:none;
+  }
   .lista .mic{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:10px}
   .lista .mic svg{width:26px;height:26px}
   .lista .mic img{width:36px !important;height:36px !important;border-radius:9px}
@@ -1389,6 +1398,12 @@
         <button class="btn ghost" id="aCatalogoFesta" type="button">Lista de preços da festa</button>
       </div>
 
+      <h3>Arrumar nomes</h3>
+      <p class="sub">Põe maiúscula no início de cada palavra dos produtos e das categorias deste evento, deixando as ligações em minúscula.</p>
+      <div class="fila" style="margin-bottom:6px">
+        <button class="btn ghost" id="aCapitalizar" type="button">Capitalizar nomes</button>
+      </div>
+
       <h3>Categorias</h3>
       <p class="sub">Dão cor aos produtos que não tenham cor própria, e ajudam a encontrar tudo mais depressa.</p>
       <ul class="lista" id="aCategorias"></ul>
@@ -2174,13 +2189,29 @@
 
   /* ------------- evento de demonstração ------------- */
   // categorias sugeridas: dão cor e arrumação aos produtos
+  // "menu de leitão" -> "Menu de Leitão": maiúscula em cada palavra, menos as ligações
+  var LIGACOES = ["de","da","do","das","dos","e","com","sem","em","no","na","ao","à","c/","s/","p/"];
+  function capitalizar(texto){
+    var partes = String(texto||"").trim().split(/\s+/);
+    return partes.map(function(palavra, i){
+      if(!palavra) return palavra;
+      var baixo = palavra.toLowerCase();
+      if(i>0 && LIGACOES.indexOf(baixo)>=0) return baixo;
+      if(palavra.length<=3 && palavra===palavra.toUpperCase() && /[A-ZÀ-Ý]/.test(palavra)) return palavra;  // siglas
+      if(palavra.charAt(0)==="("){
+        return "(" + palavra.charAt(1).toUpperCase() + palavra.slice(2);
+      }
+      return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+    }).join(" ");
+  }
+
   var CATEGORIAS_BASE = [
-    {id:"alcool",   nome:"Bebidas com álcool", cor:"#B5852A"},
-    {id:"bebidas",  nome:"Bebidas sem álcool", cor:"#2A8FC4"},
-    {id:"cafes",    nome:"Cafés e quentes",    cor:"#7A4B28"},
+    {id:"alcool",   nome:"Bebidas com Álcool", cor:"#B5852A"},
+    {id:"bebidas",  nome:"Bebidas sem Álcool", cor:"#2A8FC4"},
+    {id:"cafes",    nome:"Cafés e Quentes",    cor:"#7A4B28"},
     {id:"menus",    nome:"Menus",              cor:"#1E8F42"},
-    {id:"pratos",   nome:"Pratos e petiscos",  cor:"#B8402A"},
-    {id:"sandes",   nome:"Sandes e pão",       cor:"#C9702E"},
+    {id:"pratos",   nome:"Pratos e Petiscos",  cor:"#B8402A"},
+    {id:"sandes",   nome:"Sandes e Pão",       cor:"#C9702E"},
     {id:"doces",    nome:"Doces",              cor:"#A03A6B"},
     {id:"outros",   nome:"Outros",             cor:"#4A5C55"}
   ];
@@ -2203,33 +2234,33 @@
   var CATALOGO_FESTA = [
     ["Fino",                  1.20, "imperial", "alcool"],
     ["Metro",                12.00, "jarro",    "alcool"],
-    ["Mini s/ álcool",        1.20, "cerveja",  "bebidas"],
-    ["Cerveja s/ álcool",     1.60, "cerveja",  "bebidas"],
-    ["Refrigerante (copo)",   1.00, "sumo",     "bebidas"],
+    ["Mini s/ Álcool",        1.20, "cerveja",  "bebidas"],
+    ["Cerveja s/ Álcool",     1.60, "cerveja",  "bebidas"],
+    ["Refrigerante (Copo)",   1.00, "sumo",     "bebidas"],
     ["Água 0,33 L",           0.80, "agua",     "bebidas"],
-    ["Água c/ gás",           1.20, "agua",     "bebidas"],
-    ["Vinho (copo)",          0.60, "vinho",    "alcool"],
+    ["Água c/ Gás",           1.20, "agua",     "bebidas"],
+    ["Vinho (Copo)",          0.60, "vinho",    "alcool"],
     ["Café",                  0.80, "cafe",     "cafes"],
-    ["Sidra mini 0,20 L",     1.60, "cerveja",  "alcool"],
+    ["Sidra Mini 0,20 L",     1.60, "cerveja",  "alcool"],
     ["Sidra 0,33 L",          2.20, "garrafao", "alcool"],
     ["Martini",               1.00, "cocktail", "alcool"],
-    ["Martini c/ cerveja",    1.50, "cocktail", "alcool"],
-    ["Frisante (garrafa)",    4.50, "garrafao", "alcool"],
-    ["Frisante (copo)",       1.00, "copo",     "alcool"],
-    ["Frize limão",           1.20, "lata",     "bebidas"],
+    ["Martini c/ Cerveja",    1.50, "cocktail", "alcool"],
+    ["Frisante (Garrafa)",    4.50, "garrafao", "alcool"],
+    ["Frisante (Copo)",       1.00, "copo",     "alcool"],
+    ["Frize Limão",           1.20, "lata",     "bebidas"],
 
-    ["Menu leitão",          15.00, "espetada", "menus"],
-    ["Menu bitoque",          9.00, "espetada", "menus"],
-    ["Menu ovos rotos",      12.00, "batatas",  "menus"],
-    ["Menu pernil c/ arroz de feijão", 12.00, "espetada", "menus"],
-    ["Menu feijoada de marisco",       13.00, "caracois", "menus"],
-    ["Menu junta",           12.00, "senha",    "menus"],
+    ["Menu Leitão",          15.00, "espetada", "menus"],
+    ["Menu Bitoque",          9.00, "espetada", "menus"],
+    ["Menu Ovos Rotos",      12.00, "batatas",  "menus"],
+    ["Menu Pernil c/ Arroz de Feijão", 12.00, "espetada", "menus"],
+    ["Menu Feijoada de Marisco",       13.00, "caracois", "menus"],
+    ["Menu Junta",           12.00, "senha",    "menus"],
 
-    ["Taça de caldo verde",   2.00, "sopa",     "pratos"],
+    ["Taça de Caldo Verde",   2.00, "sopa",     "pratos"],
     ["Moelas",                3.00, "petiscos", "pratos"],
     ["Pica-pau",              4.50, "petiscos", "pratos"],
     ["Bifana",                3.00, "bifana",   "sandes"],
-    ["Sandes de leitão",      6.00, "sandes",   "sandes"],
+    ["Sandes de Leitão",      6.00, "sandes",   "sandes"],
     ["Sobremesa",             1.50, "nata",     "doces"]
   ];
 
@@ -3091,7 +3122,7 @@
   }
   function guardarProduto(){
     var e=evAtual(); if(!e) return;
-    var nome=$("#pNome").value.trim();
+    var nome=capitalizar($("#pNome").value.trim());
     var preco=parseFloat($("#pPreco").value.replace(",",".").replace(/[^0-9.]/g,""));
     if(!nome){ toast("Falta o nome"); $("#pNome").focus(); return; }
     if(isNaN(preco)||preco<0){ toast("Preço inválido"); $("#pPreco").focus(); return; }
@@ -3196,7 +3227,9 @@
       var li=document.createElement("li");
       li.innerHTML =
         '<span class="mic" style="background:'+cat.cor+';border-radius:8px;width:26px;height:26px"></span>'+
-        '<div class="txt"><b>'+esc(cat.nome)+'</b><span>'+(usados?(usados+(usados===1?" produto":" produtos")):"sem produtos")+'</span></div>'+
+        '<div class="txt"><input class="nome-cat" type="text" value="'+esc(cat.nome)+'" '+
+             'aria-label="Nome da categoria" spellcheck="false">'+
+        '<span>'+(usados?(usados+(usados===1?" produto":" produtos")):"sem produtos")+'</span></div>'+
         '<input type="color" value="'+cat.cor+'" aria-label="Cor de '+esc(cat.nome)+'" '+
               'style="width:42px;height:34px;padding:2px;border:1px solid var(--line);border-radius:9px;background:var(--card)">'+
         '<button class="mini" type="button" aria-label="Subir" title="Subir"'+(indice===0?' disabled':'')+'>↑</button>'+
@@ -3208,12 +3241,47 @@
         ev2.categorias.forEach(function(x){ if(x.id===cat.id) x.cor = this.value; }, this);
         guardarEvento(ev2); desenharCategorias(); pagina=0; pintarTudo();
       });
+      var campoNome = li.querySelector(".nome-cat");
+      function renomear(){
+        var novo = capitalizar(campoNome.value.trim());
+        if(!novo){ campoNome.value = cat.nome; return; }
+        if(novo === cat.nome) return;
+        var ev2 = evAtual();
+        var atuais = (Array.isArray(ev2.categorias) && ev2.categorias.length)
+          ? ev2.categorias.slice() : copia(CATEGORIAS_BASE);
+        var repetido = atuais.some(function(x){
+          return x.id!==cat.id && normalizar(x.nome)===normalizar(novo);
+        });
+        if(repetido){ toast("Já existe uma categoria com esse nome"); campoNome.value = cat.nome; return; }
+        atuais.forEach(function(x){ if(x.id===cat.id) x.nome = novo; });
+        ev2.categorias = atuais;
+        guardarEvento(ev2); desenharCategorias(); pagina=0; pintarTudo();
+        toast("Categoria renomeada");
+      }
+      campoNome.addEventListener("change", renomear);
+      campoNome.addEventListener("keydown", function(e){
+        if(e.key==="Enter"){ e.preventDefault(); campoNome.blur(); }
+        if(e.key==="Escape"){ e.preventDefault(); campoNome.value = cat.nome; campoNome.blur(); }
+      });
+
       var botoes = li.querySelectorAll("button");
       botoes[0].addEventListener("click", function(){ mover(cat.id, -1); });
       botoes[1].addEventListener("click", function(){ mover(cat.id, 1); });
       botoes[2].addEventListener("click", function(){
-        if(usados){ toast("“"+cat.nome+"” tem "+usados+(usados===1?" produto":" produtos")+" — mude-os primeiro"); return; }
         var ev2=evAtual();
+        if(usados){
+          confirmar("Apagar “"+cat.nome+"”?",
+            "Tem "+usados+(usados===1?" produto":" produtos")+". Ao apagar, "+
+            (usados===1?"ele passa":"eles passam")+" para “Outros” e ficam com a cor dessa categoria.",
+            "Apagar e mover").then(function(ok){
+              if(!ok) return;
+              (ev2.produtos||[]).forEach(function(pr){ if(pr.categoria===cat.id) pr.categoria = "outros"; });
+              ev2.categorias = categoriasDe(ev2).filter(function(x){ return x.id!==cat.id; });
+              guardarEvento(ev2); desenharCategorias(); desenharListaProdutos(); pagina=0; pintarTudo();
+              toast("Categoria apagada e produtos movidos");
+            });
+          return;
+        }
         ev2.categorias = categoriasDe(ev2).filter(function(x){ return x.id!==cat.id; });
         guardarEvento(ev2); desenharCategorias(); toast("Categoria apagada");
       });
@@ -4943,7 +5011,7 @@
       }
       if(preco===null || !nome) return;
       nome = nome.replace(/\s*\([^)]*prato[^)]*\)\s*/i, " ").replace(/\s+/g," ").trim();
-      saida.push({cat:(cat||catAtual).trim(), nome:nome, preco:preco});
+      saida.push({cat:capitalizar((cat||catAtual).trim()), nome:capitalizar(nome), preco:preco});
     });
     return saida;
   }
@@ -4981,6 +5049,24 @@
     return itens;
   }
   $("#aImportarLista").addEventListener("click", abrirImportarLista);
+  $("#aCapitalizar").addEventListener("click", function(){
+    var e = evAtual();
+    if(!e){ toast("Crie primeiro um evento"); return; }
+    var mudados = 0;
+    (e.produtos||[]).forEach(function(p){
+      var novo = capitalizar(p.nome);
+      if(novo !== p.nome){ p.nome = novo; mudados++; }
+    });
+    var cats = (Array.isArray(e.categorias) && e.categorias.length) ? e.categorias : copia(CATEGORIAS_BASE);
+    cats.forEach(function(c){
+      var novo = capitalizar(c.nome);
+      if(novo !== c.nome){ c.nome = novo; mudados++; }
+    });
+    e.categorias = cats;
+    if(!mudados){ toast("Já estava tudo arrumado"); return; }
+    guardarEvento(e); desenharCategorias(); desenharListaProdutos(); pagina=0; pintarTudo();
+    toast(mudados+(mudados===1?" nome arrumado":" nomes arrumados"));
+  });
   function notaDaOrdem(){
     var n = $("#notaOrdem");
     if(!n) return;
