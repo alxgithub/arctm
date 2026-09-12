@@ -431,9 +431,17 @@
           </div>
         </label>
         <div class="aviso-cx">Os pedidos que passem desse tempo ficam com contorno de aviso. Zero desliga o aviso.</div>
-        <div class="fila-botoes">
+        <div class="fila-botoes" id="botoesFila">
           <button class="btn" id="dLimparFila" type="button">Esvaziar a fila</button>
           <button class="btn" id="dReiniciar" type="button">Reiniciar a numeração</button>
+        </div>
+        <div class="fila-botoes" id="botoesMostrar" hidden>
+          <button class="btn" id="dLimparEcra" type="button">Limpar este ecrã</button>
+        </div>
+        <div class="aviso-cx" id="notaMostrar" hidden>
+          Neste modo o ecrã só mostra o que vem da sala. A numeração e a fila mudam-se no posto de
+          controlo ou na registadora. «Limpar este ecrã» apaga apenas o que está aqui, sem tocar nos outros
+          — serve para quando muda de sala ou acaba o serviço.
         </div>
       </section>
 
@@ -951,6 +959,12 @@
       }
     });
   }
+  function ajustarBotoesFila(){
+    var so = soMostrar();
+    if($("#botoesFila")) $("#botoesFila").hidden = so;
+    if($("#botoesMostrar")) $("#botoesMostrar").hidden = !so;
+    if($("#notaMostrar")) $("#notaMostrar").hidden = !so;
+  }
   function aplicarAspeto(){
     var r=document.documentElement;
     r.setAttribute("data-criar", criarAqui() ? "sim" : "nao");
@@ -1454,6 +1468,7 @@
     $("#dCriarAqui").value = LS.ler("criarAqui","nao");
     $("#dTecladoSistema").value = LS.ler("tecladoSistema","sim");
     $("#dModo").value = LS.ler("modo","mostrar");
+    ajustarBotoesFila();
     $("#dPartilha").value = partilha();
     $("#dSalaNome").value = nomeSala();
     $("#dSalaPasse").value = passeSala();
@@ -1556,7 +1571,7 @@
   $("#dCriarAqui").addEventListener("change", function(){ LS.esc("criarAqui",this.value); aplicarAspeto(); desenhar(); });
   $("#dModo").addEventListener("change", function(){
     LS.esc("modo", this.value);
-    aplicarAspeto(); mostrarBarra(); desenhar();
+    aplicarAspeto(); mostrarBarra(); ajustarBotoesFila(); desenhar();
     toast(this.value==="mostrar" ? "Este ecrã passa a só mostrar" : "Este ecrã volta a controlar");
   });
   function camposPartilha(){
@@ -1587,11 +1602,25 @@
   });
 
   $("#dLimparFila").addEventListener("click", function(){
+    if(soMostrar()){ toast("Neste modo o ecrã só mostra"); return; }
     if(!pedidos.length){ toast("A fila já está vazia"); return; }
     confirmar("Esvaziar a fila?", "Saem os "+pedidos.length+" pedidos, incluindo os que estão a ser servidos. Não há forma de recuperar.", "Esvaziar")
       .then(function(ok){
         if(!ok) return;
         pedidos=[]; atual=null; guardar(); desenhar(); toast("Fila esvaziada");
+      });
+  });
+  $("#dLimparEcra").addEventListener("click", function(){
+    confirmar("Limpar este ecrã?",
+      "Apaga o que está a ser mostrado aqui, sem tocar nos outros ecrãs nem na numeração. "+
+      "Se continuar ligado à mesma sala, os pedidos voltam a aparecer assim que houver novidades.",
+      "Limpar")
+      .then(function(ok){
+        if(!ok) return;
+        pedidos=[]; atual=null; chamadaTs=0;
+        LS.esc("lista",[]); LS.esc("atual",null); LS.esc("chamadaTs",0);
+        desenhar();
+        toast("Ecrã limpo");
       });
   });
   $("#dReiniciar").addEventListener("click", function(){

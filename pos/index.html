@@ -1246,6 +1246,21 @@
         <button class="btn ghost" id="aTestarSala" type="button">Testar ligação</button>
       </div>
 
+      <h3>Numeração dos pedidos</h3>
+      <p class="sub">O número seguinte é atribuído automaticamente. Aqui pode recomeçar ou saltar para outro, por exemplo no início de cada dia.</p>
+      <div class="par">
+        <label class="campo"><span>Próximo pedido será o</span>
+          <input id="aProximoPedido" type="number" min="1" step="1" inputmode="numeric">
+        </label>
+        <div class="campo">
+          <span>&nbsp;</span>
+          <div class="fila">
+            <button class="btn ghost" id="aDefinirNumeracao" type="button">Definir</button>
+            <button class="btn ghost" id="aReiniciarNumeracao" type="button">Recomeçar em 1</button>
+          </div>
+        </div>
+      </div>
+
       <div class="aviso" id="estadoSalaPos" style="margin-top:12px">Ainda não ligou.</div>
     </section>
 
@@ -4817,6 +4832,21 @@
     return n;
   }
   var numeroEscolhido = null;   // número escrito à mão, nunca abaixo do automático
+  function definirContador(n, aoConcluir){
+    if(!pedidosLigados() || !PEDIDOS.cli || !PEDIDOS.cli.connected){
+      toast("Sem ligação à sala — a numeração é partilhada com os visores");
+      return;
+    }
+    PEDIDOS.contador = Math.max(0, Math.round(n) - 1);
+    cifrarSala({lista:PEDIDOS.lista, atual:PEDIDOS.atual, contador:PEDIDOS.contador,
+                ts:Date.now(), de:PEDIDOS.id})
+      .then(function(txt){
+        try{ PEDIDOS.cli.publish(PEDIDOS.topico, txt, {qos:0, retain:true}); }catch(e){}
+        pintarEstadoSala();
+        if($("#aProximoPedido")) $("#aProximoPedido").value = proximoPedido();
+        if(aoConcluir) aoConcluir();
+      }).catch(function(){ toast("Não consegui gravar a numeração"); });
+  }
   function atualizarNumeroPedido(){
     var el=$("#payPedidoNum");
     if(!el || el.tagName!=="INPUT") return;
@@ -6219,6 +6249,7 @@
     $("#aSalaNome").value = salaNome();
     $("#aSalaPasse").value = salaPasse();
     $("#aSalaServidor").value = LS.ler("salaServidor","ws://192.168.0.110:9001");
+    if($("#aProximoPedido")) $("#aProximoPedido").value = proximoPedido();
     pintarEstadoSala();
     mostrarAba(abaAtiva); abrir("#sheetAjustes");
   });
@@ -6293,6 +6324,37 @@
     var vias = parseInt(LS.ler("vias","2"),10)===1 ? 1 : 2;
     var texto = talaoHtml(vendaExemplo(), vias, false);
     descarregarTexto(texto, "talao-exemplo.html", "text/html");
+  });
+  $("#aDefinirNumeracao").addEventListener("click", function(){
+    var n = parseInt($("#aProximoPedido").value, 10);
+    if(isNaN(n) || n < 1){ toast("Escreva um número a partir de 1"); return; }
+    var atual = proximoPedido();
+    if(n === atual){ toast("Já é esse o número seguinte"); return; }
+    var jaExiste = PEDIDOS.lista.some(function(p){ return p.n === n; });
+    confirmar(
+      "Passar a numeração para "+n+"?",
+      (jaExiste ? "Atenção: o pedido "+n+" ainda está na fila, e o número será saltado. " : "") +
+      (n > atual
+        ? ("Salta "+(n-atual)+(n-atual===1?" número":" números")+", de "+atual+" para "+n+".")
+        : ("Recua de "+atual+" para "+n+", e podem repetir-se números já usados hoje.")) +
+      " Vale para todos os ecrãs ligados à sala.",
+      "Passar para "+n
+    ).then(function(ok){
+      if(!ok){ $("#aProximoPedido").value = atual; return; }
+      definirContador(n, function(){ toast("O próximo pedido será o "+n); });
+    });
+  });
+  $("#aReiniciarNumeracao").addEventListener("click", function(){
+    var atual = proximoPedido();
+    confirmar(
+      "Recomeçar a numeração em 1?",
+      "O próximo pedido passa a ser o 1, em vez do "+atual+". Os pedidos que já estão na fila "+
+      "mantêm o número que têm, e as vendas anteriores não mudam. Vale para todos os ecrãs da sala.",
+      "Recomeçar em 1"
+    ).then(function(ok){
+      if(!ok) return;
+      definirContador(1, function(){ toast("Numeração recomeçada"); });
+    });
   });
   $("#aTestarSala").addEventListener("click", function(){
     if(!pedidosLigados()){ toast("Ligue primeiro a criação de pedidos"); return; }
