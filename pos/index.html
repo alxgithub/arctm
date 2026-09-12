@@ -1259,6 +1259,13 @@
             <span class="pc">linhas</span>
           </div>
         </label>
+        <label class="campo"><span>Gaveta do dinheiro</span>
+          <select id="aGaveta">
+            <option value="nao">Não abrir</option>
+            <option value="dinheiro">Abrir nas vendas com dinheiro</option>
+            <option value="sempre">Abrir em todas as vendas</option>
+          </select>
+        </label>
         <label class="campo"><span>Largura do papel</span>
           <select id="aPapel">
             <option value="80">80 mm</option>
@@ -1351,6 +1358,7 @@
         <button class="btn ghost" id="aVerTalao" type="button">Abrir em janela</button>
         <button class="btn ghost" id="aImprimirTeste" type="button">Imprimir teste</button>
         <button class="btn ghost" id="aGuardarTalao" type="button">Guardar HTML</button>
+        <button class="btn ghost" id="aAbrirGaveta" type="button">Abrir gaveta</button>
       </div>
       <div class="aviso" style="margin-top:12px">
         Cada via sai como uma página, e a impressora corta ao fim de cada uma. Para não aparecer a caixa
@@ -2268,10 +2276,10 @@
     ["Imperial", 1.50, "imperial", "#B5852A"],
     ["Caneca", 2.50, "copo", "#B5852A"],
     ["Mini", 1.00, "cerveja", "#B5852A"],
-    ["Sangria (copo)", 2.50, "jarro", "#A03A6B"],
-    ["Vinho tinto", 1.50, "vinho", "#8E2F3C"],
-    ["Vinho branco", 1.50, "vinho", "#B5852A"],
-    ["Gin tónico", 5.00, "gintonico", "#3D5A98"],
+    ["Sangria (Copo)", 2.50, "jarro", "#A03A6B"],
+    ["Vinho Tinto", 1.50, "vinho", "#8E2F3C"],
+    ["Vinho Branco", 1.50, "vinho", "#B5852A"],
+    ["Gin Tónico", 5.00, "gintonico", "#3D5A98"],
     ["Shot", 2.00, "shot", "#6B4E8E"],
     ["Água", 1.00, "agua", "#3D5A98"],
     ["Sumo/refrigerante", 1.50, "lata", "#B8402A"],
@@ -2280,114 +2288,114 @@
     ["Bifana", 3.50, "bifana", "#B8402A"],
     ["Cachorro", 3.00, "cachorro", "#B8402A"],
     ["Hambúrguer", 4.00, "hamburguer", "#B8402A"],
-    ["Tosta mista", 2.50, "tosta", "#B45309"],
-    ["Frango no churrasco", 8.00, "frango", "#B45309"],
+    ["Tosta Mista", 2.50, "tosta", "#B45309"],
+    ["Frango no Churrasco", 8.00, "frango", "#B45309"],
     ["Espetada", 4.50, "espetada", "#B45309"],
-    ["Sardinha assada", 2.00, "peixe", "#3D5A98"],
-    ["Caracóis (dose)", 4.00, "caracois", "#1F7A4C"],
-    ["Batatas fritas", 2.50, "batatas", "#B5852A"],
+    ["Sardinha Assada", 2.00, "peixe", "#3D5A98"],
+    ["Caracóis (Dose)", 4.00, "caracois", "#1F7A4C"],
+    ["Batatas Fritas", 2.50, "batatas", "#B5852A"],
     ["Rissol", 1.20, "rissol", "#B45309"],
     ["Sopa", 2.00, "sopa", "#1F7A4C"],
     ["Tremoços", 1.50, "petiscos", "#B5852A"],
     ["Farturas", 3.00, "farturas", "#6B4E8E"],
-    ["Pastel de nata", 1.20, "nata", "#B5852A"],
-    ["Bolo caseiro", 1.50, "bolo", "#A03A6B"],
+    ["Pastel de Nata", 1.20, "nata", "#B5852A"],
+    ["Bolo Caseiro", 1.50, "bolo", "#A03A6B"],
     ["Gelado", 1.50, "gelado", "#0E6B5C"],
     ["Crepe", 3.00, "crepe", "#6B4E8E"],
     ["Pipocas", 1.50, "pipocas", "#B8402A"],
-    ["Algodão doce", 2.00, "algodao", "#A03A6B"],
+    ["Algodão Doce", 2.00, "algodao", "#A03A6B"],
     ["Rifa", 1.00, "rifa", "#334744"],
 
     ["Cerveja 33cl", 1.50, "cerveja", "#B5852A"],
-    ["Cerveja sem álcool", 1.50, "cerveja", "#1F7A4C"],
+    ["Cerveja sem Álcool", 1.50, "cerveja", "#1F7A4C"],
     ["Panaché", 1.50, "imperial", "#B5852A"],
-    ["Vinho verde", 1.50, "vinho", "#1F7A4C"],
+    ["Vinho Verde", 1.50, "vinho", "#1F7A4C"],
     ["Vinho do Porto", 2.00, "vinho", "#8E2F3C"],
     ["Licor", 2.00, "shot", "#B45309"],
     ["Aguardente", 2.00, "shot", "#8E2F3C"],
     ["Whisky", 4.00, "shot", "#B45309"],
     ["Vodka", 3.50, "shot", "#3D5A98"],
     ["Caipirinha", 5.00, "cocktail", "#1F7A4C"],
-    ["Jarro de sangria", 12.00, "jarro", "#A03A6B"],
+    ["Jarro de Sangria", 12.00, "jarro", "#A03A6B"],
     ["Água 1,5 L", 1.50, "agua", "#3D5A98"],
-    ["Água com gás", 1.50, "lata", "#3D5A98"],
-    ["Café duplo", 1.40, "cafe", "#4A5C55"],
+    ["Água com Gás", 1.50, "lata", "#3D5A98"],
+    ["Café Duplo", 1.40, "cafe", "#4A5C55"],
     ["Abatanado", 1.00, "cafe", "#4A5C55"],
-    ["Meia de leite", 1.20, "galao", "#B45309"],
+    ["Meia de Leite", 1.20, "galao", "#B45309"],
     ["Cappuccino", 2.00, "galao", "#B45309"],
 
-    ["Prego no pão", 4.00, "bifana", "#B8402A"],
-    ["Pão com chouriço", 3.00, "bifana", "#B8402A"],
+    ["Prego no Pão", 4.00, "bifana", "#B8402A"],
+    ["Pão com Chouriço", 3.00, "bifana", "#B8402A"],
     ["Francesinha", 9.50, "sandes", "#B8402A"],
     ["Torrada", 1.80, "tosta", "#B45309"],
     ["Entremeada", 5.00, "espetada", "#B45309"],
-    ["Chouriço assado", 4.50, "espetada", "#B8402A"],
-    ["Polvo à lagareiro", 14.00, "peixe", "#3D5A98"],
-    ["Bacalhau assado", 12.00, "peixe", "#3D5A98"],
-    ["Caldo verde", 2.50, "sopa", "#1F7A4C"],
+    ["Chouriço Assado", 4.50, "espetada", "#B8402A"],
+    ["Polvo à Lagareiro", 14.00, "peixe", "#3D5A98"],
+    ["Bacalhau Assado", 12.00, "peixe", "#3D5A98"],
+    ["Caldo Verde", 2.50, "sopa", "#1F7A4C"],
     ["Croquete", 1.20, "rissol", "#B45309"],
-    ["Pastel de bacalhau", 1.50, "rissol", "#B45309"],
+    ["Pastel de Bacalhau", 1.50, "rissol", "#B45309"],
     ["Azeitonas", 1.50, "petiscos", "#1F7A4C"],
     ["Amendoins", 1.50, "petiscos", "#B5852A"],
-    ["Queijo e presunto", 6.00, "petiscos", "#8E2F3C"],
-    ["Salada mista", 4.00, "salada", "#1F7A4C"],
-    ["Fruta da época", 2.00, "salada", "#B8402A"],
+    ["Queijo e Presunto", 6.00, "petiscos", "#8E2F3C"],
+    ["Salada Mista", 4.00, "salada", "#1F7A4C"],
+    ["Fruta da Época", 2.00, "salada", "#B8402A"],
 
     ["Sonhos", 2.50, "farturas", "#6B4E8E"],
     ["Malassadas", 2.50, "farturas", "#B5852A"],
-    ["Churros com chocolate", 3.50, "farturas", "#6B4E8E"],
-    ["Bolo de arroz", 1.30, "bolo", "#B5852A"],
-    ["Gelado de cone", 2.00, "gelado", "#0E6B5C"],
+    ["Churros com Chocolate", 3.50, "farturas", "#6B4E8E"],
+    ["Bolo de Arroz", 1.30, "bolo", "#B5852A"],
+    ["Gelado de Cone", 2.00, "gelado", "#0E6B5C"],
     ["Granizado", 2.50, "copo", "#3D5A98"],
-    ["Doces variados", 1.00, "chupa", "#A03A6B"],
+    ["Doces Variados", 1.00, "chupa", "#A03A6B"],
 
-    ["Menu completo", 12.00, "senha", "#334744"],
-    ["Meio menu", 7.00, "senha", "#334744"],
-    ["Copo reutilizável", 1.00, "copo", "#4A5C55"],
+    ["Menu Completo", 12.00, "senha", "#334744"],
+    ["Meio Menu", 7.00, "senha", "#334744"],
+    ["Copo Reutilizável", 1.00, "copo", "#4A5C55"],
     ["Pulseira", 3.00, "rifa", "#6B4E8E"],
     ["Bilhete", 5.00, "musica", "#6B4E8E"],
     ["Donativo", 1.00, "coracao", "#B8402A"],
-    ["Saco de gelo", 2.00, "gelo", "#3D5A98"],
+    ["Saco de Gelo", 2.00, "gelo", "#3D5A98"],
     ["Takeaway", 0.50, "saco", "#4A5C55"],
 
-    ["Menu bifana", 5.50, "bifana", "#0E6B5C"],
-    ["Menu bifana + café", 6.00, "bifana", "#0E6B5C"],
-    ["Menu prego no pão", 6.00, "bifana", "#0E6B5C"],
-    ["Menu cachorro", 5.00, "cachorro", "#0E6B5C"],
-    ["Menu hambúrguer", 7.00, "hamburguer", "#0E6B5C"],
-    ["Menu sandes mista", 5.00, "sandes", "#0E6B5C"],
-    ["Menu tosta mista", 5.00, "tosta", "#0E6B5C"],
-    ["Menu francesinha", 12.00, "sandes", "#0E6B5C"],
-    ["Menu criança", 4.50, "batatas", "#0E6B5C"],
-    ["Menu vegetariano", 8.50, "salada", "#1F7A4C"],
+    ["Menu Bifana", 5.50, "bifana", "#0E6B5C"],
+    ["Menu Bifana + Café", 6.00, "bifana", "#0E6B5C"],
+    ["Menu Prego no Pão", 6.00, "bifana", "#0E6B5C"],
+    ["Menu Cachorro", 5.00, "cachorro", "#0E6B5C"],
+    ["Menu Hambúrguer", 7.00, "hamburguer", "#0E6B5C"],
+    ["Menu Sandes Mista", 5.00, "sandes", "#0E6B5C"],
+    ["Menu Tosta Mista", 5.00, "tosta", "#0E6B5C"],
+    ["Menu Francesinha", 12.00, "sandes", "#0E6B5C"],
+    ["Menu Criança", 4.50, "batatas", "#0E6B5C"],
+    ["Menu Vegetariano", 8.50, "salada", "#1F7A4C"],
 
-    ["Menu bitoque", 11.00, "espetada", "#3D5A98"],
-    ["Menu prego no prato", 11.50, "espetada", "#3D5A98"],
-    ["Menu frango + batatas", 10.00, "frango", "#3D5A98"],
-    ["Menu costeleta", 12.00, "espetada", "#3D5A98"],
-    ["Menu entremeada", 11.00, "espetada", "#3D5A98"],
-    ["Menu peixe grelhado", 12.50, "peixe", "#3D5A98"],
-    ["Menu bacalhau", 14.00, "peixe", "#3D5A98"],
-    ["Menu do dia", 10.00, "sopa", "#3D5A98"],
-    ["Menu completo (sopa a café)", 13.00, "sopa", "#3D5A98"],
+    ["Menu Bitoque", 11.00, "espetada", "#3D5A98"],
+    ["Menu Prego no Prato", 11.50, "espetada", "#3D5A98"],
+    ["Menu Frango + Batatas", 10.00, "frango", "#3D5A98"],
+    ["Menu Costeleta", 12.00, "espetada", "#3D5A98"],
+    ["Menu Entremeada", 11.00, "espetada", "#3D5A98"],
+    ["Menu Peixe Grelhado", 12.50, "peixe", "#3D5A98"],
+    ["Menu Bacalhau", 14.00, "peixe", "#3D5A98"],
+    ["Menu do Dia", 10.00, "sopa", "#3D5A98"],
+    ["Menu Completo (Sopa A Café)", 13.00, "sopa", "#3D5A98"],
 
-    ["Bifana (só)", 3.50, "bifana", "#B8402A"],
-    ["Sandes mista", 3.00, "sandes", "#B8402A"],
-    ["Sandes de queijo", 2.50, "sandes", "#B45309"],
-    ["Sandes de fiambre", 2.50, "sandes", "#B45309"],
+    ["Bifana (Só)", 3.50, "bifana", "#B8402A"],
+    ["Sandes Mista", 3.00, "sandes", "#B8402A"],
+    ["Sandes de Queijo", 2.50, "sandes", "#B45309"],
+    ["Sandes de Fiambre", 2.50, "sandes", "#B45309"],
     ["Bitoque", 9.50, "espetada", "#B45309"],
-    ["Prego no prato", 10.00, "espetada", "#B45309"],
-    ["Meia dose", 7.00, "sopa", "#B45309"],
+    ["Prego no Prato", 10.00, "espetada", "#B45309"],
+    ["Meia Dose", 7.00, "sopa", "#B45309"],
     ["Dose", 11.00, "sopa", "#B45309"],
-    ["Sopa + pão", 3.00, "sopa", "#1F7A4C"],
+    ["Sopa + Pão", 3.00, "sopa", "#1F7A4C"],
 
-    ["Extra sopa", 2.00, "sopa", "#4A5C55"],
-    ["Extra bebida", 1.50, "lata", "#4A5C55"],
-    ["Extra café", 0.80, "cafe", "#4A5C55"],
-    ["Extra sobremesa", 2.50, "nata", "#4A5C55"],
-    ["Extra batatas", 2.00, "batatas", "#4A5C55"],
-    ["Extra ovo", 1.00, "petiscos", "#4A5C55"],
-    ["Extra pão", 0.50, "bifana", "#4A5C55"]
+    ["Extra Sopa", 2.00, "sopa", "#4A5C55"],
+    ["Extra Bebida", 1.50, "lata", "#4A5C55"],
+    ["Extra Café", 0.80, "cafe", "#4A5C55"],
+    ["Extra Sobremesa", 2.50, "nata", "#4A5C55"],
+    ["Extra Batatas", 2.00, "batatas", "#4A5C55"],
+    ["Extra Ovo", 1.00, "petiscos", "#4A5C55"],
+    ["Extra Pão", 0.50, "bifana", "#4A5C55"]
   ];
   function juntarExemplos(){
     var e=evAtual();
@@ -3790,6 +3798,8 @@
     if(comPedido && LS.ler("imprimir","nao")==="sim"){
       setTimeout(function(){ abrirTalao(venda, true); }, 60);
     }
+    // a gaveta abre pelo serviço do Pi, mesmo quando a impressão é pelo browser
+    if(gavetaNestaVenda(venda)) setTimeout(abrirGaveta, 30);
     guardarVenda(venda);
     estado.ultimaVenda = venda;      // fica à vista para conferir o que foi pedido
     programarLimpezaTalao();
@@ -4852,6 +4862,20 @@
   function servidorImpressao(){
     return String(LS.ler("servidorImp","")).trim().replace(/\/+$/,"");
   }
+  function abrirGaveta(){
+    var base = servidorImpressao();
+    if(!base) return Promise.resolve(false);
+    return fetch(base+"/gaveta", {method:"POST", headers:{"Content-Type":"application/json"}, body:"{}"})
+      .then(function(r){ return r.json(); })
+      .then(function(d){ return !!(d && d.ok); })
+      .catch(function(){ return false; });
+  }
+  function gavetaNestaVenda(venda){
+    var modo = LS.ler("gaveta","nao");
+    if(modo==="sempre") return true;
+    if(modo==="dinheiro") return venda.metodo!=="cartao" && (venda.emDinheiro||0) > 0;
+    return false;
+  }
   function imprimirNoServidor(venda){
     var base = servidorImpressao();
     if(!base){ toast("Falta o endereço do serviço de impressão"); return Promise.resolve(false); }
@@ -5571,7 +5595,7 @@
     LS.esc("paleta",this.value); LS.esc(chaveManuais(), {}); LS.esc("acentoManual","nao");
     aplicarTema(); desenharAcentos(); desenharManuais(); desenharProntos();
   });
-  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","imprimir","metodoImpressao","servidorImp","avancoCorte","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
+  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","imprimir","metodoImpressao","servidorImp","avancoCorte","gaveta","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
   $("#aCopiarDefs").addEventListener("click", function(){
     var pacote = {app:"registadora-definicoes", versao:1};
     CHAVES_DEFS.forEach(function(k){
@@ -5845,6 +5869,7 @@
     $("#aImprimir").value = LS.ler("imprimir","nao");
     $("#aVias").value = String(LS.ler("vias","2"));
     $("#aPapel").value = String(LS.ler("papel","80"));
+    $("#aGaveta").value = LS.ler("gaveta","nao");
     $("#aLogo").value = LS.ler("logo","sim");
     $("#aLogoTam").value = LS.ler("logoTam","medio");
     $("#aCabecalho").value = LS.ler("cabecalho","ARCTM");
@@ -5899,7 +5924,7 @@
     mostrarAvanco(Math.max(0, Math.min(20, v)));
   });
   [["#aImprimir","imprimir"],["#aVias","vias"],["#aPapel","papel"],
-   ["#aLogo","logo"],["#aLogoTam","logoTam"],["#aMostrarTroco","mostrarTroco"],
+   ["#aLogo","logo"],["#aLogoTam","logoTam"],["#aMostrarTroco","mostrarTroco"],["#aGaveta","gaveta"],
    ["#aMostrarPagamento","mostrarPagamento"],["#aMostrarArtigos","mostrarArtigos"],
    ["#aMostrarData","mostrarData"],["#aMostrarPrecos","mostrarPrecos"],
    ["#aMostrarTotal","mostrarTotal"],["#aMostrarEvento","mostrarEvento"]].forEach(function(par){
@@ -5920,6 +5945,10 @@
   }
   $("#aVerTalao").addEventListener("click", function(){ abrirTalao(vendaExemplo(), false); });
   $("#aImprimirTeste").addEventListener("click", function(){ abrirTalao(vendaExemplo(), true); });
+  $("#aAbrirGaveta").addEventListener("click", function(){
+    if(!servidorImpressao()){ toast("Indique o endereço do serviço de impressão"); return; }
+    abrirGaveta().then(function(ok){ toast(ok ? "Gaveta aberta" : "A gaveta não respondeu"); });
+  });
   $("#aGuardarTalao").addEventListener("click", function(){
     var vias = parseInt(LS.ler("vias","2"),10)===1 ? 1 : 2;
     var texto = talaoHtml(vendaExemplo(), vias, false);
