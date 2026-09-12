@@ -590,7 +590,7 @@
 (function(){
   "use strict";
   var $ = function(s){ return document.querySelector(s); };
-  var VERSAO_APP = "2026-09-12 18:01";   // para saber que ficheiro está a correr
+  var VERSAO_APP = "2026-09-12 23:38";   // para saber que ficheiro está a correr
   var LS = {
     ler:function(k,d){ try{ var v=localStorage.getItem("senhas:"+k); return v===null?d:JSON.parse(v); }catch(e){ return d; } },
     esc:function(k,v){ try{ localStorage.setItem("senhas:"+k, JSON.stringify(v)); }catch(e){} }

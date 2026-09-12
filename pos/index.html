@@ -922,7 +922,7 @@
           <div class="l campo-pay" id="fCartao" hidden><span>No cartão</span><b id="payCartaoVal">0,00 €</b></div>
           <div class="l" id="fDevido" hidden><span>A pagar em dinheiro</span><b id="payDevido">0,00 €</b></div>
           <div class="l campo-pay" id="fRecebido"><span>Recebido em dinheiro</span><b id="payRecebido">0,00 €</b></div>
-          <div class="l g"><span id="payRot">Troco</span><b id="payTroco">—</b></div>
+          <div class="l g" id="fTroco"><span id="payRot">Troco</span><b id="payTroco">—</b></div>
         </div>
         <div class="rapidas" id="payRapidas"></div>
         <div class="teclas" id="payTeclas"></div>
@@ -1996,7 +1996,7 @@
   }
 
   var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","servidorDados","pastaCopias","imprimir","metodoImpressao","servidorImp","avancoCorte","gaveta","botaoGaveta","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
-  var VERSAO_APP = "2026-09-12 18:01";   // para saber que ficheiro está a correr
+  var VERSAO_APP = "2026-09-12 23:38";   // para saber que ficheiro está a correr
   var LS = {
     ler:function(k,d){ try{ var v=localStorage.getItem("reg2:"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
     esc:function(k,v){ try{ localStorage.setItem("reg2:"+k, JSON.stringify(v)); }catch(e){} },
@@ -3808,13 +3808,17 @@
     document.querySelectorAll("#payModos button").forEach(function(b){
       b.setAttribute("aria-pressed", String(b.dataset.modo===m));
     });
+    // os métodos criados pelo utilizador (Junta F., MB Way…) contam como "cartão":
+    // não há dinheiro a receber nem troco a dar
+    var semDinheiro = tipoDoModo(m)==="cartao";
     $("#fCartao").hidden = m!=="misto";
     $("#fDevido").hidden = m!=="misto";
-    $("#fRecebido").hidden = m==="cartao";
-    $("#payTeclas").hidden = m==="cartao";
-    $("#payRapidas").hidden = m==="cartao";
+    $("#fRecebido").hidden = semDinheiro;
+    $("#payTeclas").hidden = semDinheiro;
+    $("#payRapidas").hidden = semDinheiro;
+    $("#fTroco").hidden = semDinheiro;
     if(m==="misto"){ valorCartao = valorCartao || 0; campoPag="cartao"; }
-    else { valorCartao = m==="cartao" ? totalCarrinho() : 0; campoPag="recebido"; }
+    else { valorCartao = semDinheiro ? porPagarCarrinho() : 0; campoPag="recebido"; }
     recebido=0; if(bufPay) bufPay.v="";
     atualizarPagar();
   }
