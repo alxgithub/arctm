@@ -908,7 +908,8 @@
   function partilha(){
     var v = LS.ler("partilha", null);
     if(v) return v;
-    return LS.ler("nuvem","nao")==="sim" ? "claude" : "nao";
+    if(LS.ler("nuvem","nao")==="sim") return "claude";
+    return "sala";       // de origem, os ecrãs falam entre si pela sala local
   }
   var APP_SALA = "senhas";
   /* ---------- sala protegida: nome + palavra-passe, conteúdo cifrado ---------- */
@@ -987,15 +988,27 @@
   }
 
   var SALA = {cli:null, estado:"desligada", id:Math.random().toString(36).slice(2,10), topico:""};
+  // A biblioteca é servida pelo próprio Pi. Só se recorre à internet se ali não estiver,
+  // porque na rede do evento pode não haver saída para fora.
+  var FONTES_MQTT = ["/mqtt.min.js", "../mqtt.min.js", "mqtt.min.js",
+                     "https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.15.2/mqtt.min.js"];
   function carregarMqtt(){
     if(window.mqtt) return Promise.resolve(window.mqtt);
-    return new Promise(function(res, rej){
-      var sc=document.createElement("script");
-      sc.src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.15.2/mqtt.min.js";
-      sc.onload=function(){ window.mqtt ? res(window.mqtt) : rej(new Error("biblioteca não carregou")); };
-      sc.onerror=function(){ rej(new Error("não foi possível carregar a biblioteca")); };
-      document.head.appendChild(sc);
-    });
+    var i = 0;
+    function tentar(){
+      if(i >= FONTES_MQTT.length){
+        return Promise.reject(new Error("não foi possível carregar a biblioteca do MQTT"));
+      }
+      var fonte = FONTES_MQTT[i++];
+      return new Promise(function(res, rej){
+        var sc=document.createElement("script");
+        sc.src=fonte;
+        sc.onload=function(){ window.mqtt ? res(window.mqtt) : rej(new Error("vazia")); };
+        sc.onerror=function(){ rej(new Error("falhou")); };
+        document.head.appendChild(sc);
+      }).catch(tentar);
+    }
+    return tentar();
   }
   function desligarSala(){
     if(SALA.cli){ try{ SALA.cli.end(true); }catch(e){} SALA.cli=null; }
@@ -1006,6 +1019,17 @@
     if(!nomeSala() || !passeSala()){
       desligarSala(); SALA.estado="falta nome ou palavra-passe"; desenhar(false); return;
     }
+    var endereco = servidorSala();
+    if(location.protocol === "https:" && /^ws:\/\//i.test(endereco)){
+      desligarSala();
+      SALA.estado = "bloqueado: página em https e servidor em ws:// — use wss:// ou abra a página por http";
+      desenhar(false); return;
+    }
+    if(location.protocol === "file:"){
+      desligarSala();
+      SALA.estado = "aberto como ficheiro — sirva a página pelo Pi";
+      desenhar(false); return;
+    }
     SALA.estado="a ligar"; desenhar(false);
     Promise.all([carregarMqtt(), caminhoSala()]).then(function(r){
       var mqtt=r[0]; SALA.topico=r[1];
@@ -1013,7 +1037,7 @@
       var opcoes = {clientId:"arctm-"+SALA.id, reconnectPeriod:4000, connectTimeout:8000, clean:true};
       var u=String(LS.ler("salaUtilizador","")).trim(), pw=String(LS.ler("salaServidorPasse",""));
       if(u){ opcoes.username=u; opcoes.password=pw; }
-      var cli = mqtt.connect(servidorSala(), opcoes);
+      var cli = mqtt.connect(endereco, opcoes);
       SALA.cli=cli;
       cli.on("connect", function(){
         SALA.estado = haCifra() ? "ligada" : "ligada (sem cifra)";
@@ -1027,8 +1051,16 @@
         desenhar(false);
       });
       cli.on("reconnect", function(){ SALA.estado="a ligar"; desenhar(false); });
-      cli.on("close", function(){ if(SALA.estado==="ligada"){ SALA.estado="sem ligação"; desenhar(false); } });
-      cli.on("error", function(){ SALA.estado="sem ligação"; desenhar(false); });
+      cli.on("close", function(){
+        if(SALA.estado.indexOf("ligada")===0){ SALA.estado="sem ligação"; desenhar(false); }
+      });
+      cli.on("offline", function(){
+        if(SALA.estado.indexOf("ligada")===0){ SALA.estado="sem ligação"; desenhar(false); }
+      });
+      cli.on("error", function(e){
+        SALA.estado = "erro: " + ((e && (e.message || e.code)) || "sem ligação");
+        desenhar(false);
+      });
       cli.on("message", function(t, corpo){
         decifrar(corpo.toString()).then(function(d){
           SALA.recebeu = true;
@@ -1040,7 +1072,12 @@
           }
         }).catch(function(){ /* mensagem de outra sala ou palavra-passe errada: ignorar */ });
       });
-    }).catch(function(){ SALA.estado="sem ligação"; desenhar(false); });
+    }).catch(function(e){
+      SALA.estado = (e && /biblioteca/.test(e.message||""))
+        ? "a biblioteca do MQTT não carregou — falta o ficheiro mqtt.min.js no servidor"
+        : "sem ligação";
+      desenhar(false);
+    });
   }
   function publicarSala(){
     if(partilha()!=="sala" || !SALA.cli || !SALA.cli.connected || !SALA.topico) return;
@@ -1452,7 +1489,10 @@
   $("#campoNumero").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); confirmarDefinir(); } });
   $("#folhaDefinir").addEventListener("click", function(e){ if(e.target===this) this.removeAttribute("open"); });
   $("#dReiniciar").addEventListener("click", function(){
-    confirmar("Reiniciar a zero?", "O visor volta a zero e a contagem recomeça. Não há forma de recuperar o número atual.", "Reiniciar")
+    confirmar("Reiniciar a zero?",
+      "O visor volta a zero e a contagem recomeça"+
+      (partilha()==="sala" ? ", em todos os ecrãs ligados à sala" : "")+
+      ". Não há forma de recuperar o número atual.", "Reiniciar")
       .then(function(ok){ if(ok){ definir(0,false,false); toast("Reiniciado"); } });
   });
 

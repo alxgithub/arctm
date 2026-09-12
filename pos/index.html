@@ -978,7 +978,10 @@
       <section class="aba" data-aba="h-lista" hidden>
         <div class="cabeca-lista">
           <h3 style="margin-top:0">Vendas registadas</h3>
-          <span class="conta" id="hConta2"></span>
+          <div class="fila" style="gap:8px">
+            <span class="conta" id="hConta2"></span>
+            <button class="mini perigo" id="hApagarTodas" type="button" hidden>Anular todas</button>
+          </div>
         </div>
         <ul class="lista" id="hLista"></ul>
         <div class="paginas" id="pagHoje" hidden>
@@ -4084,6 +4087,7 @@
     var ul=$("#hLista"); ul.innerHTML="";
     var nav=$("#pagHoje"); if(nav) nav.hidden=true;
     var cont=$("#hConta2"); if(cont) cont.textContent = vs.length ? (vs.length+(vs.length===1?" venda":" vendas")) : "";
+    if($("#hApagarTodas")) $("#hApagarTodas").hidden = !vs.length;
     if(!vs.length){
       var li0=document.createElement("li");
       li0.innerHTML='<div class="txt"><span>Ainda não há vendas hoje.</span></div>';
@@ -4786,15 +4790,27 @@
       return crypto.subtle.decrypt({name:"AES-GCM", iv:_deHex(pac.iv)}, k, _deHex(pac.d));
     }).then(function(c){ return JSON.parse(new TextDecoder().decode(c)); });
   }
+  // A biblioteca é servida pelo próprio Pi. Só se recorre à internet se ali não estiver,
+  // porque na rede do evento pode não haver saída para fora.
+  var FONTES_MQTT = ["/mqtt.min.js", "../mqtt.min.js", "mqtt.min.js",
+                     "https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.15.2/mqtt.min.js"];
   function carregarMqtt(){
     if(window.mqtt) return Promise.resolve(window.mqtt);
-    return new Promise(function(res, rej){
-      var sc=document.createElement("script");
-      sc.src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.15.2/mqtt.min.js";
-      sc.onload=function(){ window.mqtt ? res(window.mqtt) : rej(new Error("biblioteca não carregou")); };
-      sc.onerror=function(){ rej(new Error("não foi possível carregar a biblioteca")); };
-      document.head.appendChild(sc);
-    });
+    var i = 0;
+    function tentar(){
+      if(i >= FONTES_MQTT.length){
+        return Promise.reject(new Error("não foi possível carregar a biblioteca do MQTT"));
+      }
+      var fonte = FONTES_MQTT[i++];
+      return new Promise(function(res, rej){
+        var sc=document.createElement("script");
+        sc.src=fonte;
+        sc.onload=function(){ window.mqtt ? res(window.mqtt) : rej(new Error("vazia")); };
+        sc.onerror=function(){ rej(new Error("falhou")); };
+        document.head.appendChild(sc);
+      }).catch(tentar);
+    }
+    return tentar();
   }
   function desligarPedidos(){
     if(PEDIDOS.cli){ try{ PEDIDOS.cli.end(true); }catch(e){} PEDIDOS.cli=null; }
@@ -4803,16 +4819,35 @@
   function ligarPedidos(){
     if(!pedidosLigados()){ desligarPedidos(); pintarEstadoSala(); return; }
     if(!salaNome() || !salaPasse()){ desligarPedidos(); PEDIDOS.estado="falta nome ou palavra-passe"; pintarEstadoSala(); return; }
+    var endereco = salaServidor();
+    if(location.protocol === "https:" && /^ws:\/\//i.test(endereco)){
+      desligarPedidos();
+      PEDIDOS.estado = "bloqueado: a página está em https e o servidor em ws:// — use wss:// ou abra por http";
+      pintarEstadoSala(); return;
+    }
+    if(location.protocol === "file:"){
+      desligarPedidos();
+      PEDIDOS.estado = "aberto como ficheiro — sirva a página pelo Pi";
+      pintarEstadoSala(); return;
+    }
     PEDIDOS.estado="a ligar"; pintarEstadoSala();
     Promise.all([carregarMqtt(), caminhoSala()]).then(function(r){
       var mqtt=r[0]; PEDIDOS.topico=r[1];
       desligarPedidos();
-      var cli=mqtt.connect(salaServidor(), {clientId:"pos-"+PEDIDOS.id, reconnectPeriod:4000, connectTimeout:8000, clean:true});
+      var cli=mqtt.connect(endereco, {clientId:"pos-"+PEDIDOS.id, reconnectPeriod:4000, connectTimeout:8000, clean:true});
       PEDIDOS.cli=cli;
       cli.on("connect", function(){ PEDIDOS.estado = haCifra() ? "ligada" : "ligada (sem cifra)"; cli.subscribe(PEDIDOS.topico,{qos:0}); pintarEstadoSala(); });
       cli.on("reconnect", function(){ PEDIDOS.estado="a ligar"; pintarEstadoSala(); });
-      cli.on("close", function(){ if(PEDIDOS.estado==="ligada"){ PEDIDOS.estado="sem ligação"; pintarEstadoSala(); } });
-      cli.on("error", function(){ PEDIDOS.estado="sem ligação"; pintarEstadoSala(); });
+      cli.on("close", function(){
+        if(PEDIDOS.estado.indexOf("ligada")===0){ PEDIDOS.estado="sem ligação"; pintarEstadoSala(); }
+      });
+      cli.on("offline", function(){
+        if(PEDIDOS.estado.indexOf("ligada")===0){ PEDIDOS.estado="sem ligação"; pintarEstadoSala(); }
+      });
+      cli.on("error", function(e){
+        PEDIDOS.estado = "erro: " + ((e && (e.message || e.code)) || "sem ligação");
+        pintarEstadoSala();
+      });
       cli.on("message", function(t, corpo){
         decifrarSala(corpo.toString()).then(function(d){
           if(!d || d.de===PEDIDOS.id) return;
@@ -4822,7 +4857,12 @@
           atualizarNumeroPedido();
         }).catch(function(){});
       });
-    }).catch(function(){ PEDIDOS.estado="sem ligação"; pintarEstadoSala(); });
+    }).catch(function(e){
+      PEDIDOS.estado = (e && /biblioteca/.test(e.message||""))
+        ? "a biblioteca do MQTT não carregou — falta o ficheiro mqtt.min.js no servidor"
+        : "sem ligação";
+      pintarEstadoSala();
+    });
   }
   function proximoPedido(){
     var base = (typeof PEDIDOS.contador==="number") ? PEDIDOS.contador : 0;
@@ -4830,13 +4870,23 @@
     while(PEDIDOS.lista.some(function(p){ return p.n===n; }) && voltas++ < 10000) n++;
     return n;
   }
+  function assinaturaSala(){
+    var e = evAtual();
+    return {
+      ev: e ? {id:e.id, nome:e.nome} : null,
+      app: "registadora",
+      versao: VERSAO_APP,
+      posto: LS.ler("pastaCopias","") || location.hostname
+    };
+  }
   function criarPedido(){
     if(!pedidosLigados() || !PEDIDOS.cli || !PEDIDOS.cli.connected) return null;
     var automatico = proximoPedido();
     var n = (numeroEscolhido!==null && numeroEscolhido>=automatico) ? numeroEscolhido : automatico;
     PEDIDOS.lista = PEDIDOS.lista.concat([{n:n, estado:"espera", ts:Date.now()}]);
     PEDIDOS.contador = n;
-    cifrarSala({lista:PEDIDOS.lista, atual:PEDIDOS.atual, contador:PEDIDOS.contador, ts:Date.now(), de:PEDIDOS.id})
+    cifrarSala(Object.assign({lista:PEDIDOS.lista, atual:PEDIDOS.atual, contador:PEDIDOS.contador,
+                              ts:Date.now(), de:PEDIDOS.id}, assinaturaSala()))
       .then(function(txt){
         try{ PEDIDOS.cli.publish(PEDIDOS.topico, txt, {qos:0, retain:true}); }catch(e){}
       }).catch(function(){});
@@ -4849,8 +4899,8 @@
       return;
     }
     PEDIDOS.contador = Math.max(0, Math.round(n) - 1);
-    cifrarSala({lista:PEDIDOS.lista, atual:PEDIDOS.atual, contador:PEDIDOS.contador,
-                ts:Date.now(), de:PEDIDOS.id})
+    cifrarSala(Object.assign({lista:PEDIDOS.lista, atual:PEDIDOS.atual, contador:PEDIDOS.contador,
+                              ts:Date.now(), de:PEDIDOS.id}, assinaturaSala()))
       .then(function(txt){
         try{ PEDIDOS.cli.publish(PEDIDOS.topico, txt, {qos:0, retain:true}); }catch(e){}
         pintarEstadoSala();
@@ -4869,6 +4919,19 @@
   function pintarEstadoSala(){
     var el=$("#estadoSalaPos");
     if(!el) return;
+    if(pedidosLigados()){
+      // a impressão digital do canal tem de ser igual em todos os aparelhos
+      el.innerHTML =
+        "<b>Sala:</b> “"+esc(salaNome())+"” · palavra-passe com "+salaPasse().length+" caracteres<br>"+
+        "<b>Canal:</b> "+(PEDIDOS.topico ? esc(PEDIDOS.topico.slice(-12)) : "ainda não calculado")+
+        " <em>(compare com os visores)</em><br>"+
+        "<b>Servidor:</b> "+esc(salaServidor())+"<br>"+
+        "<b>Ligação:</b> "+esc(PEDIDOS.estado)+
+        (PEDIDOS.estado.indexOf("ligada")===0 ? (" · próximo pedido: "+proximoPedido()) : "")+
+        (haCifra() ? "" : "<br>Sem cifra — só use assim em rede fechada.");
+      atualizarNumeroPedido();
+      return;
+    }
     var txt = !pedidosLigados() ? "Desligado. Ligue acima para a registadora criar pedidos."
             : PEDIDOS.estado.indexOf("ligada")===0
         ? ("Ligado à sala “"+salaNome()+"”. Próximo pedido: "+proximoPedido()+"."+
@@ -6240,6 +6303,35 @@
   ["#btnHoje","#btnHojeIcone"].forEach(function(sel){
     $(sel).addEventListener("click", function(){
       diaVendas=null; pagHoje=0; desenharHoje(); mostrarAbaHoje("resumo"); abrir("#sheetHoje");
+    });
+  });
+  $("#hApagarTodas").addEventListener("click", function(){
+    var e = evAtual(); if(!e) return;
+    var vs = listaHoje();
+    if(!vs.length){ toast("Não há vendas neste dia"); return; }
+    var dia = diaVendas || estado.dia;
+    var soma = vs.reduce(function(t,v){ return t+v.total; }, 0);
+    var p=dia.split("-"), dt=new Date(+p[0],+p[1]-1,+p[2]);
+    var rotulo = dt.toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"long"});
+
+    confirmar(
+      "Anular as "+vs.length+" vendas de "+rotulo+"?",
+      "Somam "+money(soma)+". Os movimentos de caixa desse dia mantêm-se. "+
+      "Não há forma de voltar atrás — se precisar do histórico, exporte primeiro.",
+      "Continuar"
+    ).then(function(ok){
+      if(!ok) return;
+      return confirmar(
+        "Tem mesmo a certeza?",
+        "Segunda e última confirmação: as "+vs.length+" vendas de "+rotulo+" vão desaparecer.",
+        "Anular as "+vs.length
+      ).then(function(certeza){
+        if(!certeza) return;
+        vs.forEach(function(v){ apagarVenda(v.id); });
+        pagHoje = 0; relCache = null;
+        desenharHoje(); pintarTudo();
+        toast(vs.length+(vs.length===1?" venda anulada":" vendas anuladas"));
+      });
     });
   });
   $("#hDia").addEventListener("change", function(){

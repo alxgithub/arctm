@@ -827,16 +827,36 @@
     });
   }
 
-  var SALA = {cli:null, estado:"desligada", id:Math.random().toString(36).slice(2,10), topico:""};
+  // nomes escritos pelo utilizador não podem ir direitos para HTML
+  function esc(t){
+    return String(t==null ? "" : t)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+  }
+  var SALA = {cli:null, estado:"desligada", id:Math.random().toString(36).slice(2,10), topico:"",
+              recebidas:0, ilegiveis:0, enviadas:0, recebeu:false,
+              ev:null, ultimaOrigem:"", trocouEvento:""};
+  // A biblioteca é servida pelo próprio Pi. Só se recorre à internet se ali não estiver,
+  // porque na rede do evento pode não haver saída para fora.
+  var FONTES_MQTT = ["/mqtt.min.js", "../mqtt.min.js", "mqtt.min.js",
+                     "https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.15.2/mqtt.min.js"];
   function carregarMqtt(){
     if(window.mqtt) return Promise.resolve(window.mqtt);
-    return new Promise(function(res, rej){
-      var sc=document.createElement("script");
-      sc.src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.15.2/mqtt.min.js";
-      sc.onload=function(){ window.mqtt ? res(window.mqtt) : rej(new Error("biblioteca não carregou")); };
-      sc.onerror=function(){ rej(new Error("não foi possível carregar a biblioteca")); };
-      document.head.appendChild(sc);
-    });
+    var i = 0;
+    function tentar(){
+      if(i >= FONTES_MQTT.length){
+        return Promise.reject(new Error("não foi possível carregar a biblioteca do MQTT"));
+      }
+      var fonte = FONTES_MQTT[i++];
+      return new Promise(function(res, rej){
+        var sc=document.createElement("script");
+        sc.src=fonte;
+        sc.onload=function(){ window.mqtt ? res(window.mqtt) : rej(new Error("vazia")); };
+        sc.onerror=function(){ rej(new Error("falhou")); };
+        document.head.appendChild(sc);
+      }).catch(tentar);
+    }
+    return tentar();
   }
   function desligarSala(){
     if(SALA.cli){ try{ SALA.cli.end(true); }catch(e){} SALA.cli=null; }
@@ -847,6 +867,17 @@
     if(!nomeSala() || !passeSala()){
       desligarSala(); SALA.estado="falta nome ou palavra-passe"; desenhar(); return;
     }
+    var endereco = servidorSala();
+    if(location.protocol === "https:" && /^ws:\/\//i.test(endereco)){
+      desligarSala();
+      SALA.estado = "bloqueado: página em https e servidor em ws:// — use wss:// ou abra a página por http";
+      desenhar(); return;
+    }
+    if(location.protocol === "file:"){
+      desligarSala();
+      SALA.estado = "aberto como ficheiro — sirva a página pelo Pi";
+      desenhar(); return;
+    }
     SALA.estado="a ligar"; desenhar();
     Promise.all([carregarMqtt(), caminhoSala()]).then(function(r){
       var mqtt=r[0]; SALA.topico=r[1];
@@ -854,7 +885,7 @@
       var opcoes = {clientId:"arctm-"+SALA.id, reconnectPeriod:4000, connectTimeout:8000, clean:true};
       var u=String(LS.ler("salaUtilizador","")).trim(), pw=String(LS.ler("salaServidorPasse",""));
       if(u){ opcoes.username=u; opcoes.password=pw; }
-      var cli = mqtt.connect(servidorSala(), opcoes);
+      var cli = mqtt.connect(endereco, opcoes);
       SALA.cli=cli;
       cli.on("connect", function(){
         SALA.estado = haCifra() ? "ligada" : "ligada (sem cifra)";
@@ -868,22 +899,38 @@
         desenhar();
       });
       cli.on("reconnect", function(){ SALA.estado="a ligar"; desenhar(); });
-      cli.on("close", function(){ if(SALA.estado==="ligada"){ SALA.estado="sem ligação"; desenhar(); } });
-      cli.on("error", function(){ SALA.estado="sem ligação"; desenhar(); });
+      cli.on("close", function(){
+        if(SALA.estado.indexOf("ligada")===0){ SALA.estado="sem ligação"; desenhar(); }
+      });
+      cli.on("offline", function(){
+        if(SALA.estado.indexOf("ligada")===0){ SALA.estado="sem ligação"; desenhar(); }
+      });
+      cli.on("error", function(e){
+        SALA.estado = "erro: " + ((e && (e.message || e.code)) || "sem ligação");
+        desenhar();
+      });
       cli.on("message", function(t, corpo){
+        SALA.recebidas++;
         decifrar(corpo.toString()).then(function(d){
           SALA.recebeu = true;
           if(!d || d.de===SALA.id) return;   // eco do próprio ecrã
           ultimaRecebida=Date.now();
           aplicarRemoto(d, true);
-        }).catch(function(){ /* mensagem de outra sala ou palavra-passe errada: ignorar */ });
+        }).catch(function(){ SALA.ilegiveis++; desenhar(); });   // palavra-passe diferente
       });
-    }).catch(function(){ SALA.estado="sem ligação"; desenhar(); });
+    }).catch(function(e){
+      SALA.estado = (e && /biblioteca/.test(e.message||""))
+        ? "a biblioteca do MQTT não carregou — falta o ficheiro mqtt.min.js no servidor"
+        : "sem ligação";
+      desenhar();
+    });
   }
   function publicarSala(){
     if(partilha()!=="sala" || !SALA.cli || !SALA.cli.connected || !SALA.topico) return;
-    cifrar({lista:pedidos, atual:atual, contador:contador, chamadaTs:chamadaTs, ts:Date.now(), de:SALA.id}).then(function(txt){
-      try{ SALA.cli.publish(SALA.topico, txt, {qos:0, retain:true}); }catch(e){}
+    cifrar({lista:pedidos, atual:atual, contador:contador, chamadaTs:chamadaTs,
+            ts:Date.now(), de:SALA.id,
+            ev:SALA.ev || null, app:"visor", versao:VERSAO_APP}).then(function(txt){
+      try{ SALA.cli.publish(SALA.topico, txt, {qos:0, retain:true}); SALA.enviadas++; }catch(e){}
     }).catch(function(){});
   }
 
@@ -1290,6 +1337,14 @@
   var sondagem=null;
   function aplicarRemoto(d, comSom){
     if(!d || !Array.isArray(d.lista)) return false;
+    // quem manda identifica-se: serve para ver na hora se é a festa certa
+    if(d.ev && d.ev.id){
+      if(SALA.ev && SALA.ev.id && SALA.ev.id !== d.ev.id){
+        SALA.trocouEvento = (SALA.ev.nome || SALA.ev.id) + " → " + (d.ev.nome || d.ev.id);
+      }
+      SALA.ev = d.ev;
+    }
+    if(d.app) SALA.ultimaOrigem = d.app + (d.posto ? (" · "+d.posto) : "") + (d.versao ? (" · "+d.versao) : "");
     var novoAtual = (d.atual===undefined ? null : d.atual);
     var novaChamada = (typeof d.chamadaTs==="number") ? d.chamadaTs : 0;
     // basta ser diferente da última conhecida: relógios trocados entre aparelhos não atrapalham
@@ -1369,6 +1424,27 @@
 
   function diagnostico(){
     var linhas = [];
+    if(partilha()==="sala"){
+      linhas.push("<b>Sala:</b> “"+esc(nomeSala())+"” · palavra-passe com "+passeSala().length+" caracteres");
+      linhas.push("<b>Canal:</b> "+(SALA.topico ? esc(SALA.topico.slice(-12)) : "ainda não calculado") +
+                  " <em>(tem de ser igual em todos os ecrãs)</em>");
+      linhas.push("<b>Servidor:</b> "+esc(servidorSala()));
+      linhas.push("<b>Ligação:</b> "+esc(SALA.estado));
+      linhas.push("<b>Mensagens:</b> recebidas "+SALA.recebidas+
+                  (SALA.ilegiveis ? (" · <b>"+SALA.ilegiveis+" ilegíveis</b> (palavra-passe diferente)") : "")+
+                  " · enviadas "+SALA.enviadas);
+      linhas.push("<b>Evento na sala:</b> "+(SALA.ev ? esc(SALA.ev.nome || SALA.ev.id) : "ainda não identificado"));
+      if(SALA.trocouEvento) linhas.push("<b>Atenção:</b> a sala mudou de evento — "+esc(SALA.trocouEvento));
+      if(SALA.ultimaOrigem) linhas.push("<b>Última mensagem de:</b> "+esc(SALA.ultimaOrigem));
+      linhas.push("<b>Neste ecrã:</b> "+pedidos.length+" na fila · em serviço "+
+                  (atual===null||atual===undefined ? "—" : atual));
+      if(!SALA.recebidas && SALA.estado.indexOf("ligada")===0){
+        linhas.push("Ligado, mas ainda sem mensagens. Se outro ecrã tem pedidos, carregue lá em "+
+                    "«Enviar este ecrã» — ou confirme que o canal acima é o mesmo nos dois.");
+      }
+      $("#dDiagnostico").innerHTML = linhas.join("<br>");
+      return;
+    }
     var modo=partilha();
     linhas.push("<b>Partilha:</b> " + (modo==="sala" ? ("sala “"+(nomeSala()||"sem nome")+"”")
                                      : modo==="claude" ? "conta Claude" : "desligada neste ecrã"));
@@ -1384,13 +1460,15 @@
     $("#dDiagnostico").innerHTML = linhas.join("<br>");
   }
   $("#dTestarNuvem").addEventListener("click", function(){
-    diagnostico();
     if(partilha()==="sala"){
+      SALA.recebidas=0; SALA.ilegiveis=0; SALA.enviadas=0;
       ligarSala();
-      toast(SALA.estado==="ligada" ? "Sala ligada" : "A ligar à sala…");
-      setTimeout(diagnostico, 1500);
+      diagnostico();
+      setTimeout(diagnostico, 1200);
+      setTimeout(diagnostico, 3500);
       return;
     }
+    diagnostico();
     ligarNuvem().then(function(ns){
       if(!ns){ ultimoErro="a nuvem não está disponível nesta janela"; diagnostico(); return; }
       db.doc("pedidos/estado").get().then(function(snap){
@@ -1408,7 +1486,12 @@
     });
   });
   $("#dEnviarNuvem").addEventListener("click", function(){
-    if(partilha()==="sala"){ publicarSala(); diagnostico(); toast("Enviado para a sala"); return; }
+    if(partilha()==="sala"){
+      if(!SALA.cli || !SALA.cli.connected){ toast("Ainda não está ligado à sala"); return; }
+      publicarSala();
+      setTimeout(function(){ diagnostico(); toast("Este ecrã passou a ser o que vale na sala"); }, 300);
+      return;
+    }
     if(partilha()!=="claude"){ toast("Ligue primeiro a partilha"); return; }
     ligarNuvem().then(function(ns){
       if(!ns){ toast("Sem acesso à nuvem"); return; }
