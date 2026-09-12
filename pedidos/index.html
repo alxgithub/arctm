@@ -856,14 +856,21 @@
       SALA.cli=cli;
       cli.on("connect", function(){
         SALA.estado = haCifra() ? "ligada" : "ligada (sem cifra)";
+        SALA.recebeu = false;
         cli.subscribe(SALA.topico, {qos:0});
-        publicarSala(); desenhar();
+        // não publicar já: primeiro ouvir o que a sala tem, senão um ecrã novo
+        // apagaria o estado dos outros. Só publica se ninguém responder.
+        setTimeout(function(){
+          if(!SALA.recebeu) publicarSala();
+        }, 2500);
+        desenhar();
       });
       cli.on("reconnect", function(){ SALA.estado="a ligar"; desenhar(); });
       cli.on("close", function(){ if(SALA.estado==="ligada"){ SALA.estado="sem ligação"; desenhar(); } });
       cli.on("error", function(){ SALA.estado="sem ligação"; desenhar(); });
       cli.on("message", function(t, corpo){
         decifrar(corpo.toString()).then(function(d){
+          SALA.recebeu = true;
           if(!d || d.de===SALA.id) return;   // eco do próprio ecrã
           ultimaRecebida=Date.now();
           aplicarRemoto(d, true);
