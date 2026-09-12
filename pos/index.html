@@ -218,6 +218,13 @@
     overflow-y:auto;padding:2px 12px;scrollbar-width:thin;
   }
   .cabeca-paga .mini + .mini{margin-left:6px}
+  .hist-prod{
+    border:1px solid var(--line);border-radius:12px;background:var(--card);
+    padding:0 13px;margin:2px 0 14px;font-size:0.875rem;
+  }
+  .hist-prod summary{cursor:pointer;padding:11px 0;font-weight:600;color:var(--ink-2)}
+  .hist-prod ul{list-style:none;margin:0;padding:0 0 11px}
+  .hist-prod li{padding:5px 0;border-top:1px solid var(--line);color:var(--ink-2)}
   .cabeca-paga{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:2px;
@@ -670,6 +677,7 @@
   }
   .toast.on{opacity:1}
   @media (prefers-reduced-motion: reduce){.toast{transition:none}}
+
 </style>
 </head>
 <body>
@@ -718,6 +726,10 @@
         <button type="button" id="btnNovoProduto">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           Produto
+        </button>
+        <button type="button" id="btnGavetaGrelha" hidden title="Abrir a gaveta do dinheiro">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="2"/><path d="M2.5 11.5h19"/><path d="M10 14.6h4"/></svg>
+          Gaveta
         </button>
       </div>
       <div class="paginas" id="paginas" hidden>
@@ -857,10 +869,18 @@
       <div class="abas" id="pAbas"></div>
       <div class="icones" id="pIcones"></div>
     </div>
+    <label class="linha-pedido" id="pValeLinha">
+      <input id="pVale" type="checkbox">
+      <span>É um <b>vale</b> — abate ao que o cliente tem a pagar, mas conta como venda</span>
+    </label>
     <div class="fila">
       <button class="btn ghost" type="button" data-fechar>Cancelar</button>
       <button class="btn" id="pGuardar" type="button">Guardar</button>
     </div>
+    <details class="hist-prod" id="pHistorico" hidden>
+      <summary>Alterações deste produto</summary>
+      <ul id="pHistLista"></ul>
+    </details>
     <div style="margin-top:12px" id="pApagarZona" hidden>
       <button class="btn perigo largo" id="pApagar" type="button">Apagar produto</button>
     </div>
@@ -895,6 +915,8 @@
         <div class="abas separadores" id="payModos"></div>
         <div class="visor">
           <div class="l"><span>Total</span><b id="payTotal">0,00 €</b></div>
+          <div class="l" id="fVales" hidden><span>Vales</span><b id="payVales">0,00 €</b></div>
+          <div class="l" id="fPorPagar" hidden><span>A pagar</span><b id="payPorPagar">0,00 €</b></div>
           <div class="l campo-pay" id="fCartao" hidden><span>No cartão</span><b id="payCartaoVal">0,00 €</b></div>
           <div class="l" id="fDevido" hidden><span>A pagar em dinheiro</span><b id="payDevido">0,00 €</b></div>
           <div class="l campo-pay" id="fRecebido"><span>Recebido em dinheiro</span><b id="payRecebido">0,00 €</b></div>
@@ -985,6 +1007,7 @@
       <button type="button" data-raba="dias">Dias</button>
       <button type="button" data-raba="artigos">Artigos</button>
       <button type="button" data-raba="horas">Horas</button>
+      <button type="button" data-raba="vales">Vales e Junta</button>
       <button type="button" data-raba="caixa">Caixa</button>
     </div>
     <div class="corpo-abas" id="rCorpo"></div>
@@ -1259,6 +1282,12 @@
             <span class="pc">linhas</span>
           </div>
         </label>
+        <label class="campo"><span>Botão da gaveta na grelha</span>
+          <select id="aBotaoGaveta">
+            <option value="sim">Mostrar ao lado de “+ Produto”</option>
+            <option value="nao">Esconder</option>
+          </select>
+        </label>
         <label class="campo"><span>Gaveta do dinheiro</span>
           <select id="aGaveta">
             <option value="nao">Não abrir</option>
@@ -1438,6 +1467,23 @@
         <button class="btn ghost" id="aImportar" type="button">Importar</button>
       </div>
       <button class="btn ghost largo" id="aExportarEvento" type="button">Exportar só este evento</button>
+
+      <h3>Guardar no servidor</h3>
+      <p class="sub">Manda a cópia para o Raspberry Pi, que a guarda com a data e a hora no nome. Assim não fica só neste aparelho.</p>
+      <div class="par">
+        <label class="campo"><span>Endereço do servidor de dados</span>
+          <input id="aServidorDados" type="text" autocomplete="off" spellcheck="false" placeholder="http://192.168.0.110:8090">
+        </label>
+        <label class="campo"><span>Pasta onde guardar</span>
+          <input id="aPastaCopias" type="text" autocomplete="off" list="listaPastas" placeholder="ex.: balcão, bar, tablet">
+          <datalist id="listaPastas"></datalist>
+        </label>
+      </div>
+      <div class="fila">
+        <button class="btn ghost" id="aEnviarCopia" type="button">Guardar cópia no servidor</button>
+        <button class="btn ghost" id="aVerCopias" type="button">Ver cópias guardadas</button>
+      </div>
+      <div class="aviso" id="estadoCopias" style="margin-top:12px" hidden></div>
 
       <h3>Definições deste dispositivo</h3>
       <p class="sub">Aspeto, tamanhos, disposição e preferências. Copie daqui e cole noutro dispositivo para ficar tudo igual — não inclui eventos nem vendas.</p>
@@ -2221,6 +2267,7 @@
     {id:"pratos",   nome:"Pratos e Petiscos",  cor:"#B8402A"},
     {id:"sandes",   nome:"Sandes e Pão",       cor:"#C9702E"},
     {id:"doces",    nome:"Doces",              cor:"#A03A6B"},
+    {id:"vales",    nome:"Vales",              cor:"#6B4E8E"},
     {id:"outros",   nome:"Outros",             cor:"#4A5C55"}
   ];
   function categoriasDe(ev){
@@ -2262,7 +2309,6 @@
     ["Menu Ovos Rotos",      12.00, "batatas",  "menus"],
     ["Menu Pernil c/ Arroz de Feijão", 12.00, "espetada", "menus"],
     ["Menu Feijoada de Marisco",       13.00, "caracois", "menus"],
-    ["Menu Junta",           12.00, "senha",    "menus"],
 
     ["Taça de Caldo Verde",   2.00, "sopa",     "pratos"],
     ["Moelas",                3.00, "petiscos", "pratos"],
@@ -2532,7 +2578,7 @@
   function metodosDe(ev){
     var extra = (ev && Array.isArray(ev.metodosExtra)) ? ev.metodosExtra : [];
     return PAG_BASE.concat(extra.map(function(m){
-      return {id:m.id, nome:m.nome, tipo:m.tipo||"cartao", fixo:false};
+      return {id:m.id, nome:m.nome, tipo:m.tipo||"cartao", fixo:false, cobrar:!!m.cobrar};
     }));
   }
   function metodoPorId(id, ev){
@@ -2580,11 +2626,21 @@
         desenharPagamentosEditor();
       });
       if(!m.fixo){
+        // marca de "a cobrar mais tarde": entra na conta a apresentar a quem paga
+        var cobrar=document.createElement("button"); cobrar.type="button"; cobrar.className="mini";
+        cobrar.textContent = m.cobrar ? "a cobrar" : "cobrar?";
+        cobrar.title = "Marcar “"+m.nome+"” como valor a cobrar mais tarde";
+        cobrar.setAttribute("aria-pressed", String(!!m.cobrar));
+        cobrar.style.marginLeft="-4px";
+        cobrar.addEventListener("click", function(){
+          metodosEditando.forEach(function(x){ if(x.id===m.id) x.cobrar = !x.cobrar; });
+          desenharPagamentosEditor();
+        });
         var x=document.createElement("button"); x.type="button"; x.className="mini perigo";
         x.textContent="×"; x.title="Apagar “"+m.nome+"”";
         x.style.marginLeft="-4px";
         x.addEventListener("click", function(){ apagarMetodo(m); });
-        c.appendChild(b); c.appendChild(x);
+        c.appendChild(b); c.appendChild(cobrar); c.appendChild(x);
         return;
       }
       c.appendChild(b);
@@ -2626,7 +2682,7 @@
     if(!id || id==="m"){ toast("Nome inválido"); return; }
     var evRef = {metodosExtra: metodosEditando};
     if(metodosDe(evRef).some(function(x){ return x.id===id; })){ toast("Já existe essa forma"); return; }
-    metodosEditando.push({id:id, nome:nome, tipo:"cartao"});
+    metodosEditando.push({id:id, nome:nome, tipo:"cartao", cobrar:false});
     pagEscolhidos[id] = true;
     $("#eNovoPag").value = "";
     desenharPagamentosEditor();
@@ -2890,7 +2946,8 @@
     estado.ultimaVenda=null;
     var achou=false;
     estado.carrinho.forEach(function(l){ if(l.pid===p.id){ l.qtd++; achou=true; } });
-    if(!achou) estado.carrinho.push({pid:p.id,nome:p.nome,preco:p.preco,qtd:1,icone:p.icone,cor:corDoProduto(p)});
+    if(!achou) estado.carrinho.push({pid:p.id,nome:p.nome,preco:p.preco,qtd:1,icone:p.icone,
+                                     cor:corDoProduto(p), vale:ehVale(p)});
     desenharCarrinho(); desenharGrelha();
     if(!achou){
       var el=$("#linhas");
@@ -2916,7 +2973,18 @@
     }
     desenharCarrinho(); desenharGrelha();
   }
-  function totalCarrinho(){ return estado.carrinho.reduce(function(s,l){ return s+l.preco*l.qtd; },0); }
+  // Um vale é dinheiro que outra entidade já entregou: entra como produto vendido,
+  // mas abate ao que o cliente tem de pagar. Por isso as contas andam separadas.
+  function ehVale(p){ return !!(p && (p.vale || p.categoria==="vales")); }
+  function totalCarrinho(){
+    return estado.carrinho.reduce(function(s,l){ return ehVale(l) ? s : s+l.preco*l.qtd; },0);
+  }
+  function valesCarrinho(){
+    return estado.carrinho.reduce(function(s,l){ return ehVale(l) ? s+l.preco*l.qtd : s; },0);
+  }
+  function porPagarCarrinho(){
+    return Math.max(0, Math.round((totalCarrinho() - valesCarrinho())*100)/100);
+  }
   function atualizarScrollTalao(){
     var el=$("#linhas"), wrap=$("#talaoLista");
     if(!el||!wrap) return;
@@ -3123,11 +3191,58 @@
     iconeEscolhido = p?(p.icone||""):"";
     imagemEscolhida = p ? (estado.imagens[p.id]||null) : null;
     grupoAtivo = iconeEscolhido && MAPA_ICONES[iconeEscolhido] ? MAPA_ICONES[iconeEscolhido].g : "bebidas";
+    $("#pVale").checked = p ? ehVale(p) : false;
     $("#pApagarZona").hidden = !p;
+    desenharHistoricoProduto(p);
     desenharCores(); desenharAbas(); desenharIcones(); desenharPrev();
     abrir("#sheetProduto");
     setTimeout(function(){ $("#pNome").focus(); },60);
   }
+  // Histórico do catálogo: quem mudou o quê e quando.
+  // As vendas guardam sempre o preço e o nome do momento, por isso o passado nunca muda;
+  // isto serve para saber quando é que o produto mudou, e do quê para quê.
+  var LIMITE_HISTORICO = 800;
+  function registarAlteracao(ev, entrada){
+    if(!ev) return;
+    ev.historico = Array.isArray(ev.historico) ? ev.historico : [];
+    entrada.ts = Date.now();
+    ev.historico.push(entrada);
+    if(ev.historico.length > LIMITE_HISTORICO){
+      ev.historico = ev.historico.slice(-LIMITE_HISTORICO);
+    }
+  }
+  function historicoDe(ev, pid){
+    return (ev && Array.isArray(ev.historico) ? ev.historico : [])
+      .filter(function(h){ return !pid || h.pid===pid; })
+      .sort(function(a,b){ return b.ts-a.ts; });
+  }
+  function descreverAlteracao(h){
+    var quando = new Date(h.ts).toLocaleString("pt-PT",
+      {day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"});
+    var texto;
+    if(h.acao==="criado") texto = "criado a "+money(h.preco);
+    else if(h.acao==="preco") texto = "preço: "+money(h.antes)+" → "+money(h.depois);
+    else if(h.acao==="nome") texto = "nome: “"+h.antes+"” → “"+h.depois+"”";
+    else if(h.acao==="categoria") texto = "mudou de categoria";
+    else if(h.acao==="oculto") texto = h.depois ? "escondido da grelha" : "voltou à grelha";
+    else if(h.acao==="apagado") texto = "apagado";
+    else texto = h.acao;
+    return quando + " · " + texto;
+  }
+
+  function desenharHistoricoProduto(p){
+    var cx = $("#pHistorico"), ul = $("#pHistLista");
+    if(!cx || !ul) return;
+    var lista = p ? historicoDe(evAtual(), p.id) : [];
+    cx.hidden = !lista.length;
+    if(!lista.length) return;
+    cx.querySelector("summary").textContent =
+      lista.length + (lista.length===1 ? " alteração" : " alterações") + " neste produto";
+    ul.innerHTML = lista.slice(0, 40).map(function(h){
+      return "<li>"+esc(descreverAlteracao(h))+"</li>";
+    }).join("");
+  }
+
   function guardarProduto(){
     var e=evAtual(); if(!e) return;
     var nome=capitalizar($("#pNome").value.trim());
@@ -3136,15 +3251,24 @@
     if(isNaN(preco)||preco<0){ toast("Preço inválido"); $("#pPreco").focus(); return; }
     preco=Math.round(preco*100)/100;
     if(editando){
+      var categoriaNova = $("#pCategoria").value || "";
+      if(editando.nome !== nome)
+        registarAlteracao(e, {pid:editando.id, acao:"nome", antes:editando.nome, depois:nome});
+      if(Math.abs((editando.preco||0) - preco) > 0.0001)
+        registarAlteracao(e, {pid:editando.id, acao:"preco", antes:editando.preco, depois:preco, nome:nome});
+      if((editando.categoria||"") !== categoriaNova)
+        registarAlteracao(e, {pid:editando.id, acao:"categoria", antes:editando.categoria||"", depois:categoriaNova, nome:nome});
       editando.nome=nome; editando.preco=preco; editando.cor=corEscolhida; editando.icone=iconeEscolhido;
-      editando.categoria = $("#pCategoria").value || "";
+      editando.categoria = categoriaNova;
+      editando.vale = $("#pVale").checked;
       definirImagem(editando.id, imagemEscolhida);
       estado.carrinho.forEach(function(l){ if(l.pid===editando.id){ l.nome=nome; l.preco=preco; l.cor=corEscolhida; l.icone=iconeEscolhido; } });
     } else {
       e.produtos=e.produtos||[];
       var novo={id:uid(),nome:nome,preco:preco,cor:corEscolhida,icone:iconeEscolhido,
-                categoria:$("#pCategoria").value||""};
+                categoria:$("#pCategoria").value||"", vale:$("#pVale").checked};
       e.produtos.push(novo);
+      registarAlteracao(e, {pid:novo.id, acao:"criado", nome:nome, preco:preco});
       if(imagemEscolhida) definirImagem(novo.id, imagemEscolhida);
     }
     if(estado.modo==="nuvem" && pesoImagens() > 200000) toast("Cuidado: muitas imagens podem não caber na nuvem");
@@ -3176,6 +3300,7 @@
         "Esconder da grelha").then(function(ok){
           if(!ok) return;
           alvo.oculto = true;
+          registarAlteracao(e, {pid:alvo.id, acao:"oculto", nome:alvo.nome, depois:true});
           guardarEvento(e); fechar("#sheetProduto"); pagina=0; pintarTudo();
           toast("Produto escondido da grelha");
         });
@@ -3183,6 +3308,7 @@
     }
     confirmar("Apagar “"+alvo.nome+"”?", "O botão desaparece da grelha. Nunca foi vendido neste evento, por isso não afeta relatórios.", "Apagar produto").then(function(ok){
       if(!ok) return;
+      registarAlteracao(e, {pid:alvo.id, acao:"apagado", nome:alvo.nome, preco:alvo.preco});
       e.produtos=(e.produtos||[]).filter(function(p){ return p.id!==alvo.id; });
       definirImagem(alvo.id, null);
       estado.carrinho=estado.carrinho.filter(function(l){ return l.pid!==alvo.id; });
@@ -3665,7 +3791,7 @@
     atualizarPagar();
   }
   function devidoEmDinheiro(){
-    var t=totalCarrinho();
+    var t=porPagarCarrinho();          // já descontados os vales
     if(tipoDoModo()==="cartao") return 0;
     if(modoPag==="misto") return Math.max(0, Math.round((t - valorCartao)*100)/100);
     return t;
@@ -3673,6 +3799,13 @@
   function atualizarPagar(){
     var t=totalCarrinho(), devido=devidoEmDinheiro();
     $("#payTotal").textContent=money(t);
+    var vl = valesCarrinho();
+    $("#fVales").hidden = vl <= 0;
+    $("#fPorPagar").hidden = vl <= 0;
+    if(vl > 0){
+      $("#payVales").textContent = "− "+money(vl);
+      $("#payPorPagar").textContent = money(porPagarCarrinho());
+    }
     $("#payCartaoVal").textContent=money(valorCartao);
     $("#payDevido").textContent=money(devido);
     $("#payRecebido").textContent=money(recebido);
@@ -3781,11 +3914,18 @@
       id:uid(), ts:Date.now(), dia:estado.dia,
       total:Math.round(t*100)/100, metodo:modoPag,
       emCartao:Math.round(emCartao*100)/100, emDinheiro:emDinheiro,
+      vales: Math.round(valesCarrinho()*100)/100,
+      porPagar: Math.round(porPagarCarrinho()*100)/100,
       recebido:Math.round(rec*100)/100,
+      metodoNome:(function(){
+        var m = metodosDe(evAtual()).filter(function(x){ return x.id===modoPag; })[0];
+        return m ? m.nome : modoPag;
+      })(),
       troco: Math.round(Math.max(0, rec-devido)*100)/100,
       linhas: estado.carrinho.map(function(l){
         // o preço fica gravado como estava no momento da venda
         var o={pid:l.pid||"", nome:l.nome, preco:l.preco, qtd:l.qtd, icone:l.icone||""};
+        if(l.vale) o.vale=true;
         if(l.livre) o.livre=true;
         if(l.nota) o.nota=l.nota;
         return o;
@@ -4082,7 +4222,7 @@
     var linhasDia=[], artigos={}, horas=[];
     for(var i=0;i<24;i++) horas.push({n:0,total:0});
     var total=0,n=0,dinheiro=0,cartao=0,retirado=0,entrada=0,itens=0;
-    var porMetodo={};
+    var porMetodo={}, vales={}, totalVales=0, vendasComVale=0;
 
     dias.forEach(function(d){
       var vs=Object.keys(porDia[d]||{}).map(function(k){ return porDia[d][k]; })
@@ -4090,7 +4230,7 @@
       var movs=Object.keys(caixaDia[d]||{}).map(function(k){ return caixaDia[d][k]; })
         .filter(function(m){ return m&&typeof m.valor==="number"; });
       var c=somaCaixa(movs);
-      var dDinheiro=0, dTotal=0, dMetodos={};
+      var dDinheiro=0, dTotal=0, dMetodos={}, dVales=0;
       vs.forEach(function(v){
         dTotal += v.total; total += v.total; n++;
         var pd=parteDinheiro(v);
@@ -4099,7 +4239,14 @@
         dMetodos[v.metodo] = (dMetodos[v.metodo]||0) + v.total;
         var hora = new Date(v.ts).getHours();
         if(horas[hora]){ horas[hora].n++; horas[hora].total += v.total; }
+        if(v.vales > 0){ totalVales += v.vales; dVales += v.vales; vendasComVale++; }
         (v.linhas||[]).forEach(function(l){
+          if(l.vale){
+            var chaveV = l.nome;
+            if(!vales[chaveV]) vales[chaveV] = {nome:chaveV, qtd:0, valor:0, unitario:l.preco};
+            vales[chaveV].qtd += l.qtd;
+            vales[chaveV].valor += l.qtd * l.preco;
+          }
           itens += l.qtd;
           if(!artigos[l.nome]) artigos[l.nome]={qtd:0,val:0,icone:l.icone||"",precos:{}};
           artigos[l.nome].qtd+=l.qtd; artigos[l.nome].val+=l.qtd*l.preco;
@@ -4110,7 +4257,7 @@
         });
       });
       retirado += c.saida; entrada += c.entrada;
-      linhasDia.push({dia:d, n:vs.length, total:dTotal, dinheiro:dDinheiro, metodos:dMetodos,
+      linhasDia.push({dia:d, n:vs.length, total:dTotal, dinheiro:dDinheiro, metodos:dMetodos, vales:dVales,
                       entrada:c.entrada, saida:c.saida, caixa:c.entrada+dDinheiro-c.saida});
     });
 
@@ -4133,7 +4280,10 @@
     return {dias:linhasDia, artigos:lista, horas:horas, total:total, n:n, itens:itens,
             dinheiro:dinheiro, cartao:cartao, retirado:retirado, entrada:entrada,
             caixa:entrada+dinheiro-retirado, media:n?total/n:0,
-            melhorDia:melhorDia, melhorHora:melhorHora, porMetodo:porMetodo};
+            melhorDia:melhorDia, melhorHora:melhorHora, porMetodo:porMetodo,
+            vales:Object.keys(vales).map(function(k){ return vales[k]; })
+                     .sort(function(a,b){ return b.valor-a.valor; }),
+            totalVales:totalVales, vendasComVale:vendasComVale};
   }
 
   function desenharFiltroDias(){
@@ -4317,6 +4467,43 @@
         function(x){ return x.total; },
         function(x){ return String(x.h).padStart(2,"0")+"h"; },
         function(x){ return x.n?(x.n+" vendas · "+money(x.total)):"—"; }));
+      return;
+    }
+
+    if(rAba==="vales"){
+      var metodosCobrar = metodosDe(relCache.ev).filter(function(m){ return m.cobrar; });
+      var totalCobrar = 0;
+      metodosCobrar.forEach(function(m){ totalCobrar += (a.porMetodo[m.id]||0); });
+
+      if(!a.totalVales && !totalCobrar){
+        c.innerHTML = '<p class="vazio-rel">Ainda não há vales nem vendas a cobrar a terceiros.<br><br>'+
+          'Marque um produto como <b>vale</b> no seu editor, ou marque uma forma de pagamento como '+
+          '<b>a cobrar mais tarde</b> nas definições do evento.</p>';
+        return;
+      }
+
+      var v1=document.createElement("div"); v1.className="visor";
+      v1.innerHTML =
+        '<div class="l"><span>Vales aceites <em>'+a.vendasComVale+(a.vendasComVale===1?" venda":" vendas")+'</em></span><b>'+money(a.totalVales)+'</b></div>'+
+        metodosCobrar.map(function(m){
+          return '<div class="l"><span>'+esc(m.nome)+' <em>a cobrar</em></span><b>'+money(a.porMetodo[m.id]||0)+'</b></div>';
+        }).join("")+
+        '<div class="l g"><span>Total a cobrar</span><b>'+money(a.totalVales + totalCobrar)+'</b></div>';
+      c.appendChild(v1);
+
+      if(a.vales.length){
+        var h2=document.createElement("h3"); h2.textContent="Vales por tipo"; c.appendChild(h2);
+        c.appendChild(barras(a.vales,
+          function(x){ return x.valor; },
+          function(x,i){ return '<i class="ordem">'+(i+1)+'</i>'+esc(x.nome); },
+          function(x){ return x.qtd+" × "+money(x.unitario)+" · "+money(x.valor); },
+          function(){ return svgIcone("senha",18); }));
+      }
+
+      var fila=document.createElement("div"); fila.className="fila"; fila.style.marginTop="16px";
+      fila.innerHTML = '<button class="btn ghost" id="rContaJunta" type="button">Imprimir conta a cobrar</button>';
+      c.appendChild(fila);
+      fila.querySelector("button").addEventListener("click", function(){ imprimirConta(a, metodosCobrar); });
       return;
     }
 
@@ -4671,6 +4858,68 @@
     } else porBlob();
   }
 
+  function imprimirConta(a, metodosCobrar){
+    var ev = relCache.ev;
+    var totalCobrar = 0;
+    metodosCobrar.forEach(function(m){ totalCobrar += (a.porMetodo[m.id]||0); });
+    var quando = new Date().toLocaleString("pt-PT",
+      {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+    var periodo = rDia ? ("dia "+rotuloDia(rDia)) : rotuloDatas(ev);
+
+    var linhas = "";
+    if(a.vales.length){
+      linhas += '<tr class="grupo"><td colspan="3">Vales aceites</td></tr>';
+      a.vales.forEach(function(v){
+        linhas += '<tr><td>'+esc(v.nome)+'</td><td class="n">'+v.qtd+' × '+money(v.unitario)+
+                  '</td><td class="n">'+money(v.valor)+'</td></tr>';
+      });
+    }
+    if(metodosCobrar.length){
+      linhas += '<tr class="grupo"><td colspan="3">Vendas a cobrar</td></tr>';
+      metodosCobrar.forEach(function(m){
+        var val = a.porMetodo[m.id]||0;
+        if(!val) return;
+        linhas += '<tr><td>'+esc(m.nome)+'</td><td class="n"></td><td class="n">'+money(val)+'</td></tr>';
+      });
+    }
+
+    var doc =
+      '<!DOCTYPE html><html lang="pt-PT"><head><meta charset="utf-8">'+
+      '<title>Conta a cobrar — '+esc(ev?ev.nome:"")+'</title><style>'+
+      '@page{size:A4;margin:18mm}'+
+      'body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#111;line-height:1.5;margin:0}'+
+      'h1{font-size:20px;margin:0 0 2px}'+
+      'p.sub{margin:0 0 22px;color:#555;font-size:13.5px}'+
+      'table{width:100%;border-collapse:collapse;font-size:14px;margin-bottom:18px}'+
+      'th,td{text-align:left;padding:7px 6px;border-bottom:1px solid #ddd}'+
+      'th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:#666}'+
+      'td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}'+
+      'tr.grupo td{font-weight:700;background:#f3f4f3;border-bottom:1px solid #ccc}'+
+      '.total{display:flex;justify-content:space-between;font-size:18px;font-weight:800;'+
+      'border-top:2px solid #111;padding-top:10px;margin-top:6px}'+
+      '.assina{margin-top:56px;display:flex;gap:40px;font-size:13px;color:#555}'+
+      '.assina div{flex:1;border-top:1px solid #999;padding-top:6px}'+
+      '@media screen{body{background:#eef1ef;padding:20px}'+
+      '.folha{background:#fff;max-width:760px;margin:0 auto;padding:34px 38px;box-shadow:0 2px 14px rgba(0,0,0,.12)}}'+
+      '</style></head><body><div class="folha">'+
+      '<h1>'+esc(LS.ler("cabecalho","ARCTM"))+' — conta a cobrar</h1>'+
+      '<p class="sub">'+esc(ev?ev.nome:"")+' · '+esc(periodo)+'<br>Emitido em '+quando+'</p>'+
+      '<table><thead><tr><th>Descrição</th><th class="n">Quantidade</th><th class="n">Valor</th></tr></thead>'+
+      '<tbody>'+linhas+'</tbody></table>'+
+      '<div class="total"><span>Total a cobrar</span><b>'+money(a.totalVales + totalCobrar)+'</b></div>'+
+      '<div class="assina"><div>Pela associação</div><div>Pela entidade</div></div>'+
+      '</div><script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script>'+
+      '</body></html>';
+
+    try{
+      var blob = new Blob([doc], {type:"text/html;charset=utf-8"});
+      var url = URL.createObjectURL(blob);
+      var w = window.open(url, "conta_arctm", "width=820,height=900");
+      if(!w) toast("A janela foi bloqueada pelo browser");
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+    }catch(e){ toast("Não consegui abrir o documento"); }
+  }
+
   /* ------------- talão para impressora térmica ------------- */
   // emblema da associação, convertido para preto e branco com difusão de erro
   var LOGO_TALAO = "data:image/png;base64,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";
@@ -4725,6 +4974,7 @@
       var comoPrecos = LS.ler("mostrarPrecos","sim");
       h += '<table class="itens">';
       linhas.forEach(function(l){
+        if(l.vale) return;   // os vales aparecem à parte, no fim
         h += '<tr><td class="q">'+l.qtd+'×</td><td class="n">'+esc(l.nome);
         if(comoPrecos==="unitario" && l.qtd>1){
           h += '<br><small>'+money(l.preco).replace(/\u00A0/g," ")+' cada</small>';
@@ -4739,6 +4989,15 @@
       if(LS.ler("mostrarTotal","sim")==="sim"){
         h += '<div class="risca"></div>';
         h += '<div class="total"><span>TOTAL</span><b>'+money(venda.total).replace(/\u00A0/g," ")+'</b></div>';
+      }
+      if(venda.vales > 0){
+        (venda.linhas||[]).filter(function(l){ return l.vale; }).forEach(function(l){
+          h += '<div class="pag">'+esc(l.nome)+(l.qtd>1 ? (" ×"+l.qtd) : "")+
+               " — "+money(l.preco*l.qtd).replace(/\u00A0/g," ")+'</div>';
+        });
+        h += '<div class="total"><span>A PAGAR</span><b>'+
+             money(venda.porPagar!==undefined ? venda.porPagar : (venda.total - venda.vales)).replace(/\u00A0/g," ")+
+             '</b></div>';
       }
       if(LS.ler("mostrarPagamento","nao")==="sim"){
         h += '<div class="pag">'+(etiquetas[venda.metodo]||venda.metodo);
@@ -5234,6 +5493,7 @@
     btnLimpar: "Anular a venda em curso",
     btnLivre: "Juntar um valor sem botão próprio",
     btnNovoProduto: "Criar um produto novo neste evento",
+    btnGavetaGrelha: "Abrir a gaveta do dinheiro",
     qLimpar: "Limpar a pesquisa",
     pgInicio: "Primeira página", pgAnterior: "Página anterior",
     pgSeguinte: "Página seguinte", pgFim: "Última página",
@@ -5293,6 +5553,7 @@
   // os botões criados durante o uso também ganham dica
   var observador = new MutationObserver(function(){ aplicarDicas(); });
   observador.observe(document.body, {childList:true, subtree:true});
+
 
   /* ------------- painéis ------------- */
   function abrir(s){
@@ -5595,7 +5856,71 @@
     LS.esc("paleta",this.value); LS.esc(chaveManuais(), {}); LS.esc("acentoManual","nao");
     aplicarTema(); desenharAcentos(); desenharManuais(); desenharProntos();
   });
-  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","imprimir","metodoImpressao","servidorImp","avancoCorte","gaveta","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
+  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","servidorDados","pastaCopias","imprimir","metodoImpressao","servidorImp","avancoCorte","gaveta","botaoGaveta","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
+  function servidorDados(){
+    return String(LS.ler("servidorDados","")).trim().replace(/\/+$/,"");
+  }
+  $("#aServidorDados").addEventListener("change", function(){
+    LS.esc("servidorDados", this.value.trim()); carregarPastasCopias();
+  });
+  $("#aPastaCopias").addEventListener("change", function(){
+    LS.esc("pastaCopias", this.value.trim());
+  });
+  function carregarPastasCopias(){
+    var base = servidorDados();
+    if(!base) return;
+    fetch(base+"/api/copias").then(function(r){ return r.json(); }).then(function(d){
+      var dl = $("#listaPastas"); dl.innerHTML="";
+      (d.pastas||[]).forEach(function(nome){
+        var o=document.createElement("option"); o.value=nome; dl.appendChild(o);
+      });
+    }).catch(function(){});
+  }
+  $("#aEnviarCopia").addEventListener("click", function(){
+    var base = servidorDados();
+    if(!base){ toast("Indique o endereço do servidor"); $("#aServidorDados").focus(); return; }
+    var cx = $("#estadoCopias");
+    cx.hidden = false; cx.textContent = "A preparar a cópia…";
+    var etiqueta = (LS.ler("pastaCopias","") || "").trim();
+    recolherDados(estado.eventos).then(function(pacote){
+      var conteudo = JSON.stringify(pacote);
+      var n = 0;
+      pacote.eventos.forEach(function(e){
+        Object.keys(e.vendas||{}).forEach(function(d){ n += Object.keys(e.vendas[d]||{}).length; });
+      });
+      return fetch(base+"/api/copias", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({nome:"registadora.json", pasta:etiqueta, conteudo:conteudo})
+      }).then(function(r){ return r.json(); }).then(function(d){
+        if(d && d.ok){
+          cx.textContent = "Guardado: " + d.ficheiro + " — " +
+            pacote.eventos.length + (pacote.eventos.length===1?" evento":" eventos") +
+            ", " + n + (n===1?" venda":" vendas") + ", " + Math.round(d.tamanho/1024) + " KB";
+          toast("Cópia guardada no servidor");
+          carregarPastasCopias();
+        } else {
+          cx.textContent = "O servidor recusou: " + ((d && d.erro) || "razão desconhecida");
+        }
+      });
+    }).catch(function(){
+      cx.textContent = "Sem ligação ao servidor de dados. Confirme o endereço e se o Pi está ligado.";
+    });
+  });
+  $("#aVerCopias").addEventListener("click", function(){
+    var base = servidorDados();
+    if(!base){ toast("Indique o endereço do servidor"); return; }
+    var cx = $("#estadoCopias"); cx.hidden=false; cx.textContent="A consultar…";
+    fetch(base+"/api/copias").then(function(r){ return r.json(); }).then(function(d){
+      var lista = d.copias||[];
+      if(!lista.length){ cx.textContent = "Ainda não há cópias guardadas em " + (d.raiz||"") + "."; return; }
+      cx.innerHTML = "<b>" + lista.length + (lista.length===1?" cópia":" cópias") + " em " + esc(d.raiz||"") + "</b><br>" +
+        lista.slice(0,8).map(function(c){
+          return esc(c.nome) + " — " + Math.round(c.tamanho/1024) + " KB, " +
+                 new Date(c.quando).toLocaleString("pt-PT");
+        }).join("<br>") + (lista.length>8 ? "<br>…" : "");
+    }).catch(function(){ cx.textContent = "Sem ligação ao servidor de dados."; });
+  });
+
   $("#aCopiarDefs").addEventListener("click", function(){
     var pacote = {app:"registadora-definicoes", versao:1};
     CHAVES_DEFS.forEach(function(k){
@@ -5859,6 +6184,9 @@
     setTimeout(function(){ aplicarMedidas(); desenharGrelha(); atualizarScrollTalao(); }, 120);
   });
   $("#btnAjustes").addEventListener("click", function(){
+    $("#aServidorDados").value = LS.ler("servidorDados","");
+    $("#aPastaCopias").value = LS.ler("pastaCopias","");
+    carregarPastasCopias();
     $("#aModo").value=estado.modo; notaModo(); desenharAcentos(); desenharProntos(); desenharManuais(); sincronizarCursores(); desenharPrevia(); desenharListaProdutos();
     $("#aMetodoImpressao").value = LS.ler("metodoImpressao","browser");
     $("#aServidorImp").value = LS.ler("servidorImp","");
@@ -5870,6 +6198,8 @@
     $("#aVias").value = String(LS.ler("vias","2"));
     $("#aPapel").value = String(LS.ler("papel","80"));
     $("#aGaveta").value = LS.ler("gaveta","nao");
+    $("#aBotaoGaveta").value = LS.ler("botaoGaveta","sim");
+    mostrarBotaoGaveta();
     $("#aLogo").value = LS.ler("logo","sim");
     $("#aLogoTam").value = LS.ler("logoTam","medio");
     $("#aCabecalho").value = LS.ler("cabecalho","ARCTM");
@@ -5910,7 +6240,10 @@
     $("#campoAvanco").hidden = this.value!=="servidor";
   });
   $("#aServidorImp").addEventListener("change", function(){
-    LS.esc("servidorImp", this.value.trim());
+    LS.esc("servidorImp", this.value.trim()); mostrarBotaoGaveta();
+  });
+  $("#aBotaoGaveta").addEventListener("change", function(){
+    LS.esc("botaoGaveta", this.value); mostrarBotaoGaveta();
   });
   function mostrarAvanco(v){
     LS.esc("avancoCorte", v);
@@ -5945,6 +6278,13 @@
   }
   $("#aVerTalao").addEventListener("click", function(){ abrirTalao(vendaExemplo(), false); });
   $("#aImprimirTeste").addEventListener("click", function(){ abrirTalao(vendaExemplo(), true); });
+  function mostrarBotaoGaveta(){
+    var b = $("#btnGavetaGrelha");
+    if(b) b.hidden = !servidorImpressao() || LS.ler("botaoGaveta","sim")!=="sim";
+  }
+  $("#btnGavetaGrelha").addEventListener("click", function(){
+    abrirGaveta().then(function(ok){ toast(ok ? "Gaveta aberta" : "A gaveta não respondeu"); });
+  });
   $("#aAbrirGaveta").addEventListener("click", function(){
     if(!servidorImpressao()){ toast("Indique o endereço do serviço de impressão"); return; }
     abrirGaveta().then(function(ok){ toast(ok ? "Gaveta aberta" : "A gaveta não respondeu"); });
@@ -6200,6 +6540,7 @@
   $("#aModo").value=estado.modo;
   notaModo(); pintarChip(); desenharAcentos(); desenharProntos(); desenharManuais(); pintarTudo();
   vigiarArea();
+  mostrarBotaoGaveta();
   if(pedidosLigados()) ligarPedidos();
   requestAnimationFrame(function(){ desenharGrelha(); });
 
