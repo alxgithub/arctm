@@ -910,9 +910,9 @@
   }
   var APP_SALA = "senhas";
   /* ---------- sala protegida: nome + palavra-passe, conteúdo cifrado ---------- */
-  function nomeSala(){ return String(LS.ler("salaNome","")).trim(); }
-  function passeSala(){ return String(LS.ler("salaPasse","")); }
-  function servidorSala(){ return String(LS.ler("salaServidor","wss://broker.emqx.io:8084/mqtt")).trim(); }
+  function nomeSala(){ return String(LS.ler("salaNome","arctm-ff-26")).trim(); }
+  function passeSala(){ return String(LS.ler("salaPasse","123")); }
+  function servidorSala(){ return String(LS.ler("salaServidor","ws://192.168.0.110:9001")).trim(); }
 
 
   // Sem https não existe crypto.subtle. Em rede local isso é aceitável: as mensagens
@@ -1263,7 +1263,7 @@
     $("#dPartilha").value = partilha();
     $("#dSalaNome").value = nomeSala();
     $("#dSalaPasse").value = passeSala();
-    $("#dSalaServidor").value = LS.ler("salaServidor","");
+    $("#dSalaServidor").value = LS.ler("salaServidor","ws://192.168.0.110:9001");
     $("#dSalaUtilizador").value = LS.ler("salaUtilizador","");
     $("#dSalaServidorPasse").value = LS.ler("salaServidorPasse","");
     camposPartilha();

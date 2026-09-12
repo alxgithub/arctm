@@ -4695,9 +4695,9 @@
   var PEDIDOS = {cli:null, estado:"desligada", topico:"", id:Math.random().toString(36).slice(2,10),
                  lista:[], atual:null, contador:null};
   function pedidosLigados(){ return LS.ler("pedidosLigar","sim")==="sim"; }
-  function salaNome(){ return String(LS.ler("salaNome","")).trim(); }
-  function salaPasse(){ return String(LS.ler("salaPasse","")); }
-  function salaServidor(){ return String(LS.ler("salaServidor","wss://broker.emqx.io:8084/mqtt")).trim(); }
+  function salaNome(){ return String(LS.ler("salaNome","arctm-ff-26")).trim(); }
+  function salaPasse(){ return String(LS.ler("salaPasse","123")); }
+  function salaServidor(){ return String(LS.ler("salaServidor","ws://192.168.0.110:9001")).trim(); }
 
 
   // Sem https não existe crypto.subtle. Em rede local isso é aceitável: as mensagens
@@ -5119,7 +5119,7 @@
     };
   }
   function servidorImpressao(){
-    return String(LS.ler("servidorImp","")).trim().replace(/\/+$/,"");
+    return String(LS.ler("servidorImp","http://192.168.0.110:8080")).trim().replace(/\/+$/,"");
   }
   function abrirGaveta(){
     var base = servidorImpressao();
@@ -5858,7 +5858,7 @@
   });
   var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","servidorDados","pastaCopias","imprimir","metodoImpressao","servidorImp","avancoCorte","gaveta","botaoGaveta","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
   function servidorDados(){
-    return String(LS.ler("servidorDados","")).trim().replace(/\/+$/,"");
+    return String(LS.ler("servidorDados","http://192.168.0.110:8090")).trim().replace(/\/+$/,"");
   }
   $("#aServidorDados").addEventListener("change", function(){
     LS.esc("servidorDados", this.value.trim()); carregarPastasCopias();
@@ -5868,7 +5868,7 @@
   });
   function carregarPastasCopias(){
     var base = servidorDados();
-    if(!base) return;
+    if(!base || typeof fetch !== "function") return;
     fetch(base+"/api/copias").then(function(r){ return r.json(); }).then(function(d){
       var dl = $("#listaPastas"); dl.innerHTML="";
       (d.pastas||[]).forEach(function(nome){
@@ -6184,12 +6184,12 @@
     setTimeout(function(){ aplicarMedidas(); desenharGrelha(); atualizarScrollTalao(); }, 120);
   });
   $("#btnAjustes").addEventListener("click", function(){
-    $("#aServidorDados").value = LS.ler("servidorDados","");
+    $("#aServidorDados").value = LS.ler("servidorDados","http://192.168.0.110:8090");
     $("#aPastaCopias").value = LS.ler("pastaCopias","");
-    carregarPastasCopias();
+    try{ carregarPastasCopias(); }catch(e){}
     $("#aModo").value=estado.modo; notaModo(); desenharAcentos(); desenharProntos(); desenharManuais(); sincronizarCursores(); desenharPrevia(); desenharListaProdutos();
     $("#aMetodoImpressao").value = LS.ler("metodoImpressao","browser");
-    $("#aServidorImp").value = LS.ler("servidorImp","");
+    $("#aServidorImp").value = LS.ler("servidorImp","http://192.168.0.110:8080");
     var porServidor = LS.ler("metodoImpressao","browser")==="servidor";
     $("#campoServidorImp").hidden = !porServidor;
     $("#campoAvanco").hidden = !porServidor;
@@ -6218,7 +6218,7 @@
 
     $("#aSalaNome").value = salaNome();
     $("#aSalaPasse").value = salaPasse();
-    $("#aSalaServidor").value = LS.ler("salaServidor","");
+    $("#aSalaServidor").value = LS.ler("salaServidor","ws://192.168.0.110:9001");
     pintarEstadoSala();
     mostrarAba(abaAtiva); abrir("#sheetAjustes");
   });
