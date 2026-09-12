@@ -590,6 +590,8 @@
     display:flex;justify-content:space-between;align-items:baseline;gap:12px;
     padding:8px 0;font-size:0.9375rem;border-bottom:1px solid color-mix(in srgb, var(--line) 60%, transparent);
   }
+  /* o atributo hidden tem de vencer qualquer display definido nas classes */
+  [hidden]{display:none !important}
   .visor .l:last-child{border-bottom:0}
   .visor .l.g{
     font-size:1.375rem;font-weight:700;margin-top:10px;padding:14px;
@@ -1993,6 +1995,7 @@
     return copia2;
   }
 
+  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","servidorDados","pastaCopias","imprimir","metodoImpressao","servidorImp","avancoCorte","gaveta","botaoGaveta","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
   var VERSAO_APP = "2026-09-12 18:01";   // para saber que ficheiro está a correr
   var LS = {
     ler:function(k,d){ try{ var v=localStorage.getItem("reg2:"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
@@ -3119,7 +3122,9 @@
     atualizarScrollTalao();
     var n=estado.carrinho.reduce(function(s,l){ return s+l.qtd; },0);
     $("#valTotal").textContent=money(totalCarrinho());
-    $("#rotItens").textContent = n?(n===1?"1 artigo":n+" artigos"):"Sem artigos";
+    var vlCarrinho = valesCarrinho();
+    $("#rotItens").textContent = (n?(n===1?"1 artigo":n+" artigos"):"Sem artigos") +
+      (vlCarrinho > 0 ? (" · vales " + money(vlCarrinho) + " · a pagar " + money(porPagarCarrinho())) : "");
     $("#btnCobrar").disabled = n===0;
     $("#btnLimpar").disabled = n===0;
   }
@@ -3776,7 +3781,7 @@
   }
   function abrirPagar(){
     recebido=0; valorCartao=0; campoPag="recebido";
-    var podeCriar = pedidosLigados() && PEDIDOS.estado==="ligada";
+    var podeCriar = pedidosLigados() && PEDIDOS.estado.indexOf("ligada")===0;
     $("#blocoPedido").hidden = !podeCriar;
     var nota=$("#notaPedido");
     nota.hidden = !(pedidosLigados() && !podeCriar);
@@ -3831,10 +3836,8 @@
     var vl = valesCarrinho();
     $("#fVales").hidden = vl <= 0;
     $("#fPorPagar").hidden = vl <= 0;
-    if(vl > 0){
-      $("#payVales").textContent = "− "+money(vl);
-      $("#payPorPagar").textContent = money(porPagarCarrinho());
-    }
+    $("#payVales").textContent = vl > 0 ? ("− "+money(vl)) : money(0);
+    $("#payPorPagar").textContent = money(porPagarCarrinho());
     $("#payCartaoVal").textContent=money(valorCartao);
     $("#payDevido").textContent=money(devido);
     $("#payRecebido").textContent=money(recebido);
@@ -3972,7 +3975,17 @@
     guardarVenda(venda);
     estado.ultimaVenda = venda;      // fica à vista para conferir o que foi pedido
     programarLimpezaTalao();
-    estado.carrinho=[]; fechar("#sheetPagar");
+    estado.carrinho=[];
+    // o cabeçalho fica limpo para a venda seguinte
+    recebido=0; valorCartao=0; campoPag="recebido";
+    if(bufPay) bufPay.v="";
+    numeroEscolhido=null;
+    if(filtro){                       // a pesquisa não deve sobrar para o cliente seguinte
+      filtro=""; pagina=0;
+      var q=$("#qProduto"); if(q) q.value="";
+      var lx=$("#qLimpar"); if(lx) lx.hidden=true;
+    }
+    fechar("#sheetPagar");
     desenharCarrinho(); desenharGrelha(); desenharHoje();
     toast(venda.pedido ? ("Pedido "+venda.pedido+" criado")
         : (venda.troco>0 ? "Troco "+money(venda.troco) : "Venda registada"));
@@ -5960,7 +5973,6 @@
     LS.esc("paleta",this.value); LS.esc(chaveManuais(), {}); LS.esc("acentoManual","nao");
     aplicarTema(); desenharAcentos(); desenharManuais(); desenharProntos();
   });
-  var CHAVES_DEFS = ["tema","paleta","escala","acento","acentoManual","nivelCor","larguraApp","tileWp","tileHp","tileW","tileH","coresClaro","coresEscuro","ordemCaixa","tamanho","textoBotoes","controlos","tecladoSistema","ordemGrelha","talaoLinhas","manterTalao","segundosTalao","vistaProdutos","disposicao","colTalaoPc","colTalao","colunas","indicadorVendas","pedidosLigar","salaServidor","servidorDados","pastaCopias","imprimir","metodoImpressao","servidorImp","avancoCorte","gaveta","botaoGaveta","vias","papel","cabecalho","subcabecalho","rodapeTalao","logo","logoTam","mostrarTroco","mostrarPagamento","mostrarArtigos","mostrarData","mostrarPrecos","mostrarTotal","mostrarEvento"];
   function servidorDados(){
     return String(LS.ler("servidorDados","http://192.168.0.110:8090")).trim().replace(/\/+$/,"");
   }
@@ -6609,11 +6621,24 @@
     return Promise.all(evs.map(function(ev){
       return Promise.all([lerDadosEvento(ev.id), lerImagensEvento(ev.id)]).then(function(r){
         var d=r[0];
-        return {id:ev.id, nome:ev.nome, inicio:ev.inicio, fim:ev.fim, produtos:ev.produtos||[], criado:ev.criado||0,
+        return {id:ev.id, nome:ev.nome, inicio:ev.inicio, fim:ev.fim,
+                produtos:ev.produtos||[], criado:ev.criado||0,
+                categorias:ev.categorias||null,          // cores e ordem dos grupos
+                metodosExtra:ev.metodosExtra||null,       // formas de pagamento criadas
+                historico:ev.historico||null,             // alterações de preços e nomes
                 pagamentos:pagamentosDe(ev), vendas:d.vendas||{}, caixa:d.caixa||{}, imagens:r[1]||{}};
       });
     })).then(function(lista){
-      return {app:"registadora", versao:3, exportado:new Date().toISOString(), eventos:lista,
+      // as definições deste posto vão junto, para se poder repor tudo tal como estava
+      var defs = {};
+      CHAVES_DEFS.forEach(function(k){
+        var v = LS.ler(k, null);
+        if(v !== null && k !== "salaPasse") defs[k] = v;
+      });
+      return {app:"registadora", versao:4, exportado:new Date().toISOString(),
+              posto: LS.ler("pastaCopias","") || location.hostname,
+              aplicacao: VERSAO_APP,
+              eventos:lista, definicoes:defs,
               biblioteca:bibLista(), bibliotecaImagens:bibImgs()};
     });
   }
@@ -6658,8 +6683,15 @@
           inicio: orig.inicio || hoje(),
           fim: orig.fim || orig.inicio || hoje(),
           produtos: (orig.produtos||[]).map(function(p){
-            return {id:p.id||uid(), nome:p.nome||"Artigo", preco:Number(p.preco)||0, cor:p.cor||"#0E6B5C", icone:p.icone||""};
+            var np = {id:p.id||uid(), nome:p.nome||"Artigo", preco:Number(p.preco)||0,
+                      cor:p.cor||"", icone:p.icone||"", categoria:p.categoria||""};
+            if(p.vale) np.vale = true;
+            if(p.oculto) np.oculto = true;
+            return np;
           }),
+          categorias: Array.isArray(orig.categorias) ? orig.categorias : undefined,
+          metodosExtra: Array.isArray(orig.metodosExtra) ? orig.metodosExtra : undefined,
+          historico: Array.isArray(orig.historico) ? orig.historico : undefined,
           criado: orig.criado || Date.now(),
           pagamentos: orig.pagamentos
         };
